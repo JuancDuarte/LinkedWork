@@ -7,7 +7,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface OfertaRepository extends JpaRepository<Oferta, Long> {
-    List<Oferta> findBySolicitudId(Long solicitudId);
-    List<Oferta> findByTrabajadorId(Long trabajadorId);
+public interface OfertaRepository extends JpaRepository<Oferta, Integer> {
+    List<Oferta> findBySolicitudIdSolicitud(Integer idSolicitud);
+    
+    List<Oferta> findByTrabajadorIdTrabajador(Integer idTrabajador);
+    
+    List<Oferta> findByEstado(String estado);
 }

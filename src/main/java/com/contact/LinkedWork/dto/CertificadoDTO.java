@@ -1,86 +1,69 @@
-package com.contact.LinkedWork.model;
+package com.contact.LinkedWork.dto;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "Certificado")
-public class Certificado {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_certificado")
+public class CertificadoDTO {
+    
     private Integer idCertificado;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "id_trabajador", nullable = false)
-    private Trabajador trabajador;
-
-    @Column(length = 100)
+    private Integer idTrabajador;
     private String nombre;
-
-    @Column(length = 100)
     private String entidad;
-
-    @Column(columnDefinition = "TEXT")
     private String descripcion;
-
-    @Column
     private LocalDateTime fecha;
-
-    public Certificado() {
+    
+    public CertificadoDTO() {
     }
-
-    public Certificado(Trabajador trabajador, String nombre, String entidad) {
-        this.trabajador = trabajador;
+    
+    public CertificadoDTO(Integer idTrabajador, String nombre, String entidad) {
+        this.idTrabajador = idTrabajador;
         this.nombre = nombre;
         this.entidad = entidad;
     }
-
+    
     public Integer getIdCertificado() {
         return idCertificado;
     }
-
+    
     public void setIdCertificado(Integer idCertificado) {
         this.idCertificado = idCertificado;
     }
-
-    public Trabajador getTrabajador() {
-        return trabajador;
+    
+    public Integer getIdTrabajador() {
+        return idTrabajador;
     }
-
-    public void setTrabajador(Trabajador trabajador) {
-        this.trabajador = trabajador;
+    
+    public void setIdTrabajador(Integer idTrabajador) {
+        this.idTrabajador = idTrabajador;
     }
-
+    
     public String getNombre() {
         return nombre;
     }
-
+    
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
-
+    
     public String getEntidad() {
         return entidad;
     }
-
+    
     public void setEntidad(String entidad) {
         this.entidad = entidad;
     }
-
+    
     public String getDescripcion() {
         return descripcion;
     }
-
+    
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
     }
-
+    
     public LocalDateTime getFecha() {
         return fecha;
     }
-
+    
     public void setFecha(LocalDateTime fecha) {
         this.fecha = fecha;
     }

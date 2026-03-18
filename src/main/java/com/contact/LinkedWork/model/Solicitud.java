@@ -2,21 +2,23 @@ package com.contact.LinkedWork.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
-@Table(name = "solicitudes")
+@Table(name = "Solicitud")
 public class Solicitud {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_solicitud")
-    private Long id;
+    private Integer idSolicitud;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_usuario")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_area")
     private Area area;
 
@@ -29,18 +31,36 @@ public class Solicitud {
     @Column(length = 50)
     private String estado = "pendiente";
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "fecha_creacion", nullable = false, updatable = false)
+    private LocalDateTime fechaCreacion;
+
+    @OneToMany(mappedBy = "solicitud", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<SolicitudHistorial> historiales = new HashSet<>();
+
+    @OneToMany(mappedBy = "solicitud", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Oferta> ofertas = new HashSet<>();
+
+    @OneToMany(mappedBy = "solicitud", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Calificacion> calificaciones = new HashSet<>();
 
     public Solicitud() {
+        this.fechaCreacion = LocalDateTime.now();
     }
 
-    public Long getId() {
-        return id;
+    public Solicitud(Usuario usuario, Area area, String titulo, String descripcion) {
+        this.usuario = usuario;
+        this.area = area;
+        this.titulo = titulo;
+        this.descripcion = descripcion;
+        this.fechaCreacion = LocalDateTime.now();
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public Integer getIdSolicitud() {
+        return idSolicitud;
+    }
+
+    public void setIdSolicitud(Integer idSolicitud) {
+        this.idSolicitud = idSolicitud;
     }
 
     public Usuario getUsuario() {
@@ -83,11 +103,35 @@ public class Solicitud {
         this.estado = estado;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
+
+    public Set<SolicitudHistorial> getHistoriales() {
+        return historiales;
+    }
+
+    public void setHistoriales(Set<SolicitudHistorial> historiales) {
+        this.historiales = historiales;
+    }
+
+    public Set<Oferta> getOfertas() {
+        return ofertas;
+    }
+
+    public void setOfertas(Set<Oferta> ofertas) {
+        this.ofertas = ofertas;
+    }
+
+    public Set<Calificacion> getCalificaciones() {
+        return calificaciones;
+    }
+
+    public void setCalificaciones(Set<Calificacion> calificaciones) {
+        this.calificaciones = calificaciones;
     }
 }

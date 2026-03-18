@@ -1,12 +1,12 @@
 package com.contact.LinkedWork.repository;
 
-import com.contact.LinkedWork.model.Area;
+import com.contact.LinkedWork.model.Rol;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 @Repository
-public interface AreaRepository extends JpaRepository<Area, Integer> {
-    Optional<Area> findByNombre(String nombre);
+public interface RolRepository extends JpaRepository<Rol, Integer> {
+    Optional<Rol> findByNombre(String nombre);
 }

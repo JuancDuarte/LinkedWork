@@ -4,13 +4,13 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Evaluacion")
-public class Evaluacion {
+@Table(name = "Observacion")
+public class Observacion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_evaluacion")
-    private Integer idEvaluacion;
+    @Column(name = "id_observacion")
+    private Integer idObservacion;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_trabajador", nullable = false)
@@ -20,30 +20,32 @@ public class Evaluacion {
     @JoinColumn(name = "id_administrador")
     private Usuario administrador;
 
-    @Column(length = 50)
-    private String resultado;
+    @Column(columnDefinition = "TEXT")
+    private String descripcion;
 
     @Column(length = 50)
-    private String estado = "pendiente";
+    private String tipo;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime fecha;
 
-    public Evaluacion() {
+    public Observacion() {
         this.fecha = LocalDateTime.now();
     }
 
-    public Evaluacion(Trabajador trabajador) {
+    public Observacion(Trabajador trabajador, String descripcion, String tipo) {
         this.trabajador = trabajador;
+        this.descripcion = descripcion;
+        this.tipo = tipo;
         this.fecha = LocalDateTime.now();
     }
 
-    public Integer getIdEvaluacion() {
-        return idEvaluacion;
+    public Integer getIdObservacion() {
+        return idObservacion;
     }
 
-    public void setIdEvaluacion(Integer idEvaluacion) {
-        this.idEvaluacion = idEvaluacion;
+    public void setIdObservacion(Integer idObservacion) {
+        this.idObservacion = idObservacion;
     }
 
     public Trabajador getTrabajador() {
@@ -62,20 +64,20 @@ public class Evaluacion {
         this.administrador = administrador;
     }
 
-    public String getResultado() {
-        return resultado;
+    public String getDescripcion() {
+        return descripcion;
     }
 
-    public void setResultado(String resultado) {
-        this.resultado = resultado;
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
 
-    public String getEstado() {
-        return estado;
+    public String getTipo() {
+        return tipo;
     }
 
-    public void setEstado(String estado) {
-        this.estado = estado;
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
     }
 
     public LocalDateTime getFecha() {

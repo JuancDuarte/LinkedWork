@@ -3,22 +3,24 @@ package com.contact.LinkedWork.model;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
-@Table(name = "ofertas")
+@Table(name = "Oferta")
 public class Oferta {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_oferta")
-    private Long id;
+    private Integer idOferta;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_solicitud")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "id_solicitud", nullable = false)
     private Solicitud solicitud;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_trabajador")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "id_trabajador", nullable = false)
     private Trabajador trabajador;
 
     @Column(precision = 10, scale = 2)
@@ -30,18 +32,28 @@ public class Oferta {
     @Column(length = 50)
     private String estado = "pendiente";
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "fecha_creacion", nullable = false, updatable = false)
+    private LocalDateTime fechaCreacion;
+
+    @OneToMany(mappedBy = "oferta", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<OfertaHistorial> historiales = new HashSet<>();
 
     public Oferta() {
+        this.fechaCreacion = LocalDateTime.now();
     }
 
-    public Long getId() {
-        return id;
+    public Oferta(Solicitud solicitud, Trabajador trabajador) {
+        this.solicitud = solicitud;
+        this.trabajador = trabajador;
+        this.fechaCreacion = LocalDateTime.now();
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public Integer getIdOferta() {
+        return idOferta;
+    }
+
+    public void setIdOferta(Integer idOferta) {
+        this.idOferta = idOferta;
     }
 
     public Solicitud getSolicitud() {
@@ -84,11 +96,19 @@ public class Oferta {
         this.estado = estado;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
+
+    public Set<OfertaHistorial> getHistoriales() {
+        return historiales;
+    }
+
+    public void setHistoriales(Set<OfertaHistorial> historiales) {
+        this.historiales = historiales;
     }
 }

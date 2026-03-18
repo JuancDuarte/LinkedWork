@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface CertificadoRepository extends JpaRepository<Certificado, Long> {
-    List<Certificado> findByTrabajadorId(Long trabajadorId);
+public interface CertificadoRepository extends JpaRepository<Certificado, Integer> {
+    List<Certificado> findByTrabajadorIdTrabajador(Integer idTrabajador);
 }

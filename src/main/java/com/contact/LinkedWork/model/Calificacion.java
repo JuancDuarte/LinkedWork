@@ -4,39 +4,52 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "calificaciones")
+@Table(name = "Calificacion")
 public class Calificacion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_calificacion")
-    private Long id;
+    private Integer idCalificacion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_usuario")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_trabajador")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "id_trabajador", nullable = false)
     private Trabajador trabajador;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "id_solicitud", nullable = false)
+    private Solicitud solicitud;
+
+    @Column
     private Integer puntuacion;
 
     @Column(columnDefinition = "TEXT")
     private String comentario;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "fecha_creacion", nullable = false, updatable = false)
+    private LocalDateTime fechaCreacion;
 
     public Calificacion() {
+        this.fechaCreacion = LocalDateTime.now();
     }
 
-    public Long getId() {
-        return id;
+    public Calificacion(Usuario usuario, Trabajador trabajador, Solicitud solicitud) {
+        this.usuario = usuario;
+        this.trabajador = trabajador;
+        this.solicitud = solicitud;
+        this.fechaCreacion = LocalDateTime.now();
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public Integer getIdCalificacion() {
+        return idCalificacion;
+    }
+
+    public void setIdCalificacion(Integer idCalificacion) {
+        this.idCalificacion = idCalificacion;
     }
 
     public Usuario getUsuario() {
@@ -55,6 +68,14 @@ public class Calificacion {
         this.trabajador = trabajador;
     }
 
+    public Solicitud getSolicitud() {
+        return solicitud;
+    }
+
+    public void setSolicitud(Solicitud solicitud) {
+        this.solicitud = solicitud;
+    }
+
     public Integer getPuntuacion() {
         return puntuacion;
     }
@@ -71,11 +92,11 @@ public class Calificacion {
         this.comentario = comentario;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
     }
 }

@@ -7,6 +7,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface EvaluacionRepository extends JpaRepository<Evaluacion, Long> {
-    List<Evaluacion> findByTrabajadorId(Long trabajadorId);
+public interface EvaluacionRepository extends JpaRepository<Evaluacion, Integer> {
+    List<Evaluacion> findByTrabajadorIdTrabajador(Integer idTrabajador);
+    
+    List<Evaluacion> findByEstado(String estado);
+    
+    List<Evaluacion> findByAdministradorIdUsuario(Integer idAdministrador);
 }

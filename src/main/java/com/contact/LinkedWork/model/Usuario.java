@@ -14,7 +14,7 @@ public class Usuario {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_rol", nullable = false)
-    private Role role;
+    private Rol role;
 
     @Column(length = 100)
     private String nombre;
@@ -34,7 +34,7 @@ public class Usuario {
     public Usuario() {
     }
 
-    public Usuario(Role role, String nombre, String email, String password) {
+    public Usuario(Rol role, String nombre, String email, String password) {
         this.role = role;
         this.nombre = nombre;
         this.email = email;
@@ -49,11 +49,11 @@ public class Usuario {
         this.id = id;
     }
 
-    public Role getRole() {
+    public Rol getRole() {
         return role;
     }
 
-    public void setRole(Role role) {
+    public void setRole(Rol role) {
         this.role = role;
     }
 
