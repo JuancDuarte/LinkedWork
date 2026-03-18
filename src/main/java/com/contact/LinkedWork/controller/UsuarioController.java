@@ -11,19 +11,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.contact.LinkedWork.model.Usuario;
+import com.contact.LinkedWork.service.SolicitudService;
 import com.contact.LinkedWork.service.UsuarioService;
 
 @RestController
 @RequestMapping("/LinkedApi/")
 @CrossOrigin(origins="*")
 public class UsuarioController {
-    @Autowireds
+    @Autowired
     @Qualifier("UsuarioService")
     private UsuarioService usuarioService;
 
-    @GetMapping(path = "/listarusuarios", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Autowired
+    @Qualifier("SolicitudService")
+    private SolicitudService solicitudService;
+
+    @GetMapping(path = "/listUsers", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Usuario> getAllUsuarios() {
         return usuarioService.getAllUsuarios();
-    }
-
+    } 
 }
