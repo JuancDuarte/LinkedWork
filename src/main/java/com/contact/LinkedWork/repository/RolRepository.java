@@ -1,12 +1,12 @@
 package com.contact.LinkedWork.repository;
 
 import com.contact.LinkedWork.model.Rol;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-@Repository
-public interface RolRepository extends JpaRepository<Rol, Integer> {
+@Repository("CrudRolRepository")
+public interface RolRepository extends CrudRepository<Rol, Integer> {
     Optional<Rol> findByNombre(String nombre);
 }
