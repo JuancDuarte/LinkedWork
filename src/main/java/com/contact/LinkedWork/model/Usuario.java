@@ -2,67 +2,91 @@ package com.contact.LinkedWork.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
-@Table(name = "usuarios")
+@Table(name = "Usuario")
 public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_usuario")
-    private Long id;
+    @Column(name = "IdUsuario")
+    private Long idUsuario;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_rol", nullable = false)
-    private Rol role;
+    @ManyToMany
+    @JoinTable(
+    name = "Usuario_Rol",
+    joinColumns = @JoinColumn(name = "IdUsuario"),
+    inverseJoinColumns = @JoinColumn(name = "IdRol")
+    )   
+    private List<Rol> roles;
 
-    @Column(length = 100)
-    private String nombre;
+    @Column( name = "NombreUsuario", length = 50, unique = true)
+    private String nombreUsuario;
 
-    @Column(length = 100, unique = true)
+    @Column(name = "NombreCompleto", length = 100)
+    private String nombreCompleto;
+
+    @Column(name = "Email", length = 100, unique = true)
     private String email;
 
-    @Column(length = 255)
-    private String password;
+    @Column(name = "ClaveHash", length = 255)
+    private String claveHash;
 
-    @Column(length = 50)
+    @Column(name = "Estado", length = 50)
     private String estado = "activo";
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(columnDefinition = "INT DEFAULT 0")
+    private Integer intentosFallidos = 0;
+
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean bloqueado = false;
+
+    @Column(name = "UltimoAcceso")
+    private LocalDateTime ultimoAcceso;
+
+    @Column(name = "FechaCreacion", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private LocalDateTime fechaCreacion = LocalDateTime.now();
 
     public Usuario() {
     }
 
-    public Usuario(Rol role, String nombre, String email, String password) {
-        this.role = role;
-        this.nombre = nombre;
+    public Usuario(List<Rol> roles, String nombre, String email, String password) {
+        this.roles = roles;
+        this.nombreCompleto = nombre;
         this.email = email;
-        this.password = password;
+        this.claveHash = password;
     }
 
-    public Long getId() {
-        return id;
+    public Long getIdUsuario() {
+        return idUsuario;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setIdUsuario(Long idUsuario) {
+        this.idUsuario = idUsuario;
     }
 
-    public Rol getRole() {
-        return role;
+    public List<Rol> getRoles() {
+        return roles;
+    }       
+    public void setRoles(List<Rol> roles) {
+        this.roles = roles;
+    }   
+
+    public String getNombreUsuario() {
+        return nombreUsuario;
     }
 
-    public void setRole(Rol role) {
-        this.role = role;
+    public void setNombreUsuario(String nombreUsuario) {
+        this.nombreUsuario = nombreUsuario;
     }
 
-    public String getNombre() {
-        return nombre;
+    public String getNombreCompleto() { 
+        return nombreCompleto;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public void setNombreCompleto(String nombreCompleto) {
+        this.nombreCompleto = nombreCompleto;
     }
 
     public String getEmail() {
@@ -73,12 +97,12 @@ public class Usuario {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
+    public String getClaveHash() {
+        return claveHash;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setClaveHash(String claveHash) {
+        this.claveHash = claveHash;
     }
 
     public String getEstado() {
@@ -89,11 +113,35 @@ public class Usuario {
         this.estado = estado;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public Integer getIntentosFallidos() {
+        return intentosFallidos;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setIntentosFallidos(Integer intentosFallidos) {
+        this.intentosFallidos = intentosFallidos;
+    }
+
+    public Boolean getBloqueado() {
+        return bloqueado;
+    }
+
+    public void setBloqueado(Boolean bloqueado) {
+        this.bloqueado = bloqueado;
+    }
+
+    public LocalDateTime getUltimoAcceso() {
+        return ultimoAcceso;
+    }
+
+    public void setUltimoAcceso(LocalDateTime ultimoAcceso) {
+        this.ultimoAcceso = ultimoAcceso;
+    }
+
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
+    }
+
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
     }
 }

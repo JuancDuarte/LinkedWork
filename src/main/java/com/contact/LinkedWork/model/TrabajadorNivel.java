@@ -3,27 +3,31 @@ package com.contact.LinkedWork.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "Trabajador_Nivel")
 public class TrabajadorNivel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Integer id;
+    @Column(name = "Id")
+    private Long id;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "id_trabajador", nullable = false)
+    @JoinColumn(name = "IdTrabajador", referencedColumnName = "IdTrabajador", nullable = false)
+    @JsonIgnore
     private Trabajador trabajador;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "id_nivel", nullable = false)
+    @JsonIgnore
+    @JoinColumn(name = "IdNivel", referencedColumnName = "IdNivel", nullable = false)
     private Nivel nivel;
 
-    @Column(name = "fecha_inicio", nullable = false, updatable = false)
+    @Column(name = "FechaInicio", nullable = false, updatable = false)
     private LocalDateTime fechaInicio;
 
-    @Column(name = "fecha_fin")
+    @Column(name = "FechaFin")
     private LocalDateTime fechaFin;
 
     public TrabajadorNivel() {
@@ -36,11 +40,11 @@ public class TrabajadorNivel {
         this.fechaInicio = LocalDateTime.now();
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

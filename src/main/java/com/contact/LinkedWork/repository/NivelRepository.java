@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository("CrudNivelRepository")
-public interface NivelRepository extends CrudRepository<Nivel, Integer> {
-    Optional<Nivel> findByNombre(String nombre);
+public interface NivelRepository extends CrudRepository<Nivel, Long> {
+    Optional<Nivel> findByNombre(String Nombre);
 }

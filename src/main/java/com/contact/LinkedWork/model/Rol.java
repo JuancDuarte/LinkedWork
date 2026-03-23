@@ -2,7 +2,10 @@ package com.contact.LinkedWork.model;
 
 import jakarta.persistence.*;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "Rol")
@@ -10,14 +13,16 @@ public class Rol {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_rol")
-    private Integer idRol;
+    @Column(name = "IdRol")
+    
+    private Long idRol;
 
-    @Column(nullable = false, length = 50)
+    @Column( name = "Nombre", nullable = false, length = 50)
     private String nombre;
 
     @ManyToMany(mappedBy = "roles")
-    private Set<Usuario> usuarios = new HashSet<>();
+    @JsonIgnore
+    private List<Usuario> usuarios;
 
     public Rol() {
     }
@@ -26,11 +31,11 @@ public class Rol {
         this.nombre = nombre;
     }
 
-    public Integer getIdRol() {
+    public Long getIdRol() {
         return idRol;
     }
 
-    public void setIdRol(Integer idRol) {
+    public void setIdRol(Long idRol) {
         this.idRol = idRol;
     }
 
@@ -42,11 +47,10 @@ public class Rol {
         this.nombre = nombre;
     }
 
-    public Set<Usuario> getUsuarios() {
+    public List<Usuario> getUsuarios() {
         return usuarios;
-    }
-
-    public void setUsuarios(Set<Usuario> usuarios) {
+    }   
+    public void setUsuarios(List<Usuario> usuarios) {
         this.usuarios = usuarios;
     }
 }

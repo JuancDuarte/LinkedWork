@@ -15,16 +15,12 @@ import com.contact.LinkedWork.service.SolicitudService;
 import com.contact.LinkedWork.service.UsuarioService;
 
 @RestController
-@RequestMapping("/LinkedApi/")
+@RequestMapping("/")
 @CrossOrigin(origins="*")
 public class UsuarioController {
     @Autowired
     @Qualifier("UsuarioService")
     private UsuarioService usuarioService;
-
-    @Autowired
-    @Qualifier("SolicitudService")
-    private SolicitudService solicitudService;
 
     @GetMapping(path = "/listUsers", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Usuario> getAllUsuarios() {

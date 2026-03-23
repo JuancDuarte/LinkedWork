@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository("CrudSolicitudHistorialRepository")
 public interface SolicitudHistorialRepository extends CrudRepository<SolicitudHistorial, Integer> {
-    List<SolicitudHistorial> findBySolicitudIdSolicitud(Integer idSolicitud);
+    List<SolicitudHistorial> findBySolicitud_IdSolicitud(Integer IdSolicitud);
 }

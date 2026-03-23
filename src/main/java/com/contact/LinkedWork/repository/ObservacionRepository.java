@@ -7,10 +7,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository("CrudObservacionRepository")
-public interface ObservacionRepository extends CrudRepository<Observacion, Integer> {
-    List<Observacion> findByTrabajadorIdTrabajador(Integer idTrabajador);
+public interface ObservacionRepository extends CrudRepository<Observacion, Long> {
+    List<Observacion> findByTrabajador_IdTrabajador(Long IdTrabajador);
     
-    List<Observacion> findByAdministradorIdUsuario(Integer idAdministrador);
-    
-    List<Observacion> findByTipo(String tipo);
+    List<Observacion> findByTipo(String Tipo);
 }

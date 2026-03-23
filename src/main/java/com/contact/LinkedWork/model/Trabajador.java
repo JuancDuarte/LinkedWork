@@ -10,25 +10,25 @@ public class Trabajador {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_trabajador")
-    private Integer idTrabajador;
+    @Column(name = "IdTrabajador")
+    private Long IdTrabajador;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "id_usuario", nullable = false)
+    @JoinColumn(name = "IdUsuario", nullable = false)
     private Usuario usuario;
 
     @ManyToOne
-    @JoinColumn(name = "id_area")
+    @JoinColumn(name = "IdArea")
     private Area area;
 
     @Column(columnDefinition = "TEXT")
-    private String descripcion;
+    private String Descripcion;
 
     @Column
-    private Integer experiencia;
+    private Long Experiencia;
 
     @Column(length = 50)
-    private String estado = "activo";
+    private String Estado = "activo";
 
     @OneToMany(mappedBy = "trabajador", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<TrabajadorNivel> trabajadorNiveles = new HashSet<>();
@@ -60,12 +60,12 @@ public class Trabajador {
         this.area = area;
     }
 
-    public Integer getIdTrabajador() {
-        return idTrabajador;
+    public Long getIdTrabajador() {
+        return IdTrabajador;
     }
 
-    public void setIdTrabajador(Integer idTrabajador) {
-        this.idTrabajador = idTrabajador;
+    public void setIdTrabajador(Long idTrabajador) {
+        this.IdTrabajador = idTrabajador;
     }
 
     public Usuario getUsuario() {
@@ -85,27 +85,27 @@ public class Trabajador {
     }
 
     public String getDescripcion() {
-        return descripcion;
+        return Descripcion;
     }
 
     public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
+        this.Descripcion = descripcion;
     }
 
-    public Integer getExperiencia() {
-        return experiencia;
+    public Long getExperiencia() {
+        return Experiencia;
     }
 
-    public void setExperiencia(Integer experiencia) {
-        this.experiencia = experiencia;
+    public void setExperiencia(Long experiencia) {
+        this.Experiencia = experiencia;
     }
 
     public String getEstado() {
-        return estado;
+        return Estado;
     }
 
     public void setEstado(String estado) {
-        this.estado = estado;
+        this.Estado = estado;
     }
 
     public Set<TrabajadorNivel> getTrabajadorNiveles() {

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +19,7 @@ import com.contact.LinkedWork.model.Usuario;
 import com.contact.LinkedWork.service.SolicitudService;
 
 @RestController
-@RequestMapping("/LinkedApi/")
+@RequestMapping("/")
 @CrossOrigin(origins="*")
 public class ServicioController {
 
@@ -26,8 +27,8 @@ public class ServicioController {
     @Qualifier("SolicitudService")
     private SolicitudService solicitudService;
 
-@PostMapping(path="/addSolicitud", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Solicitud addSolicitud(@RequestBody Solicitud solicitud, @RequestParam Long idUsuario, @RequestParam Long idArea) {
+@PostMapping(path="/addSolicitud/{idUsuario}/{idArea}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Solicitud addSolicitud(@RequestBody Solicitud solicitud, @PathVariable Long idUsuario, @PathVariable Long idArea) {
         return solicitudService.AgregarSolicitud(idUsuario, solicitud, idArea);
     }  
 

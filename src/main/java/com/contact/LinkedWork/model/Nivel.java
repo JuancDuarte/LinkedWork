@@ -10,17 +10,17 @@ public class Nivel {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_nivel")
-    private Integer idNivel;
+    @Column(name = "IdNivel")
+    private Long idNivel;
     
-    @Column(length = 50)
+    @Column(name = "nombre", length = 50)
     private String nombre;
     
     @Column(name = "puntaje_min")
-    private Integer puntajeMin;
+    private Long puntajeMin;
     
     @Column(name = "puntaje_max")
-    private Integer puntajeMax;
+    private Long puntajeMax;
     
     @OneToMany(mappedBy = "nivel", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<TrabajadorNivel> trabajadorNiveles = new HashSet<>();
@@ -28,17 +28,17 @@ public class Nivel {
     public Nivel() {
     }
     
-    public Nivel(String nombre, Integer puntajeMin, Integer puntajeMax) {
+    public Nivel(String nombre, Long puntajeMin, Long puntajeMax) {
         this.nombre = nombre;
         this.puntajeMin = puntajeMin;
         this.puntajeMax = puntajeMax;
     }
     
-    public Integer getIdNivel() {
+    public Long getIdNivel() {
         return idNivel;
     }
     
-    public void setIdNivel(Integer idNivel) {
+    public void setIdNivel(Long idNivel) {
         this.idNivel = idNivel;
     }
     
@@ -50,19 +50,19 @@ public class Nivel {
         this.nombre = nombre;
     }
     
-    public Integer getPuntajeMin() {
+    public Long getPuntajeMin() {
         return puntajeMin;
     }
     
-    public void setPuntajeMin(Integer puntajeMin) {
+    public void setPuntajeMin(Long puntajeMin) {
         this.puntajeMin = puntajeMin;
     }
     
-    public Integer getPuntajeMax() {
+    public Long getPuntajeMax() {
         return puntajeMax;
     }
     
-    public void setPuntajeMax(Integer puntajeMax) {
+    public void setPuntajeMax(Long puntajeMax) {
         this.puntajeMax = puntajeMax;
     }
     

@@ -5,12 +5,13 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository("CrudSolicitudRepository")
-public interface SolicitudRepository extends CrudRepository<Solicitud, Integer> {
-    List<Solicitud> findByUsuarioIdUsuario(Integer idUsuario);
+public interface SolicitudRepository extends CrudRepository<Solicitud, Long> {
+    Optional<Solicitud> findByUsuario_IdUsuario(Long IdUsuario);
     
-    List<Solicitud> findByAreaIdArea(Integer idArea);
+    List<Solicitud> findByArea_IdArea(Long IdArea);
     
-    List<Solicitud> findByEstado(String estado);
+    List<Solicitud> findByEstado(String Estado);
 }

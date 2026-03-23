@@ -3,29 +3,32 @@ package com.contact.LinkedWork.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "Certificado")
 public class Certificado {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_certificado")
-    private Integer idCertificado;
+    @Column(name = "IdCertificado")
+    private Long idCertificado;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "id_trabajador", nullable = false)
+    @JoinColumn(name = "IdTrabajador", nullable = false)
+    @JsonIgnore
     private Trabajador trabajador;
 
-    @Column(length = 100)
+    @Column(name = "Nombre", length = 100)
     private String nombre;
 
-    @Column(length = 100)
+    @Column(name = "Entidad", length = 100)
     private String entidad;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "Descripcion", columnDefinition = "TEXT")
     private String descripcion;
 
-    @Column
+    @Column(name = "Fecha")
     private LocalDateTime fecha;
 
     public Certificado() {
@@ -37,11 +40,11 @@ public class Certificado {
         this.entidad = entidad;
     }
 
-    public Integer getIdCertificado() {
+    public Long getIdCertificado() {
         return idCertificado;
     }
 
-    public void setIdCertificado(Integer idCertificado) {
+    public void setIdCertificado(Long idCertificado) {
         this.idCertificado = idCertificado;
     }
 

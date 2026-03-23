@@ -7,10 +7,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository("CrudCalificacionRepository")
-public interface CalificacionRepository extends CrudRepository<Calificacion, Integer> {
-    List<Calificacion> findByUsuarioIdUsuario(Integer idUsuario);
+public interface CalificacionRepository extends CrudRepository<Calificacion, Long> {
+    List<Calificacion> findByUsuario_IdUsuario(Long IdUsuario);
     
-    List<Calificacion> findByTrabajadorIdTrabajador(Integer idTrabajador);
+    List<Calificacion> findByTrabajador_IdTrabajador(Long IdTrabajador);
     
-    List<Calificacion> findBySolicitudIdSolicitud(Integer idSolicitud);
+    List<Calificacion> findBySolicitud_IdSolicitud(Long IdSolicitud);
 }

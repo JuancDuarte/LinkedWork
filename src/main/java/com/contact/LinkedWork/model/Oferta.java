@@ -6,33 +6,37 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "Oferta")
 public class Oferta {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_oferta")
-    private Integer idOferta;
+    @Column(name = "IdOferta")
+    private Long idOferta;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "id_solicitud", nullable = false)
+    @JoinColumn(name = "IdSolicitud", nullable = false)
+    @JsonIgnore
     private Solicitud solicitud;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "id_trabajador", nullable = false)
+    @JoinColumn(name = "IdTrabajador", nullable = false)
+    @JsonIgnore
     private Trabajador trabajador;
 
-    @Column(precision = 10, scale = 2)
+    @Column( name = "Precio", precision = 10, scale = 2)
     private BigDecimal precio;
 
-    @Column(columnDefinition = "TEXT")
+    @Column( name = "Descripcion", columnDefinition = "TEXT")
     private String descripcion;
 
-    @Column(length = 50)
+    @Column( name = "Estado", length = 50)
     private String estado = "pendiente";
 
-    @Column(name = "fecha_creacion", nullable = false, updatable = false)
+    @Column(name = "FechaCreacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
     @OneToMany(mappedBy = "oferta", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -48,11 +52,11 @@ public class Oferta {
         this.fechaCreacion = LocalDateTime.now();
     }
 
-    public Integer getIdOferta() {
+    public Long getIdOferta() {
         return idOferta;
     }
 
-    public void setIdOferta(Integer idOferta) {
+    public void setIdOferta(Long idOferta) {
         this.idOferta = idOferta;
     }
 

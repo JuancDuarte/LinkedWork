@@ -3,30 +3,34 @@ package com.contact.LinkedWork.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "Evaluacion")
 public class Evaluacion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_evaluacion")
-    private Integer idEvaluacion;
+    @Column(name = "IdEvaluacion")
+    private Long idEvaluacion;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "id_trabajador", nullable = false)
+    @JoinColumn(name = "IdTrabajador", nullable = false)
+    @JsonIgnore
     private Trabajador trabajador;
 
     @ManyToOne
-    @JoinColumn(name = "id_administrador")
+    @JoinColumn(name = "IdAdministrador")
+    @JsonIgnore
     private Usuario administrador;
 
-    @Column(length = 50)
+    @Column(name = "Resultado", length = 50)
     private String resultado;
 
-    @Column(length = 50)
+    @Column(name = "Estado", length = 50)
     private String estado = "pendiente";
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "Fecha", nullable = false, updatable = false)
     private LocalDateTime fecha;
 
     public Evaluacion() {
@@ -38,11 +42,11 @@ public class Evaluacion {
         this.fecha = LocalDateTime.now();
     }
 
-    public Integer getIdEvaluacion() {
+    public Long getIdEvaluacion() {
         return idEvaluacion;
     }
 
-    public void setIdEvaluacion(Integer idEvaluacion) {
+    public void setIdEvaluacion(Long idEvaluacion) {
         this.idEvaluacion = idEvaluacion;
     }
 

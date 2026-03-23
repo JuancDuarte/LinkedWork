@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository("CrudAreaRepository")
-public interface AreaRepository extends CrudRepository<Area, Integer> {
-    Optional<Area> findByNombre(String nombre);
+public interface AreaRepository extends CrudRepository<Area, Long> {
+    Optional<Area> findByNombre(String Nombre);
+    Optional<Area> findById(Long IdArea); 
 }

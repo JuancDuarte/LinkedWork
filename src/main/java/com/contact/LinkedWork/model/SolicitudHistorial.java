@@ -3,23 +3,26 @@ package com.contact.LinkedWork.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "Solicitud_Historial")
 public class SolicitudHistorial {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_historial")
-    private Integer idHistorial;
+    @Column(name = "IdHistorial")
+    private Long idHistorial;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "id_solicitud", nullable = false)
+    @JoinColumn(name = "IdSolicitud", nullable = false)
+    @JsonIgnore
     private Solicitud solicitud;
 
-    @Column(name = "estado_anterior", length = 50)
+    @Column(name = "EstadoAnterior", length = 50)
     private String estadoAnterior;
 
-    @Column(name = "estado_nuevo", length = 50)
+    @Column(name = "EstadoNuevo", length = 50)
     private String estadoNuevo;
 
     @Column(nullable = false, updatable = false)
@@ -36,11 +39,11 @@ public class SolicitudHistorial {
         this.fecha = LocalDateTime.now();
     }
 
-    public Integer getIdHistorial() {
+    public Long getIdHistorial() {
         return idHistorial;
     }
 
-    public void setIdHistorial(Integer idHistorial) {
+    public void setIdHistorial(Long idHistorial) {
         this.idHistorial = idHistorial;
     }
 

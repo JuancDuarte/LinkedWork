@@ -7,10 +7,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository("CrudOfertaRepository")
-public interface OfertaRepository extends CrudRepository<Oferta, Integer> {
-    List<Oferta> findBySolicitudIdSolicitud(Integer idSolicitud);
+public interface OfertaRepository extends CrudRepository<Oferta, Long> {
+    List<Oferta> findBySolicitud_IdSolicitud(Long IdSolicitud);
     
-    List<Oferta> findByTrabajadorIdTrabajador(Integer idTrabajador);
+    List<Oferta> findByTrabajador_IdTrabajador(Long IdTrabajador);
     
-    List<Oferta> findByEstado(String estado);
+    List<Oferta> findByEstado(String Estado);
 }

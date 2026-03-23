@@ -4,25 +4,29 @@ import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "Area")
 public class Area {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_area")
-    private Integer idArea;
+    @Column(name = "IdArea")
+    private Long idArea;
 
-    @Column(length = 100)
+    @Column(name = "Nombre", length = 100)
     private String nombre;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "Descripcion", columnDefinition = "TEXT")
     private String descripcion;
 
     @OneToMany(mappedBy = "area", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private Set<Trabajador> trabajadores = new HashSet<>();
 
     @OneToMany(mappedBy = "area", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private Set<Solicitud> solicitudes = new HashSet<>();
 
     public Area() {
@@ -37,11 +41,11 @@ public class Area {
         this.descripcion = descripcion;
     }
 
-    public Integer getIdArea() {
+    public Long getIdArea() {
         return idArea;
     }
 
-    public void setIdArea(Integer idArea) {
+    public void setIdArea(Long idArea) {
         this.idArea = idArea;
     }
 
@@ -55,7 +59,7 @@ public class Area {
 
     public String getDescripcion() {
         return descripcion;
-    }
+    }   
 
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;

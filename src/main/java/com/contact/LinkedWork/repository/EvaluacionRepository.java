@@ -7,10 +7,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository("CrudEvaluacionRepository")
-public interface EvaluacionRepository extends CrudRepository<Evaluacion, Integer> {
-    List<Evaluacion> findByTrabajadorIdTrabajador(Integer idTrabajador);
+public interface EvaluacionRepository extends CrudRepository<Evaluacion, Long> {
+    List<Evaluacion> findByTrabajador_IdTrabajador(Long IdTrabajador);
     
-    List<Evaluacion> findByEstado(String estado);
-    
-    List<Evaluacion> findByAdministradorIdUsuario(Integer idAdministrador);
+    List<Evaluacion> findByEstado(String Estado);
+
 }

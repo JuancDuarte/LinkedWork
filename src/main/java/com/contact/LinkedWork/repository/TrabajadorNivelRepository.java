@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository("CrudTrabajadorNivelRepository")
 public interface TrabajadorNivelRepository extends CrudRepository<TrabajadorNivel, Integer> {
-    List<TrabajadorNivel> findByTrabajadorIdTrabajador(Integer idTrabajador);
+    List<TrabajadorNivel> findByTrabajadorIdTrabajador(Integer IdTrabajador);
     
-    List<TrabajadorNivel> findByNivelIdNivel(Integer idNivel);
+    List<TrabajadorNivel> findByNivelIdNivel(Integer IdNivel);
 }

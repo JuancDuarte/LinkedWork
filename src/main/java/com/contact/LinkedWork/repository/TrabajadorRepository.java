@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository("CrudTrabajadorRepository")
-public interface TrabajadorRepository extends CrudRepository<Trabajador, Integer> {
-    Optional<Trabajador> findByUsuarioIdUsuario(Integer idUsuario);
+public interface TrabajadorRepository extends CrudRepository<Trabajador, Long> {
+    Optional<Trabajador> findByUsuario_IdUsuario(Long IdUsuario);
     
-    List<Trabajador> findByAreaIdArea(Integer idArea);
+    List<Trabajador> findByArea_IdArea(Long IdArea);
     
-    List<Trabajador> findByEstado(String estado);
+    List<Trabajador> findByEstado(String Estado);
 }

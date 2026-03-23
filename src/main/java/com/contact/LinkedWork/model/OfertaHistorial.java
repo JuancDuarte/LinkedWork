@@ -4,29 +4,32 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "Oferta_Historial")
 public class OfertaHistorial {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_historial")
-    private Integer idHistorial;
+    @Column(name = "IdHistorial")
+    private Long idHistorial;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "id_oferta", nullable = false)
+    @JoinColumn(name = "IdOferta", nullable = false)
+    @JsonIgnore
     private Oferta oferta;
 
-    @Column(name = "precio_anterior", precision = 10, scale = 2)
+    @Column(name = "PrecioAnterior", precision = 10, scale = 2)
     private BigDecimal precioAnterior;
 
-    @Column(name = "precio_nuevo", precision = 10, scale = 2)
+    @Column(name = "PrecioNuevo", precision = 10, scale = 2)
     private BigDecimal precioNuevo;
 
-    @Column(name = "descripcion_anterior", columnDefinition = "TEXT")
+    @Column(name = "DescripcionAnterior", columnDefinition = "TEXT")
     private String descripcionAnterior;
 
-    @Column(name = "descripcion_nueva", columnDefinition = "TEXT")
+    @Column(name = "DescripcionNueva", columnDefinition = "TEXT")
     private String descripcionNueva;
 
     @Column(nullable = false, updatable = false)
@@ -41,11 +44,11 @@ public class OfertaHistorial {
         this.fecha = LocalDateTime.now();
     }
 
-    public Integer getIdHistorial() {
+    public Long getIdHistorial() {
         return idHistorial;
     }
 
-    public void setIdHistorial(Integer idHistorial) {
+    public void setIdHistorial(Long idHistorial) {
         this.idHistorial = idHistorial;
     }
 

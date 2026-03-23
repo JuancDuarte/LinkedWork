@@ -5,33 +5,37 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "Solicitud")
 public class Solicitud {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_solicitud")
-    private Integer idSolicitud;
+    @Column(name = "IdSolicitud")
+    private Long idSolicitud;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "id_usuario", nullable = false)
+    @JoinColumn(name = "IdUsuario", nullable = false)
+    @JsonIgnore
     private Usuario usuario;
 
     @ManyToOne
-    @JoinColumn(name = "id_area")
+    @JoinColumn(name = "IdArea")
+    @JsonIgnore
     private Area area;
 
-    @Column(length = 150)
+    @Column(name = "Titulo", length = 150)
     private String titulo;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "Descripcion", columnDefinition = "TEXT")
     private String descripcion;
 
-    @Column(length = 50)
+    @Column(name = "Estado", length = 50)
     private String estado = "pendiente";
 
-    @Column(name = "fecha_creacion", nullable = false, updatable = false)
+    @Column(name = "FechaCreacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
     @OneToMany(mappedBy = "solicitud", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -55,11 +59,11 @@ public class Solicitud {
         this.fechaCreacion = LocalDateTime.now();
     }
 
-    public Integer getIdSolicitud() {
+    public Long getIdSolicitud() {
         return idSolicitud;
     }
 
-    public void setIdSolicitud(Integer idSolicitud) {
+    public void setIdSolicitud(Long idSolicitud) {
         this.idSolicitud = idSolicitud;
     }
 

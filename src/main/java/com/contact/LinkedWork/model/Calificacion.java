@@ -3,34 +3,40 @@ package com.contact.LinkedWork.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "Calificacion")
 public class Calificacion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_calificacion")
-    private Integer idCalificacion;
+    @Column(name = "IdCalificacion")
+    @JsonIgnore
+    private Long idCalificacion;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "id_usuario", nullable = false)
+    @JoinColumn(name = "IdUsuario", nullable = false)
+    @JsonIgnore
     private Usuario usuario;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "id_trabajador", nullable = false)
+    @JoinColumn(name = "IdTrabajador", nullable = false)
+    @JsonIgnore
     private Trabajador trabajador;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "id_solicitud", nullable = false)
+    @JoinColumn(name = "IdSolicitud", nullable = false)
+    @JsonIgnore
     private Solicitud solicitud;
 
-    @Column
-    private Integer puntuacion;
+    @Column(name = "Puntuacion")
+    private Long puntuacion;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "Comentario", columnDefinition = "TEXT")
     private String comentario;
 
-    @Column(name = "fecha_creacion", nullable = false, updatable = false)
+    @Column(name = "FechaCreacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
     public Calificacion() {
@@ -44,11 +50,11 @@ public class Calificacion {
         this.fechaCreacion = LocalDateTime.now();
     }
 
-    public Integer getIdCalificacion() {
+    public Long getIdCalificacion() {
         return idCalificacion;
     }
 
-    public void setIdCalificacion(Integer idCalificacion) {
+    public void setIdCalificacion(Long idCalificacion) {
         this.idCalificacion = idCalificacion;
     }
 
@@ -76,11 +82,11 @@ public class Calificacion {
         this.solicitud = solicitud;
     }
 
-    public Integer getPuntuacion() {
+    public Long getPuntuacion() {
         return puntuacion;
     }
 
-    public void setPuntuacion(Integer puntuacion) {
+    public void setPuntuacion(Long puntuacion) {
         this.puntuacion = puntuacion;
     }
 

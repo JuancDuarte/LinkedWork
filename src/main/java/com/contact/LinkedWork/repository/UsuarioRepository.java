@@ -8,10 +8,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository("CrudUsuarioRepository")
-public interface UsuarioRepository extends CrudRepository<Usuario, Integer> {
-    Optional<Usuario> findByEmail(String email);
+public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
+    Optional<Usuario> findByEmail(String Email);
     
-    Optional<Usuario> findByNombreUsuario(String nombreUsuario);
+    Optional<Usuario> findByNombreUsuario(String NombreUsuario);
     
-    List<Usuario> findAllByEstado(String estado);
+    List<Usuario> findAllByEstado(String Estado);
+    
+    Optional<Usuario> findByidUsuario(Long IdUsuario);
 }
