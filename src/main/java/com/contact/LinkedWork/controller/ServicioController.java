@@ -34,7 +34,7 @@ public class ServicioController {
         return solicitudService.AgregarSolicitud(idUsuario, solicitud, idArea);
     }  
 
-@GetMapping(path = "/lisRequests", produces = MediaType.APPLICATION_JSON_VALUE)
+@GetMapping(path = "/listRequests", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Solicitud> getAllSolicitudes() {
         return solicitudService.getAllSolicitudes();
     } 
