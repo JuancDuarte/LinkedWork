@@ -5,11 +5,14 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.contact.LinkedWork.dto.UsuarioDTO;
 import com.contact.LinkedWork.model.Usuario;
 import com.contact.LinkedWork.service.SolicitudService;
 import com.contact.LinkedWork.service.UsuarioService;
@@ -26,4 +29,8 @@ public class UsuarioController {
     public List<Usuario> getAllUsuarios() {
         return usuarioService.getAllUsuarios();
     } 
+    @GetMapping(path = "/seeProfile/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UsuarioDTO> SeeProfile(@PathVariable Long idUsuario) {
+        return ResponseEntity.ok(usuarioService.SeeProfile(idUsuario));
+    }
 }
