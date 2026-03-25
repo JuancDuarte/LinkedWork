@@ -22,8 +22,24 @@ public class UsuarioService {
     @Qualifier("CrudUsuarioRepository")
     private UsuarioRepository usuarioRepository;
 
-    public List<Usuario> getAllUsuarios() {
-        return (List<Usuario>) usuarioRepository.findAll();
+    public List<UsuarioDTO> getAllUsuarios() {
+        return usuarioRepository.findAll()
+                .stream()
+                .map(usuario -> {
+                    UsuarioDTO usuarioDTO = new UsuarioDTO();
+                    usuarioDTO.setIdUsuario(usuario.getIdUsuario());
+                    usuarioDTO.setNombreCompleto(usuario.getNombreCompleto());
+                    usuarioDTO.setEmail(usuario.getEmail());
+                    usuarioDTO.setNombreUsuario(usuario.getNombreUsuario());
+                    usuarioDTO.setEstado(usuario.getEstado());
+                    List<String> roles = usuario.getRoles()
+                            .stream()
+                            .map(Rol::getNombre)
+                            .toList();
+                    usuarioDTO.setRoles(roles);
+                    return usuarioDTO;
+                })
+                .toList();
     }
 
     public UsuarioDTO SeeProfile(Long idUsuario) {
@@ -48,6 +64,7 @@ public class UsuarioService {
             if (trabajador.getArea() != null) {
                 trabajadorDTO.setAreaNombre(trabajador.getArea().getNombre());
             }
+            usuarioDTO.setTrabajador(trabajadorDTO);
 
             }
         return usuarioDTO;

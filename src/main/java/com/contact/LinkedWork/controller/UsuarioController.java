@@ -26,7 +26,7 @@ public class UsuarioController {
     private UsuarioService usuarioService;
 
     @GetMapping(path = "/listUsers", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<Usuario> getAllUsuarios() {
+    public List<UsuarioDTO> getAllUsuarios() {
         return usuarioService.getAllUsuarios();
     } 
     @GetMapping(path = "/seeProfile/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
