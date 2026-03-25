@@ -35,11 +35,11 @@ public class SolicitudService {
     @Qualifier("CrudAreaRepository")
     private AreaRepository areaRepository;
 
-    public SolicitudDTO AgregarSolicitud(CrearSolicituDto crearSolicitudDto) {
-        Usuario usuario = usuarioRepository.findById(crearSolicitudDto.getIdUsuario())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + crearSolicitudDto.getIdUsuario()));
-        Area area = areaRepository.findById(crearSolicitudDto.getIdArea())
-                .orElseThrow(() -> new RuntimeException("Área no encontrada con ID: " + crearSolicitudDto.getIdArea()));    
+    public SolicitudDTO AgregarSolicitud(CrearSolicituDto crearSolicitudDto, Long idUsuario, Long idArea) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idUsuario));
+        Area area = areaRepository.findById(idArea)
+                .orElseThrow(() -> new RuntimeException("Área no encontrada con ID: " + idArea));    
         Solicitud solicitud = new Solicitud();
         solicitud.setTitulo(crearSolicitudDto.getTitulo());
         solicitud.setDescripcion(crearSolicitudDto.getDescripcion());
@@ -96,10 +96,10 @@ public class SolicitudService {
             throw new RuntimeException("Solicitud no encontrada con ID: " + idSolicitud);
         }
     }
-    public SolicitudDTO editarSolicitud(EditarSolicitudDTO editarSolicitudDTO) {
-        Solicitud solicitud = solicitudRepository.findById(editarSolicitudDTO.getIdSolicitud())
-                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada con ID: " + editarSolicitudDTO.getIdSolicitud()));
-        if (!solicitud.getUsuario().getIdUsuario().equals(editarSolicitudDTO.getIdUsuario())) {
+    public SolicitudDTO editarSolicitud(EditarSolicitudDTO editarSolicitudDTO, Long idSolicitud, Long idUsuario) {
+        Solicitud solicitud = solicitudRepository.findById(idSolicitud)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada con ID: " + idSolicitud));
+        if (!solicitud.getUsuario().getIdUsuario().equals(idUsuario)) {
             throw new RuntimeException("El usuario no tiene permiso para editar esta solicitud.");
         }
         solicitud.setTitulo(editarSolicitudDTO.getTitulo());

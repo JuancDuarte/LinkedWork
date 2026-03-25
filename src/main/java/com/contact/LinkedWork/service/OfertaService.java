@@ -33,20 +33,20 @@ public class OfertaService {
     @Autowired
     private UsuarioRepository  usuarioRepository;
 
-    public Oferta crearOferta(OfertaDTO ofertaDTO) {
-        Usuario usuario = usuarioRepository.findByidUsuario(ofertaDTO.getIdTrabajador())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + ofertaDTO.getIdTrabajador()));
+    public Oferta crearOferta(OfertaDTO ofertaDTO, Long idTrabajador, Long idSolicitud) {
+        Usuario usuario = usuarioRepository.findByidUsuario(idTrabajador)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idTrabajador));
         boolean esTrabajador = usuario.getRoles()
                 .stream()
                 .anyMatch(rol -> rol.getNombre().equals("ROLE_TRABAJADOR"));
         if (!esTrabajador) {
-            throw new RuntimeException("El usuario con ID: " + ofertaDTO.getIdTrabajador()
+            throw new RuntimeException("El usuario con ID: " + idTrabajador
                     + " no tiene el rol de trabajador y no puede crear una oferta.");
         }
         Trabajador trabajador = trabajadorRepository.findByUsuario_IdUsuario(usuario.getIdUsuario())
                 .orElseThrow(() -> new RuntimeException("Trabajador no encontrado para el usuario con ID: " + usuario.getIdUsuario()));
-        Solicitud solicitud = solicitudRepository.findById(ofertaDTO.getIdSolicitud())
-                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada con ID: " + ofertaDTO.getIdSolicitud()));
+        Solicitud solicitud = solicitudRepository.findById(idSolicitud)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada con ID: " + idSolicitud));
         if(trabajador.getArea() == null || solicitud.getArea() == null || !trabajador.getArea().getIdArea().equals(solicitud.getArea().getIdArea())) {
             throw new RuntimeException("El trabajador con ID: " + trabajador.getIdTrabajador()
                     + " no pertenece al área requerida por la solicitud con ID: " + solicitud.getIdSolicitud());
@@ -69,12 +69,12 @@ public class OfertaService {
         oferta.setDescripcion(ofertaDTO.getDescripcion());
         return ofertaRepository.save(oferta);
     }
-    public Oferta editOferta(EditarOfertaDTO editarOfertaDTO) {
-        Oferta oferta = ofertaRepository.findById(editarOfertaDTO.getIdOferta())
-                .orElseThrow(() -> new RuntimeException("Oferta no encontrada con ID: " + editarOfertaDTO.getIdOferta()));
-        if (!oferta.getTrabajador().getIdTrabajador().equals(editarOfertaDTO.getIdTrabajador())) {
-            throw new RuntimeException("El trabajador con ID: " + editarOfertaDTO.getIdTrabajador()
-                    + " no es el creador de la oferta con ID: " + editarOfertaDTO.getIdOferta() + " y no puede editarla.");
+    public Oferta editOferta(EditarOfertaDTO editarOfertaDTO, Long idOferta, Long idTrabajador) {
+        Oferta oferta = ofertaRepository.findById(idOferta)
+                .orElseThrow(() -> new RuntimeException("Oferta no encontrada con ID: " + idOferta));
+        if (!oferta.getTrabajador().getIdTrabajador().equals(idTrabajador)) {
+            throw new RuntimeException("El trabajador con ID: " + idTrabajador
+                    + " no es el creador de la oferta con ID: " + idOferta + " y no puede editarla.");
         }
         BigDecimal precio = editarOfertaDTO.getPrecio();
         BigDecimal MIN = new BigDecimal("50000");

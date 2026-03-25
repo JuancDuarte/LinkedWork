@@ -29,13 +29,13 @@ public class OfertaController {
     @Qualifier("OfertaService")
     private OfertaService ofertaService;
 
-    @PostMapping(path="/addOferta", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Oferta> addOferta(@RequestBody OfertaDTO ofertaDTO) {
-        return ResponseEntity.ok(ofertaService.crearOferta(ofertaDTO));
+    @PostMapping(path="/addOferta/{idTrabajador}/{idSolicitud}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Oferta> addOferta(@RequestBody OfertaDTO ofertaDTO, @PathVariable Long idTrabajador, @PathVariable Long idSolicitud) {
+        return ResponseEntity.ok(ofertaService.crearOferta(ofertaDTO, idTrabajador, idSolicitud));
     }
-    @PutMapping(path="/editOferta", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Oferta editOferta(@RequestBody EditarOfertaDTO ofertaDTO) {
-        return ofertaService.editOferta(ofertaDTO);
+    @PutMapping(path="/editOferta/{idOferta}/{idTrabajador}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Oferta editOferta(@RequestBody EditarOfertaDTO ofertaDTO, @PathVariable Long idOferta, @PathVariable Long idTrabajador) {
+        return ofertaService.editOferta(ofertaDTO, idOferta, idTrabajador  );
     }
     @DeleteMapping(path = "/deleteOferta/{idOferta}/{idTrabajador}")
     public ResponseEntity<String> deleteOfertaByUsuarioId(@PathVariable Long idOferta, @PathVariable Long idTrabajador) {

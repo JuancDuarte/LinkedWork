@@ -1,7 +1,7 @@
 package com.contact.LinkedWork.dto;
 
 public class EditarSolicitudDTO {
-        private Long idSolicitud;
+    private Long idSolicitud;
     private Long idUsuario;
 
     private String titulo;
