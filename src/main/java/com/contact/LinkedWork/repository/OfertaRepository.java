@@ -13,4 +13,6 @@ public interface OfertaRepository extends CrudRepository<Oferta, Long> {
     List<Oferta> findByTrabajador_IdTrabajador(Long IdTrabajador);
     
     List<Oferta> findByEstado(String Estado);
+
+    boolean existsBySolicitud_IdSolicitudAndTrabajador_IdTrabajador(Long idSolicitud, Long idTrabajador);
 }

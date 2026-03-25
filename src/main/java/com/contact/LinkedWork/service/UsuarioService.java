@@ -23,7 +23,7 @@ public class UsuarioService {
     private UsuarioRepository usuarioRepository;
 
     public List<UsuarioDTO> getAllUsuarios() {
-        return usuarioRepository.findAll()
+        return ((List<Usuario>) usuarioRepository.findAll())
                 .stream()
                 .map(usuario -> {
                     UsuarioDTO usuarioDTO = new UsuarioDTO();
@@ -41,6 +41,7 @@ public class UsuarioService {
                 })
                 .toList();
     }
+
 
     public UsuarioDTO SeeProfile(Long idUsuario) {
         Usuario usuario = usuarioRepository.findByidUsuario(idUsuario)

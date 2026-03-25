@@ -14,4 +14,5 @@ public interface SolicitudRepository extends CrudRepository<Solicitud, Long> {
     List<Solicitud> findByArea_IdArea(Long IdArea);
     
     List<Solicitud> findByEstado(String Estado);
+    void deleteByUsuarioIdUsuario(Long idUsuario);
 }

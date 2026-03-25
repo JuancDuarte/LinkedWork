@@ -6,12 +6,16 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.contact.LinkedWork.dto.EditarOFertaDTO.EditarOfertaDTO;
 import com.contact.LinkedWork.dto.OfertaDTO;
 import com.contact.LinkedWork.model.Oferta;
 import com.contact.LinkedWork.service.OfertaService;
@@ -28,5 +32,14 @@ public class OfertaController {
     @PostMapping(path="/addOferta", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Oferta> addOferta(@RequestBody OfertaDTO ofertaDTO) {
         return ResponseEntity.ok(ofertaService.crearOferta(ofertaDTO));
+    }
+    @PutMapping(path="/editOferta", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Oferta editOferta(@RequestBody EditarOfertaDTO ofertaDTO) {
+        return ofertaService.editOferta(ofertaDTO);
+    }
+    @DeleteMapping(path = "/deleteOferta/{idOferta}/{idTrabajador}")
+    public ResponseEntity<String> deleteOfertaByUsuarioId(@PathVariable Long idOferta, @PathVariable Long idTrabajador) {
+        ofertaService.eliminarOferta(idOferta, idTrabajador);
+        return ResponseEntity.ok("Oferta eliminada correctamente.");
     }
 }

@@ -5,43 +5,42 @@ import java.time.LocalDateTime;
 
 public class OfertaDTO {
     
-    private Integer idOferta;
-    private Integer idSolicitud;
-    private Integer idTrabajador;
+    private Long idOferta;
+    private Long idSolicitud;
+    private Long idTrabajador;
     private BigDecimal precio;
     private String descripcion;
-    private String estado;
-    private LocalDateTime fechaCreacion;
+
     
     public OfertaDTO() {
     }
     
-    public OfertaDTO(Integer idSolicitud, Integer idTrabajador) {
+    public OfertaDTO( Long idSolicitud, Long idTrabajador) {
         this.idSolicitud = idSolicitud;
         this.idTrabajador = idTrabajador;
     }
     
-    public Integer getIdOferta() {
+    public Long getIdOferta() {
         return idOferta;
     }
     
-    public void setIdOferta(Integer idOferta) {
+    public void setIdOferta(Long idOferta) {
         this.idOferta = idOferta;
     }
     
-    public Integer getIdSolicitud() {
+    public Long getIdSolicitud() {
         return idSolicitud;
     }
     
-    public void setIdSolicitud(Integer idSolicitud) {
+    public void setIdSolicitud(Long idSolicitud) {
         this.idSolicitud = idSolicitud;
     }
     
-    public Integer getIdTrabajador() {
+    public Long getIdTrabajador() {
         return idTrabajador;
     }
     
-    public void setIdTrabajador(Integer idTrabajador) {
+    public void setIdTrabajador(Long idTrabajador) {
         this.idTrabajador = idTrabajador;
     }
     
@@ -61,19 +60,4 @@ public class OfertaDTO {
         this.descripcion = descripcion;
     }
     
-    public String getEstado() {
-        return estado;
-    }
-    
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
-    
-    public LocalDateTime getFechaCreacion() {
-        return fechaCreacion;
-    }
-    
-    public void setFechaCreacion(LocalDateTime fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
 }

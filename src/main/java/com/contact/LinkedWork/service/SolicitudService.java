@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.contact.LinkedWork.dto.CrearSolicituDto;
+import com.contact.LinkedWork.dto.EditarSolicitudDTO;
 import com.contact.LinkedWork.dto.SolicitudDTO;
 import com.contact.LinkedWork.model.Area;
 import com.contact.LinkedWork.model.Solicitud;
@@ -94,5 +95,36 @@ public class SolicitudService {
         } else {
             throw new RuntimeException("Solicitud no encontrada con ID: " + idSolicitud);
         }
+    }
+    public SolicitudDTO editarSolicitud(EditarSolicitudDTO editarSolicitudDTO) {
+        Solicitud solicitud = solicitudRepository.findById(editarSolicitudDTO.getIdSolicitud())
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada con ID: " + editarSolicitudDTO.getIdSolicitud()));
+        if (!solicitud.getUsuario().getIdUsuario().equals(editarSolicitudDTO.getIdUsuario())) {
+            throw new RuntimeException("El usuario no tiene permiso para editar esta solicitud.");
+        }
+        solicitud.setTitulo(editarSolicitudDTO.getTitulo());
+        solicitud.setDescripcion(editarSolicitudDTO.getDescripcion());
+        Solicitud solicitudActualizada = solicitudRepository.save(solicitud);
+        SolicitudDTO solicitudDTO = new SolicitudDTO();
+        solicitudDTO.setIdSolicitud(solicitudActualizada.getIdSolicitud());
+        solicitudDTO.setTitulo(solicitudActualizada.getTitulo());
+        solicitudDTO.setDescripcion(solicitudActualizada.getDescripcion());
+        solicitudDTO.setEstado(solicitudActualizada.getEstado());
+        solicitudDTO.setFechaCreacion(solicitudActualizada.getFechaCreacion());
+        solicitudDTO.setIdUsuario(solicitudActualizada.getUsuario().getIdUsuario());
+        solicitudDTO.setNombreUsuario(solicitudActualizada.getUsuario().getNombreCompleto());
+        solicitudDTO.setIdArea(solicitudActualizada.getArea().getIdArea());
+        solicitudDTO.setNombreArea(solicitudActualizada.getArea().getNombre());
+        return solicitudDTO;
+    }
+    public void eliminarSolicitud(Long idSolicitud, Long idUsuario) {
+        Optional<Solicitud> solicitudExistente = solicitudRepository.findById(idSolicitud);
+        if (!solicitudExistente.get().getUsuario().getIdUsuario().equals(idUsuario)) {
+            throw new RuntimeException("El usuario no tiene permiso para eliminar esta solicitud.");
+        }
+    Solicitud solicitud = solicitudExistente.get();
+    Area area = solicitud.getArea();
+    area.getSolicitudes().remove(solicitud);
+    solicitudRepository.deleteById(idSolicitud);
     }
 }

@@ -4,44 +4,46 @@ import java.time.LocalDateTime;
 
 public class SolicitudDTO {
     
-    private Integer idSolicitud;
-    private Integer idUsuario;
-    private Integer idArea;
+    private Long idSolicitud;
     private String titulo;
     private String descripcion;
     private String estado;
     private LocalDateTime fechaCreacion;
+    private Long idUsuario;
+    private String nombreUsuario;
+    private Long idArea;
+    private String nombreArea;
     
     public SolicitudDTO() {
     }
     
-    public SolicitudDTO(Integer idSolicitud, String titulo, String estado) {
+    public SolicitudDTO(Long idSolicitud, String titulo, String estado) {
         this.idSolicitud = idSolicitud;
         this.titulo = titulo;
         this.estado = estado;
     }
     
-    public Integer getIdSolicitud() {
+    public Long getIdSolicitud() {
         return idSolicitud;
     }
     
-    public void setIdSolicitud(Integer idSolicitud) {
+    public void setIdSolicitud(Long idSolicitud) {
         this.idSolicitud = idSolicitud;
     }
     
-    public Integer getIdUsuario() {
+    public Long getIdUsuario() {
         return idUsuario;
     }
     
-    public void setIdUsuario(Integer idUsuario) {
+    public void setIdUsuario(Long idUsuario) {
         this.idUsuario = idUsuario;
     }
     
-    public Integer getIdArea() {
+    public Long getIdArea() {
         return idArea;
     }
     
-    public void setIdArea(Integer idArea) {
+    public void setIdArea(Long idArea) {
         this.idArea = idArea;
     }
     
@@ -75,5 +77,17 @@ public class SolicitudDTO {
     
     public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
+    }
+    public String getNombreUsuario() {
+        return nombreUsuario;
+    }
+    public void setNombreUsuario(String nombreUsuario) {
+        this.nombreUsuario = nombreUsuario;
+    }
+    public String getNombreArea() {
+        return nombreArea;
+    }
+    public void setNombreArea(String nombreArea) {
+        this.nombreArea = nombreArea;
     }
 }
