@@ -30,8 +30,8 @@ public class OfertaController {
     private OfertaService ofertaService;
 
     @PostMapping(path="/addOferta/{idTrabajador}/{idSolicitud}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Oferta> addOferta(@RequestBody OfertaDTO ofertaDTO, @PathVariable Long idTrabajador, @PathVariable Long idSolicitud) {
-        return ResponseEntity.ok(ofertaService.crearOferta(ofertaDTO, idTrabajador, idSolicitud));
+    public Oferta addOferta(@RequestBody OfertaDTO ofertaDTO, @PathVariable Long idTrabajador, @PathVariable Long idSolicitud) {
+        return ofertaService.crearOferta(ofertaDTO, idTrabajador, idSolicitud);
     }
     @PutMapping(path="/editOferta/{idOferta}/{idTrabajador}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public Oferta editOferta(@RequestBody EditarOfertaDTO ofertaDTO, @PathVariable Long idOferta, @PathVariable Long idTrabajador) {
