@@ -17,6 +17,7 @@ import com.contact.LinkedWork.model.Solicitud;
 import com.contact.LinkedWork.model.SolicitudHistorial;
 import com.contact.LinkedWork.model.Usuario;
 import com.contact.LinkedWork.repository.AreaRepository;
+import com.contact.LinkedWork.repository.SolicitudHistorialRepository;
 import com.contact.LinkedWork.repository.SolicitudRepository;
 import com.contact.LinkedWork.repository.UsuarioRepository;
 
@@ -35,6 +36,10 @@ public class SolicitudService {
     @Qualifier("CrudAreaRepository")
     private AreaRepository areaRepository;
 
+    @Autowired
+    @Qualifier("CrudSolicitudHistorialRepository")
+    private SolicitudHistorialRepository solicitudHistorialRepository;
+
     public SolicitudDTO AgregarSolicitud(CrearSolicituDto crearSolicitudDto, Long idUsuario, Long idArea) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idUsuario));
@@ -49,6 +54,10 @@ public class SolicitudService {
         solicitud.setArea(area);
         SolicitudHistorial historial = new SolicitudHistorial();
         historial.setSolicitud(solicitud);
+        historial.setEstadoAnterior("N/A");
+        historial.setEstadoNuevo("Pendiente");
+        historial.setFecha(LocalDateTime.now());
+        solicitudHistorialRepository.save(historial);
         solicitudRepository.save(solicitud);
         SolicitudDTO solicitudDTO = new SolicitudDTO();
         solicitudDTO.setIdSolicitud(solicitud.getIdSolicitud());
@@ -102,6 +111,13 @@ public class SolicitudService {
         if (!solicitud.getUsuario().getIdUsuario().equals(idUsuario)) {
             throw new RuntimeException("El usuario no tiene permiso para editar esta solicitud.");
         }
+        String estadoAnterior = solicitud.getEstado();
+        SolicitudHistorial historial = new SolicitudHistorial();
+        historial.setSolicitud(solicitud);
+        historial.setEstadoAnterior(estadoAnterior);
+        historial.setEstadoNuevo("Editado");
+        historial.setFecha(LocalDateTime.now());
+        solicitudHistorialRepository.save(historial);
         solicitud.setTitulo(editarSolicitudDTO.getTitulo());
         solicitud.setDescripcion(editarSolicitudDTO.getDescripcion());
         Solicitud solicitudActualizada = solicitudRepository.save(solicitud);
@@ -122,6 +138,13 @@ public class SolicitudService {
         if (!solicitudExistente.get().getUsuario().getIdUsuario().equals(idUsuario)) {
             throw new RuntimeException("El usuario no tiene permiso para eliminar esta solicitud.");
         }
+    String estadoAnterior = solicitudExistente.get().getEstado();
+    SolicitudHistorial historial = new SolicitudHistorial();
+    historial.setSolicitud(solicitudExistente.get());
+    historial.setEstadoAnterior(estadoAnterior);
+    historial.setEstadoNuevo("Eliminado");
+    historial.setFecha(LocalDateTime.now());
+    solicitudHistorialRepository.save(historial);
     Solicitud solicitud = solicitudExistente.get();
     Area area = solicitud.getArea();
     area.getSolicitudes().remove(solicitud);
