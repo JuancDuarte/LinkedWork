@@ -22,6 +22,7 @@ import com.contact.LinkedWork.dto.CrearOfertaDTO;
 import com.contact.LinkedWork.dto.EditarOFertaDTO.EditarOfertaDTO;
 import com.contact.LinkedWork.dto.OfertaDTO;
 import com.contact.LinkedWork.dto.OfertaVistaDTO;
+import com.contact.LinkedWork.dto.RespuestaAceptarDTO;
 import com.contact.LinkedWork.model.Oferta;
 import com.contact.LinkedWork.service.OfertaService;
 
@@ -50,5 +51,9 @@ public class OfertaController {
     @GetMapping(path ="/SeeOfferts/{idSolicitud}/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<OfertaVistaDTO> seeOfferts(@PathVariable Long idSolicitud, @PathVariable Long idUsuario) {
         return ofertaService.listarOfertasPorSolicitud(idSolicitud, idUsuario);
+    }
+    @PostMapping(path = "/aceptarOferta/{idSolicitud}/{idOferta}/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public RespuestaAceptarDTO aceptarOferta(@PathVariable Long idSolicitud, @PathVariable Long idOferta, @PathVariable Long idUsuario) {
+        return ofertaService.aceptarOferta(idSolicitud, idOferta, idUsuario);
     }
 }
