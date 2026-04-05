@@ -8,11 +8,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.contact.LinkedWork.dto.ListarTrabajadorDTO;
 import com.contact.LinkedWork.dto.TrabajadorDTO;
 import com.contact.LinkedWork.dto.UsuarioDTO;
 import com.contact.LinkedWork.model.Usuario;
 import com.contact.LinkedWork.model.Rol;
 import com.contact.LinkedWork.model.Trabajador;
+import com.contact.LinkedWork.repository.TrabajadorRepository;
 import com.contact.LinkedWork.repository.UsuarioRepository;
 
 @Service("UsuarioService")
@@ -21,6 +23,10 @@ public class UsuarioService {
     @Autowired
     @Qualifier("CrudUsuarioRepository")
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    @Qualifier("TrabajadorRepository")
+    private TrabajadorRepository trabajadorRepository;
 
     public List<UsuarioDTO> getAllUsuarios() {
         return ((List<Usuario>) usuarioRepository.findAll())
@@ -70,4 +76,24 @@ public class UsuarioService {
             }
         return usuarioDTO;
     } 
+    public List<ListarTrabajadorDTO> listarTrabajadores(){
+        return ((List<Trabajador>) trabajadorRepository.findAll())
+                .stream()
+                .map(trabajador -> {
+                    ListarTrabajadorDTO trabajadorDTO = new ListarTrabajadorDTO();
+                    trabajadorDTO.setIdTrabajador(trabajador.getIdTrabajador());
+                    trabajadorDTO.setNombreUsusario(trabajador.getUsuario().getNombreUsuario());
+                    if (trabajador.getArea() != null) {
+                        trabajadorDTO.setNombreArea(trabajador.getArea().getNombre());
+                    }
+                    trabajadorDTO.setExperiencia(trabajador.getExperiencia());
+                    Long nivel = trabajador.getCalificaciones()
+                            .stream()
+                            .mapToLong(calificacion -> calificacion.getPuntuacion())
+                            .sum(); 
+                    trabajadorDTO.setPuntajeTotal(nivel);
+                    return trabajadorDTO;
+                })
+                .toList();
+    }
 }

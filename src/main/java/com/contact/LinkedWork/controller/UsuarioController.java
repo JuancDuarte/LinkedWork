@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.contact.LinkedWork.dto.UsuarioDTO;
 import com.contact.LinkedWork.model.Usuario;
+import com.contact.LinkedWork.dto.ListarTrabajadorDTO;
 import com.contact.LinkedWork.service.SolicitudService;
 import com.contact.LinkedWork.service.UsuarioService;
 
@@ -25,6 +26,7 @@ public class UsuarioController {
     @Qualifier("UsuarioService")
     private UsuarioService usuarioService;
 
+
     @GetMapping(path = "/listUsers", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<UsuarioDTO> getAllUsuarios() {
         return usuarioService.getAllUsuarios();
@@ -32,5 +34,9 @@ public class UsuarioController {
     @GetMapping(path = "/seeProfile/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UsuarioDTO> SeeProfile(@PathVariable Long idUsuario) {
         return ResponseEntity.ok(usuarioService.SeeProfile(idUsuario));
+    }
+    @GetMapping(path = "/SeeFarmers/", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<ListarTrabajadorDTO> listarTrabajadores() {
+        return usuarioService.listarTrabajadores();
     }
 }

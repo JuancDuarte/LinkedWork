@@ -1,5 +1,7 @@
 package com.contact.LinkedWork.controller;
 
+import java.util.List;
+
 import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -7,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.contact.LinkedWork.dto.CrearOfertaDTO;
 import com.contact.LinkedWork.dto.EditarOFertaDTO.EditarOfertaDTO;
 import com.contact.LinkedWork.dto.OfertaDTO;
+import com.contact.LinkedWork.dto.OfertaVistaDTO;
 import com.contact.LinkedWork.model.Oferta;
 import com.contact.LinkedWork.service.OfertaService;
 
@@ -42,5 +46,9 @@ public class OfertaController {
     public ResponseEntity<String> deleteOfertaByUsuarioId(@PathVariable Long idOferta, @PathVariable Long idTrabajador) {
         ofertaService.eliminarOferta(idOferta, idTrabajador);
         return ResponseEntity.ok("Oferta eliminada correctamente.");
+    }
+    @GetMapping(path ="/SeeOfferts/{idSolicitud}/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<OfertaVistaDTO> seeOfferts(@PathVariable Long idSolicitud, @PathVariable Long idUsuario) {
+        return ofertaService.listarOfertasPorSolicitud(idSolicitud, idUsuario);
     }
 }
