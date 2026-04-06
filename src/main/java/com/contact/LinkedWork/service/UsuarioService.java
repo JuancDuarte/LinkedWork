@@ -25,7 +25,7 @@ public class UsuarioService {
     private UsuarioRepository usuarioRepository;
 
     @Autowired
-    @Qualifier("TrabajadorRepository")
+    @Qualifier("CrudTrabajadorRepository")
     private TrabajadorRepository trabajadorRepository;
 
     public List<UsuarioDTO> getAllUsuarios() {
