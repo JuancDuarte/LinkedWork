@@ -3,13 +3,21 @@ package com.contact.LinkedWork.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public class UsuarioDTO {
     
+    @Schema(example = "1")
     private Long idUsuario;
+    @Schema(example = "Juan Pérez")
     private String nombreCompleto;
+    @Schema(example = "juan@test.com")
     private String email;
+    @Schema(example = "juan123")
     private String nombreUsuario;
+    @Schema(example = "activo")
     private String estado;
+    @Schema(example = "[\"ROLE_TRABAJADOR\"]")
     private List<String> roles;
     private TrabajadorDTO trabajador;
 
