@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.contact.LinkedWork.dto.OfertaDTO;
 import com.contact.LinkedWork.dto.OfertaVistaDTO;
+import com.contact.LinkedWork.dto.RespuestaAceptarDTO;
 import com.contact.LinkedWork.dto.CrearOfertaDTO;
 import com.contact.LinkedWork.dto.EditarOFertaDTO.EditarOfertaDTO;
 import com.contact.LinkedWork.model.Oferta;
@@ -209,7 +210,7 @@ public class OfertaService {
                         }
                 });
                 ofertaRepository.save(oferta);
-                return new RespuestaAceptarDTO("Oferta aceptada correctamente.");
+                return new RespuestaAceptarDTO("Oferta aceptada correctamente, Te pondremos en contacto con el Trabajador.");
         }
 
 }
