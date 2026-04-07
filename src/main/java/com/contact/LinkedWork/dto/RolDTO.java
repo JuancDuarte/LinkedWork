@@ -2,22 +2,22 @@ package com.contact.LinkedWork.dto;
 
 public class RolDTO {
     
-    private Integer idRol;
+    private Long idRol;
     private String nombre;
     
     public RolDTO() {
     }
     
-    public RolDTO(Integer idRol, String nombre) {
+    public RolDTO(Long idRol, String nombre) {
         this.idRol = idRol;
         this.nombre = nombre;
     }
     
-    public Integer getIdRol() {
+    public Long getIdRol() {
         return idRol;
     }
     
-    public void setIdRol(Integer idRol) {
+    public void setIdRol(Long idRol) {
         this.idRol = idRol;
     }
     

@@ -17,12 +17,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import com.contact.LinkedWork.dto.AreaDTO;
+import com.contact.LinkedWork.dto.CrearUsuarioDTO;
 import com.contact.LinkedWork.dto.LoginDTO;
 import com.contact.LinkedWork.dto.ListarTrabajadorDTO;
+import com.contact.LinkedWork.dto.RolDTO;
 import com.contact.LinkedWork.dto.UsuarioDTO;
 import com.contact.LinkedWork.service.UsuarioService;
 
@@ -46,6 +48,33 @@ public class UsuarioController {
     @GetMapping(path = "/SeeFarmers/", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<ListarTrabajadorDTO> listarTrabajadores() {
         return usuarioService.listarTrabajadores();
+    }
+
+    @GetMapping(path = "/listRoles", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<RolDTO> getAllRoles() {
+        return usuarioService.getAllRoles();
+    }
+
+    @GetMapping(path = "/listAreas", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<AreaDTO> getAllAreas() {
+        return usuarioService.getAllAreas();
+    }
+
+    @Operation(summary = "Crear cuenta", description = "Registra un nuevo usuario y lo asocia a un rol.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Cuenta creada",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = UsuarioDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos",
+                    content = @Content(mediaType = "text/plain"))
+    })
+    @PostMapping(path = "/CreateUser", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> createUser(@RequestBody CrearUsuarioDTO crearUsuarioDTO) {
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.crearCuenta(crearUsuarioDTO));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+        }
     }
 
     @Operation(summary = "Iniciar sesión", description = "Autentica un usuario usando idUsuario, nombreUsuario o email junto con la clave.")

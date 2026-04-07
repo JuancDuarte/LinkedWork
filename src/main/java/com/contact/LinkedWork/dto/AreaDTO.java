@@ -2,23 +2,23 @@ package com.contact.LinkedWork.dto;
 
 public class AreaDTO {
     
-    private Integer idArea;
+    private Long idArea;
     private String nombre;
     private String descripcion;
     
     public AreaDTO() {
     }
     
-    public AreaDTO(Integer idArea, String nombre) {
+    public AreaDTO(Long idArea, String nombre) {
         this.idArea = idArea;
         this.nombre = nombre;
     }
     
-    public Integer getIdArea() {
+    public Long getIdArea() {
         return idArea;
     }
     
-    public void setIdArea(Integer idArea) {
+    public void setIdArea(Long idArea) {
         this.idArea = idArea;
     }
     
