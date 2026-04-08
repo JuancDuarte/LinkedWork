@@ -14,7 +14,7 @@ import com.contact.LinkedWork.dto.OfertaDTO;
 import com.contact.LinkedWork.dto.OfertaVistaDTO;
 import com.contact.LinkedWork.dto.RespuestaAceptarDTO;
 import com.contact.LinkedWork.dto.CrearOfertaDTO;
-import com.contact.LinkedWork.dto.EditarOFertaDTO.EditarOfertaDTO;
+import com.contact.LinkedWork.dto.EditarOFertaDTO;
 import com.contact.LinkedWork.model.Oferta;
 import com.contact.LinkedWork.model.OfertaHistorial;
 import com.contact.LinkedWork.model.Solicitud;
@@ -51,17 +51,9 @@ public class OfertaService {
     private OfertaHistorialRepository ofertaHistorialRepository;
 
     public OfertaDTO crearOferta(CrearOfertaDTO crearofertaDTO, Long idTrabajador, Long idSolicitud) {
-        Usuario usuario = usuarioRepository.findByidUsuario(idTrabajador)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idTrabajador));
-        boolean esTrabajador = usuario.getRoles()
-                .stream()
-                .anyMatch(rol -> rol.getNombre().equals("ROLE_TRABAJADOR"));
-        if (!esTrabajador) {
-            throw new RuntimeException("El usuario con ID: " + idTrabajador
-                    + " no tiene el rol de trabajador y no puede crear una oferta.");
-        }
-        Trabajador trabajador = trabajadorRepository.findByUsuario_IdUsuario(usuario.getIdUsuario())
-                .orElseThrow(() -> new RuntimeException("Trabajador no encontrado para el usuario con ID: " + usuario.getIdUsuario()));
+     
+        Trabajador trabajador = trabajadorRepository.findByidTrabajador(idTrabajador)
+                .orElseThrow(() -> new RuntimeException("Trabajador no encontrado con ID: " + idTrabajador));
         Solicitud solicitud = solicitudRepository.findById(idSolicitud)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada con ID: " + idSolicitud));
         if(trabajador.getArea() == null || solicitud.getArea() == null || !trabajador.getArea().getIdArea().equals(solicitud.getArea().getIdArea())) {
@@ -104,7 +96,7 @@ public class OfertaService {
 
         return ofertaDTO;
     }
-    public Oferta editOferta(EditarOfertaDTO editarOfertaDTO, Long idOferta, Long idTrabajador) {
+    public Oferta editOferta(EditarOFertaDTO editarOfertaDTO, Long idOferta, Long idTrabajador) {
         Oferta oferta = ofertaRepository.findById(idOferta)
                 .orElseThrow(() -> new RuntimeException("Oferta no encontrada con ID: " + idOferta));
         if (!oferta.getTrabajador().getIdTrabajador().equals(idTrabajador)) {

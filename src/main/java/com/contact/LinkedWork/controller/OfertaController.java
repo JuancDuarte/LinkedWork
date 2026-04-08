@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.contact.LinkedWork.dto.CrearOfertaDTO;
-import com.contact.LinkedWork.dto.EditarOFertaDTO.EditarOfertaDTO;
+import com.contact.LinkedWork.dto.EditarOFertaDTO;
 import com.contact.LinkedWork.dto.OfertaDTO;
 import com.contact.LinkedWork.dto.OfertaVistaDTO;
 import com.contact.LinkedWork.dto.RespuestaAceptarDTO;
@@ -40,7 +40,7 @@ public class OfertaController {
         return ofertaService.crearOferta(ofertaDTO, idTrabajador, idSolicitud);
     }
     @PutMapping(path="/editOferta/{idOferta}/{idTrabajador}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Oferta editOferta(@RequestBody EditarOfertaDTO ofertaDTO, @PathVariable Long idOferta, @PathVariable Long idTrabajador) {
+    public Oferta editOferta(@RequestBody EditarOFertaDTO ofertaDTO, @PathVariable Long idOferta, @PathVariable Long idTrabajador) {
         return ofertaService.editOferta(ofertaDTO, idOferta, idTrabajador  );
     }
     @DeleteMapping(path = "/deleteOferta/{idOferta}/{idTrabajador}")

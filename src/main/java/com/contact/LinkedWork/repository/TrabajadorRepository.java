@@ -14,4 +14,6 @@ public interface TrabajadorRepository extends CrudRepository<Trabajador, Long> {
     List<Trabajador> findByArea_IdArea(Long IdArea);
     
     List<Trabajador> findByEstado(String Estado);
+
+    Optional<Trabajador> findByidTrabajador(Long idTrabajador);
 }

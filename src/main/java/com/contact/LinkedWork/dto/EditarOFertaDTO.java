@@ -3,15 +3,14 @@ package com.contact.LinkedWork.dto;
 import java.math.BigDecimal;
 
 public class EditarOFertaDTO {
-    public class EditarOfertaDTO {
     private Long idOferta;
     private Long idTrabajador;
 
     private BigDecimal precio;
     private String descripcion;
-    public EditarOfertaDTO() {
+    public EditarOFertaDTO() {
     }
-    public EditarOfertaDTO(Long idOferta, Long idTrabajador, BigDecimal precio, String descripcion) {
+    public EditarOFertaDTO(Long idOferta, Long idTrabajador, BigDecimal precio, String descripcion) {
         this.idOferta = idOferta;
         this.idTrabajador = idTrabajador;
         this.precio = precio;
@@ -42,6 +41,6 @@ public class EditarOFertaDTO {
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
     }
-    }
+    
 }
 

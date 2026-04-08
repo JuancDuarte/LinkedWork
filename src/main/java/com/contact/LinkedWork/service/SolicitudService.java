@@ -57,8 +57,8 @@ public class SolicitudService {
         historial.setEstadoAnterior("N/A");
         historial.setEstadoNuevo("Pendiente");
         historial.setFecha(LocalDateTime.now());
-        solicitudHistorialRepository.save(historial);
         solicitudRepository.save(solicitud);
+        solicitudHistorialRepository.save(historial);
         SolicitudDTO solicitudDTO = new SolicitudDTO();
         solicitudDTO.setIdSolicitud(solicitud.getIdSolicitud());
         solicitudDTO.setTitulo(solicitud.getTitulo());
@@ -117,10 +117,10 @@ public class SolicitudService {
         historial.setEstadoAnterior(estadoAnterior);
         historial.setEstadoNuevo("Editado");
         historial.setFecha(LocalDateTime.now());
-        solicitudHistorialRepository.save(historial);
         solicitud.setTitulo(editarSolicitudDTO.getTitulo());
         solicitud.setDescripcion(editarSolicitudDTO.getDescripcion());
         Solicitud solicitudActualizada = solicitudRepository.save(solicitud);
+        solicitudHistorialRepository.save(historial);
         SolicitudDTO solicitudDTO = new SolicitudDTO();
         solicitudDTO.setIdSolicitud(solicitudActualizada.getIdSolicitud());
         solicitudDTO.setTitulo(solicitudActualizada.getTitulo());

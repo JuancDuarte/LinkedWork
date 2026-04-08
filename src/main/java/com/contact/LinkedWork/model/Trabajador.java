@@ -11,7 +11,7 @@ public class Trabajador {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "IdTrabajador")
-    private Long IdTrabajador;
+    private Long idTrabajador;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "IdUsuario", nullable = false)
@@ -61,11 +61,11 @@ public class Trabajador {
     }
 
     public Long getIdTrabajador() {
-        return IdTrabajador;
+        return idTrabajador;
     }
 
     public void setIdTrabajador(Long idTrabajador) {
-        this.IdTrabajador = idTrabajador;
+        this.idTrabajador = idTrabajador;
     }
 
     public Usuario getUsuario() {
