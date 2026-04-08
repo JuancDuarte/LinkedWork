@@ -1,0 +1,130 @@
+<section class="profile-page">
+  <div class="profile-header">
+    <div>
+      <p class="eyebrow">Perfil</p>
+      <h1>Tu cuenta</h1>
+      <p class="subtitle">Administra tus datos, roles y acceso sin perder el estilo.</p>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary" (click)="reloadProfile()" [disabled]="loading()">
+        Actualizar
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="logout()">
+        Cerrar sesión
+      </button>
+      <button
+        *ngIf="hasRoleSwitch()"
+        type="button"
+        class="btn btn-outline"
+        (click)="switchRole(otherRoles()[0])"
+      >
+        <span class="btn-icon">⟳</span>
+        Cambiar a {{ auth.getRoleLabel(otherRoles()[0]) }}
+      </button>
+    </div>
+  </div>
+
+  <div class="profile-grid">
+    <aside class="summary-card" *ngIf="profile()">
+      <div class="summary-header">
+        <div class="avatar">{{ profile()?.nombreCompleto?.charAt(0) || 'L' }}</div>
+        <div>
+          <p class="eyebrow">Resumen</p>
+          <h2>{{ profile()?.nombreCompleto || 'Usuario de LinkedWork' }}</h2>
+          <span class="role-chip">Rol activo: {{ auth.getRoleLabel(activeRole()) }}</span>
+        </div>
+      </div>
+
+      <dl class="data-list">
+        <div class="data-row">
+          <dt>ID</dt>
+          <dd>{{ profile()?.idUsuario }}</dd>
+        </div>
+        <div class="data-row">
+          <dt>Usuario</dt>
+          <dd>{{ profile()?.nombreUsuario }}</dd>
+        </div>
+        <div class="data-row">
+          <dt>Email</dt>
+          <dd>{{ profile()?.email }}</dd>
+        </div>
+        <div class="data-row">
+          <dt>Estado</dt>
+          <dd>{{ profile()?.estado || 'No definido' }}</dd>
+        </div>
+      </dl>
+
+      <div class="info-block" *ngIf="activeRole() === 'ROLE_TRABAJADOR' && profile()?.trabajador">
+        <p class="info-title">Perfil trabajador</p>
+        <p><strong>Área:</strong> {{ profile()?.trabajador?.areaNombre || 'No disponible' }}</p>
+        <p><strong>Experiencia:</strong> {{ profile()?.trabajador?.experiencia || 0 }} años</p>
+        <p><strong>Descripción:</strong> {{ profile()?.trabajador?.descripcion || 'Sin descripción' }}</p>
+      </div>
+    </aside>
+
+    <section class="form-card" *ngIf="profile()">
+      <div class="form-card-header">
+        <p class="eyebrow">Editar perfil</p>
+        <h2>Información de la cuenta</h2>
+      </div>
+
+      <form (ngSubmit)="saveProfile()" class="profile-form">
+        <div class="form-row">
+          <label for="profileName">Nombre completo</label>
+          <input
+            id="profileName"
+            type="text"
+            [(ngModel)]="profileEditor.nombreCompleto"
+            name="nombreCompleto"
+            class="form-input"
+            required
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="profileEmail">Email</label>
+          <input
+            id="profileEmail"
+            type="email"
+            [(ngModel)]="profileEditor.email"
+            name="email"
+            class="form-input"
+            required
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="profilePassword">Contraseña</label>
+          <input
+            id="profilePassword"
+            type="password"
+            [(ngModel)]="profileEditor.password"
+            name="password"
+            class="form-input"
+            placeholder="Dejar en blanco para mantener la contraseña"
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="profileEstado">Estado</label>
+          <input
+            id="profileEstado"
+            type="text"
+            [(ngModel)]="profileEditor.estado"
+            name="estado"
+            class="form-input"
+          />
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-save" [disabled]="loading()">
+          {{ loading() ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </form>
+    </section>
+  </div>
+
+  <div class="status" [class.error]="errorMessage()">
+    {{ errorMessage() || successMessage() }}
+  </div>
+</section>

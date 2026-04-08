@@ -1,0 +1,184 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable, catchError, retry, throwError, tap } from 'rxjs';
+
+const API_BASE = 'http://127.0.0.1:8082/LinkedApi';
+
+export interface ApiUser {
+  idUsuario?: number;
+  nombreCompleto?: string;
+  nombreUsuario?: string;
+  email: string;
+  password?: string;
+  estado?: string;
+  create_at?: string;
+  roles?: string[];
+  trabajador?: {
+    areaNombre?: string;
+    experiencia?: number;
+    descripcion?: string;
+  };
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ApiService {
+  constructor(private readonly http: HttpClient) {}
+
+  private handleError(operation: string) {
+    return (error: any) => {
+      console.error(`[ApiService] ${operation} failed:`, error);
+      return throwError(() => error);
+    };
+  }
+
+  createUser(payload: ApiUser): Observable<any> {
+    return this.http.post(`${API_BASE}/CreateUser`, payload).pipe(
+      tap(() => console.log('[ApiService] createUser payload:', payload)),
+      catchError(this.handleError('createUser'))
+    );
+  }
+
+  loginUser(payload: { usuario_id: number; password: string }): Observable<any> {
+    const loginPayload = {
+      idUsuario: payload.usuario_id,
+      clave: payload.password
+    };
+    return this.http.post(`${API_BASE}/Login`, loginPayload).pipe(
+      tap(() => console.log('[ApiService] loginUser payload:', loginPayload)),
+      catchError(this.handleError('loginUser'))
+    );
+  }
+
+  getProfile(userId: number): Observable<ApiUser> {
+    return this.http.get<ApiUser>(`${API_BASE}/seeProfile/${encodeURIComponent(userId)}`).pipe(
+      tap(() => console.log('[ApiService] getProfile userId:', userId)),
+      catchError(this.handleError('getProfile'))
+    );
+  }
+
+  editUser(payload: ApiUser): Observable<any> {
+    return this.http.put(`${API_BASE}/EditUser`, payload).pipe(
+      tap(() => console.log('[ApiService] editUser payload:', payload)),
+      catchError(this.handleError('editUser'))
+    );
+  }
+
+  changeRole(userId: number, roles: string[]): Observable<any> {
+    return this.http.post(`${API_BASE}/changeRole/${encodeURIComponent(userId)}`, { roles }).pipe(
+      tap(() => console.log('[ApiService] changeRole userId:', userId, 'roles:', roles)),
+      catchError(this.handleError('changeRole'))
+    );
+  }
+
+  listFarming(): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/SeeFarmers/`).pipe(
+      tap((response) => console.log('[ApiService] listFarming response:', response)),
+      retry(1),
+      catchError(this.handleError('listFarming'))
+    );
+  }
+
+  getAreas(): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/listAreas`).pipe(
+      tap((response) => console.log('[ApiService] getAreas response:', response)),
+      retry(1),
+      catchError(this.handleError('getAreas'))
+    );
+  }
+
+  farmProfile(id: number): Observable<any> {
+    return this.http.get<any>(`${API_BASE}/seeProfile/${encodeURIComponent(id)}`).pipe(
+      tap(() => console.log('[ApiService] farmProfile id:', id)),
+      catchError(this.handleError('farmProfile'))
+    );
+  }
+
+  listRequest(userId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/listRequests/${encodeURIComponent(userId)}`).pipe(
+      tap((response) => console.log('[ApiService] listRequest userId:', userId, 'response:', response)),
+      retry(1),
+      catchError(this.handleError('listRequest'))
+    );
+  }
+
+  listRequestsForWorker(workerUserId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/listRequestsForWorker/${encodeURIComponent(workerUserId)}`).pipe(
+      tap((response) => console.log('[ApiService] listRequestsForWorker workerUserId:', workerUserId, 'response:', response)),
+      retry(1),
+      catchError(this.handleError('listRequestsForWorker'))
+    );
+  }
+
+  acceptRequestByWorker(requestId: number, workerUserId: number): Observable<any> {
+    return this.http.post(`${API_BASE}/acceptRequest/${encodeURIComponent(requestId)}/${encodeURIComponent(workerUserId)}`, {}).pipe(
+      tap(() => console.log('[ApiService] acceptRequestByWorker requestId:', requestId, 'workerUserId:', workerUserId)),
+      catchError(this.handleError('acceptRequestByWorker'))
+    );
+  }
+
+  createRequest(userId: number, areaId: number, payload: any): Observable<any> {
+    return this.http.post(`${API_BASE}/addSolicitud/${userId}/${areaId}`, payload).pipe(
+      tap(() => console.log('[ApiService] createRequest payload:', payload, 'userId:', userId, 'areaId:', areaId)),
+      catchError(this.handleError('createRequest'))
+    );
+  }
+
+  createDirectRequest(userId: number, workerUserId: number, payload: any): Observable<any> {
+    return this.http.post(`${API_BASE}/addSolicitudDirecta/${encodeURIComponent(userId)}/${encodeURIComponent(workerUserId)}`, payload).pipe(
+      tap(() => console.log('[ApiService] createDirectRequest payload:', payload, 'userId:', userId, 'workerUserId:', workerUserId)),
+      catchError(this.handleError('createDirectRequest'))
+    );
+  }
+
+  editRequest(solicitudId: number, userId: number, payload: any): Observable<any> {
+    return this.http.put(`${API_BASE}/editSolicitud/${encodeURIComponent(solicitudId)}/${encodeURIComponent(userId)}`, payload).pipe(
+      tap(() => console.log('[ApiService] editRequest payload:', payload, 'solicitudId:', solicitudId, 'userId:', userId)),
+      catchError(this.handleError('editRequest'))
+    );
+  }
+
+  deleteRequest(id: number, userId: number): Observable<any> {
+    return this.http.delete(`${API_BASE}/deleteSolicitud/${encodeURIComponent(id)}/${encodeURIComponent(userId)}`).pipe(
+      tap(() => console.log('[ApiService] deleteRequest id:', id, 'userId:', userId)),
+      catchError(this.handleError('deleteRequest'))
+    );
+  }
+
+  // Offer methods
+  createOffer(trabajadorId: number, solicitudId: number, payload: any): Observable<any> {
+    return this.http.post(`${API_BASE}/addOferta/${encodeURIComponent(trabajadorId)}/${encodeURIComponent(solicitudId)}`, payload).pipe(
+      tap(() => console.log('[ApiService] createOffer payload:', payload, 'trabajadorId:', trabajadorId, 'solicitudId:', solicitudId)),
+      catchError(this.handleError('createOffer'))
+    );
+  }
+
+  editOffer(ofertaId: number, trabajadorId: number, payload: any): Observable<any> {
+    return this.http.put(`${API_BASE}/editOferta/${encodeURIComponent(ofertaId)}/${encodeURIComponent(trabajadorId)}`, payload).pipe(
+      tap(() => console.log('[ApiService] editOffer payload:', payload, 'ofertaId:', ofertaId, 'trabajadorId:', trabajadorId)),
+      catchError(this.handleError('editOffer'))
+    );
+  }
+
+  deleteOffer(ofertaId: number, trabajadorId: number): Observable<any> {
+    return this.http.delete(`${API_BASE}/deleteOferta/${encodeURIComponent(ofertaId)}/${encodeURIComponent(trabajadorId)}`).pipe(
+      tap(() => console.log('[ApiService] deleteOffer ofertaId:', ofertaId, 'trabajadorId:', trabajadorId)),
+      catchError(this.handleError('deleteOffer'))
+    );
+  }
+
+  listOffers(solicitudId: number, usuarioId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/SeeOfferts/${encodeURIComponent(solicitudId)}/${encodeURIComponent(usuarioId)}`).pipe(
+      tap((response) => console.log('[ApiService] listOffers solicitudId:', solicitudId, 'usuarioId:', usuarioId, 'response:', response)),
+      catchError(this.handleError('listOffers'))
+    );
+  }
+
+  acceptOffer(solicitudId: number, ofertaId: number, usuarioId: number): Observable<any> {
+    return this.http.post(`${API_BASE}/aceptarOferta/${encodeURIComponent(solicitudId)}/${encodeURIComponent(ofertaId)}/${encodeURIComponent(usuarioId)}`, {}).pipe(
+      tap(() => console.log('[ApiService] acceptOffer solicitudId:', solicitudId, 'ofertaId:', ofertaId, 'usuarioId:', usuarioId)),
+      catchError(this.handleError('acceptOffer'))
+    );
+  }
+}

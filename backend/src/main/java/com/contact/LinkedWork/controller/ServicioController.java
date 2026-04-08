@@ -1,0 +1,109 @@
+package com.contact.LinkedWork.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.contact.LinkedWork.dto.CrearSolicituDto;
+import com.contact.LinkedWork.dto.EditarSolicitudDTO;
+import com.contact.LinkedWork.dto.RespuestaAceptarDTO;
+import com.contact.LinkedWork.dto.SolicitudDTO;
+import com.contact.LinkedWork.dto.SolicitudHistorialDTO;
+import com.contact.LinkedWork.dto.AreaDTO;
+import com.contact.LinkedWork.model.Area;
+import com.contact.LinkedWork.service.SolicitudService;
+import com.contact.LinkedWork.repository.AreaRepository;
+
+@RestController
+@RequestMapping("/")
+@CrossOrigin(origins="*")
+public class ServicioController {
+
+    @Autowired
+    @Qualifier("SolicitudService")
+    private SolicitudService solicitudService;
+
+    @Autowired
+    @Qualifier("CrudAreaRepository")
+    private AreaRepository areaRepository;
+
+    @PostMapping(path="/addSolicitud/{idUsuario}/{idArea}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public SolicitudDTO addSolicitud(@RequestBody CrearSolicituDto solicitud, @PathVariable Long idUsuario, @PathVariable Long idArea) {
+        return solicitudService.AgregarSolicitud(solicitud, idUsuario, idArea);
+    }  
+
+    @PostMapping(path="/addSolicitudDirecta/{idUsuario}/{idTrabajadorUsuario}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public SolicitudDTO addSolicitudDirecta(@RequestBody CrearSolicituDto solicitud, @PathVariable Long idUsuario, @PathVariable Long idTrabajadorUsuario) {
+        return solicitudService.agregarSolicitudDirecta(solicitud, idUsuario, idTrabajadorUsuario);
+    }
+
+    @GetMapping(path = "/listRequests", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<SolicitudDTO> getAllSolicitudes() {
+        return solicitudService.getAllSolicitudes();
+    } 
+
+    @GetMapping(path = "/listRequests/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<SolicitudDTO> getSolicitudesByUsuario(@PathVariable Long idUsuario) {
+        return solicitudService.getSolicitudesByUsuario(idUsuario);
+    } 
+
+    @GetMapping(path = "/listRequestsForWorker/{idUsuarioTrabajador}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<SolicitudDTO> getSolicitudesForWorker(@PathVariable Long idUsuarioTrabajador) {
+        return solicitudService.getSolicitudesParaTrabajador(idUsuarioTrabajador);
+    }
+
+    @PostMapping(path = "/acceptRequest/{idSolicitud}/{idUsuarioTrabajador}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public RespuestaAceptarDTO acceptRequest(@PathVariable Long idSolicitud, @PathVariable Long idUsuarioTrabajador) {
+        return solicitudService.aceptarSolicitudPorTrabajador(idSolicitud, idUsuarioTrabajador);
+    }
+
+    @PutMapping(path = "/editSolicitud/{idSolicitud}/{idUsuario}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public SolicitudDTO editSolicitud(@RequestBody EditarSolicitudDTO solicitud, @PathVariable Long idSolicitud, @PathVariable Long idUsuario) {
+        return solicitudService.editarSolicitud(solicitud, idSolicitud, idUsuario);
+    }
+    @DeleteMapping(path = "/deleteSolicitud/{idSolicitud}/{idUsuario}")
+    public ResponseEntity<String> deleteSolicitudByUsuarioId(@PathVariable Long idSolicitud, @PathVariable Long idUsuario) {
+        try {
+            solicitudService.deleteSolicitudByUsuarioId(idSolicitud, idUsuario);
+            return ResponseEntity.ok("Solicitud eliminada correctamente.");
+        } catch (RuntimeException ex) {
+            String message = ex.getMessage() == null ? "No se pudo eliminar la solicitud." : ex.getMessage();
+            if (message.toLowerCase().contains("no encontrada")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("La solicitud ya no existe.");
+            }
+            if (message.toLowerCase().contains("permiso")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permiso para eliminar esta solicitud.");
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No fue posible eliminar la solicitud en este momento.");
+        }
+    }
+
+    @GetMapping(path = "/historialSolicitud/{idSolicitud}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<SolicitudHistorialDTO> getHistorialSolicitud(@PathVariable Long idSolicitud) {
+        return solicitudService.getHistorialSolicitud(idSolicitud);
+    }
+
+    @GetMapping(path = "/listAreas", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<AreaDTO> getAllAreas() {
+        return ((List<Area>) areaRepository.findAll())
+                .stream()
+                .map(area -> new AreaDTO(area.getIdArea(), area.getNombre()))
+                .toList();
+    }
+} 
+
+
+

@@ -1,0 +1,79 @@
+<section class="dashboard-page">
+  <div class="dashboard-header">
+    <div>
+      <h1>Bienvenido a LinkedWork</h1>
+      <p class="subtitle">Desde un panel moderno y claro.</p>
+    </div>
+
+    <div class="dashboard-actions">
+      <span class="role-pill">Rol activo: {{ activeRoleLabel() }}</span>
+      <button
+        *ngIf="hasRoleSwitch()"
+        type="button"
+        class="btn btn-primary btn-switch"
+        (click)="switchRole()"
+      >
+        <span class="btn-icon">⟳</span>
+        Cambiar a {{ auth.getRoleLabel(otherRoles()[0]) }}
+      </button>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <a routerLink="/profile" class="dashboard-card">
+      <div class="card-icon">{{ getCardIcon('perfil') }}</div>
+      <div>
+        <h2>Mi perfil</h2>
+        <p>Actualiza tu información personal y revisa tu cuenta.</p>
+      </div>
+    </a>
+
+    <a
+      *ngIf="isUser()"
+      routerLink="/requests"
+      class="dashboard-card"
+    >
+      <div class="card-icon">{{ getCardIcon('solicitudes') }}</div>
+      <div>
+        <h2>Mis solicitudes</h2>
+        <p>Crea nuevas solicitudes y gestiona su estado en tiempo real.</p>
+      </div>
+    </a>
+
+    <a
+      *ngIf="isUser()"
+      routerLink="/farmings"
+      class="dashboard-card"
+    >
+      <div class="card-icon">{{ getCardIcon('tecnicos') }}</div>
+      <div>
+        <h2>Técnicos disponibles</h2>
+        <p>Conecta con los mejores técnicos y revisa sus perfiles.</p>
+      </div>
+    </a>
+
+    <a
+      *ngIf="isWorker()"
+      routerLink="/farmings"
+      class="dashboard-card"
+    >
+      <div class="card-icon">{{ getCardIcon('trabajos') }}</div>
+      <div>
+        <h2>Trabajos disponibles</h2>
+        <p>Explora solicitudes abiertas y postula tus servicios.</p>
+      </div>
+    </a>
+
+    <a
+      *ngIf="isWorker()"
+      routerLink="/requests"
+      class="dashboard-card"
+    >
+      <div class="card-icon">{{ getCardIcon('recibidas') }}</div>
+      <div>
+        <h2>Solicitudes recibidas</h2>
+        <p>Gestiona las solicitudes que te envían los clientes.</p>
+      </div>
+    </a>
+  </div>
+</section>

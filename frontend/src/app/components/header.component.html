@@ -1,0 +1,51 @@
+<header class="app-header" role="banner" *ngIf="auth.isLoggedIn()">
+  <a routerLink="/" class="brand" (click)="closeMenu()">
+    <img class="brand-logo-img" src="assets/logo.png" alt="LinkedWork" />
+  </a>
+
+  <div class="nav-wrapper">
+    <button class="menu-toggle" (click)="toggleMenu()" aria-label="Abrir menú" [class.active]="menuOpen()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class="nav-links" aria-label="Navegación principal" [class.open]="menuOpen()">
+      <a class="nav-link" routerLink="/" (click)="closeMenu()">
+        <span class="nav-icon">🏠</span>
+        Inicio
+      </a>
+      <a class="nav-link" routerLink="/requests" *ngIf="auth.role() === 'ROLE_USUARIO' || auth.role() === 'ROLE_TRABAJADOR'" (click)="closeMenu()">
+        <span class="nav-icon">📋</span>
+        {{ auth.role() === 'ROLE_TRABAJADOR' ? 'Solicitudes del área' : 'Solicitudes' }}
+      </a>
+      <a class="nav-link" routerLink="/farmings" (click)="closeMenu()">
+        <span class="nav-icon">🔧</span>
+        Técnicos
+      </a>
+      <a class="nav-link" routerLink="/profile" (click)="closeMenu()">
+        <span class="nav-icon">👤</span>
+        Perfil
+      </a>
+    </nav>
+  </div>
+
+  <div class="header-actions">
+    <div class="user-block">
+      <p class="user-greeting">Hola, <strong>{{ auth.userName() || 'Invitado' }}</strong></p>
+    </div>
+
+    <div class="action-buttons">
+      <button
+        type="button"
+        class="btn btn-success"
+        (click)="switchRole()"
+      >
+        {{ toggleRoleLabel() }}
+      </button>
+      <button type="button" class="btn btn-logout" (click)="logout()" title="Cerrar sesión">
+        Salir
+      </button>
+    </div>
+  </div>
+</header>
