@@ -33,13 +33,13 @@ public class CalificacionService {
     @Qualifier("CrudOfertaRepository")
     private OfertaRepository ofertaRepository;
 
-    public String CalificarTrabajador(CalificarDTO calificarDTO) {
-        Solicitud solicitud = solicitudRepository.findById(calificarDTO.getIdSolicitud())
+    public String CalificarTrabajador(CalificarDTO calificarDTO, long idUsuario, long idSolicitud) {
+        Solicitud solicitud = solicitudRepository.findById(idSolicitud)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
-            if(!solicitud.getUsuario().getIdUsuario().equals(calificarDTO.getIdUsuario())) {
+            if(!solicitud.getUsuario().getIdUsuario().equals(idUsuario)) {
                 throw new RuntimeException("El usuario no es el trabajador asignado a la solicitud");
             }
-            if(!"ACEPTADA".equals(solicitud.getEstado())) {
+            if(!"Aceptada".equals(solicitud.getEstado())) {
                 throw new RuntimeException("La solicitud no está en estado ACEPTADA");
             }
             Oferta oferta = solicitud.getOfertas().stream()

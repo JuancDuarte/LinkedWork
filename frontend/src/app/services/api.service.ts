@@ -170,7 +170,7 @@ export class ApiService {
 
   listOffers(solicitudId: number, usuarioId: number): Observable<any[]> {
     return this.http.get<any[]>(`${API_BASE}/SeeOfferts/${encodeURIComponent(solicitudId)}/${encodeURIComponent(usuarioId)}`).pipe(
-      tap((response) => console.log('[ApiService] listOffers solicitudId:', solicitudId, 'usuarioId:', usuarioId, 'response:', response)),
+      tap((response: any) => console.log('[ApiService] listOffers solicitudId:', solicitudId, 'usuarioId:', usuarioId, 'response:', response)),
       catchError(this.handleError('listOffers'))
     );
   }
