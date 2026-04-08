@@ -1,32 +1,20 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterOutlet } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
+import { NgIf, NgFor } from '@angular/common';
 
-import { AuthService, UserRole } from './services/auth.service';
+import { HeaderComponent } from './components/header.component';
+import { AuthService } from './services/auth.service';
+import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, FormsModule],
+  imports: [HeaderComponent, RouterOutlet, FormsModule, NgIf, NgFor],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
-  private readonly router = inject(Router);
   readonly auth = inject(AuthService);
-
-  selectedRole = signal<UserRole>(this.auth.role());
-
-  readonly canSeeRequests = computed(() => this.auth.role() === 'user');
-  readonly canSeeFarmings = computed(() => this.auth.role() === 'worker' || this.auth.role() === 'user');
-
-  switchRole(role: UserRole) {
-    this.selectedRole.set(role);
-    this.auth.setRole(role);
-  }
-
-  logout() {
-    this.auth.logout();
-    this.router.navigate(['/auth']);
-  }
+  readonly notification = inject(NotificationService);
 }

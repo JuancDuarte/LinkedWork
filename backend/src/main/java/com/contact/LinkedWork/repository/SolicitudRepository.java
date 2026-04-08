@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface SolicitudRepository extends CrudRepository<Solicitud, Long> {
     Optional<Solicitud> findByUsuario_IdUsuario(Long IdUsuario);
     
+    List<Solicitud> findAllByUsuario_IdUsuario(Long idUsuario);
+    
     List<Solicitud> findByArea_IdArea(Long IdArea);
     
     List<Solicitud> findByEstado(String Estado);

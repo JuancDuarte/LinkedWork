@@ -1,6 +1,7 @@
 package com.contact.LinkedWork.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,20 +16,28 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.web.bind.annotation.PutMapping;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import com.contact.LinkedWork.dto.CreateUsuarioDTO;
+import com.contact.LinkedWork.dto.UsuarioDTO;
 import com.contact.LinkedWork.dto.LoginDTO;
 import com.contact.LinkedWork.dto.ListarTrabajadorDTO;
-import com.contact.LinkedWork.dto.UsuarioDTO;
 import com.contact.LinkedWork.service.UsuarioService;
 
 @RestController
 @RequestMapping("/")
-@CrossOrigin(origins="*")
+@CrossOrigin(origins = {
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+    "http://localhost:4201",
+    "http://127.0.0.1:4201"
+})
 public class UsuarioController {
     @Autowired
     @Qualifier("UsuarioService")
@@ -62,6 +71,58 @@ public class UsuarioController {
             return ResponseEntity.ok(usuarioService.login(loginDTO));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+        }
+    }
+
+    @PostMapping(path = "/CreateUser", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UsuarioDTO> createUser(@RequestBody CreateUsuarioDTO payload) {
+        System.out.println("CreateUser called with: " + payload);
+        try {
+            String nombre = payload.getNombre();
+            String email = payload.getEmail();
+            String password = payload.getPassword();
+            List<String> roles = payload.getRoles();
+            Long areaId = payload.getAreaId();
+            String descripcion = payload.getDescripcion();
+            Long experiencia = payload.getExperiencia();
+
+            if (nombre == null || nombre.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            }
+            if (email == null || email.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            }
+            if (password == null || password.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            }
+
+            UsuarioDTO created = usuarioService.createUser(nombre, email, password, roles, areaId, descripcion, experiencia);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (RuntimeException ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+
+    @PostMapping(path = "/changeRole/{idUsuario}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UsuarioDTO> changeRole(@PathVariable Long idUsuario, @RequestBody Map<String, List<String>> payload) {
+        try {
+            List<String> newRoles = payload.get("roles");
+            UsuarioDTO updated = usuarioService.changeRole(idUsuario, newRoles);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+
+    @PutMapping(path = "/EditUser", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UsuarioDTO> editUser(@RequestBody UsuarioDTO payload) {
+        try {
+            // Assuming editUser method exists in service, but it doesn't, so add it
+            UsuarioDTO updated = usuarioService.editUser(payload);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }
 }

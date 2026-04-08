@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository("CrudSolicitudHistorialRepository")
-public interface SolicitudHistorialRepository extends CrudRepository<SolicitudHistorial, Integer> {
-    List<SolicitudHistorial> findBySolicitud_IdSolicitud(Integer IdSolicitud);
+public interface SolicitudHistorialRepository extends CrudRepository<SolicitudHistorial, Long> {
+    List<SolicitudHistorial> findBySolicitud_IdSolicitud(Long IdSolicitud);
 }

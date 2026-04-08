@@ -11,7 +11,7 @@ public class Trabajador {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "IdTrabajador")
-    private Long IdTrabajador;
+    private Long idTrabajador;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "IdUsuario", nullable = false)
@@ -28,7 +28,7 @@ public class Trabajador {
     private Long Experiencia;
 
     @Column(length = 50)
-    private String Estado = "activo";
+    private String estado = "activo";
 
     @OneToMany(mappedBy = "trabajador", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<TrabajadorNivel> trabajadorNiveles = new HashSet<>();
@@ -61,11 +61,11 @@ public class Trabajador {
     }
 
     public Long getIdTrabajador() {
-        return IdTrabajador;
+        return idTrabajador;
     }
 
     public void setIdTrabajador(Long idTrabajador) {
-        this.IdTrabajador = idTrabajador;
+        this.idTrabajador = idTrabajador;
     }
 
     public Usuario getUsuario() {
@@ -101,11 +101,11 @@ public class Trabajador {
     }
 
     public String getEstado() {
-        return Estado;
+        return estado;
     }
 
     public void setEstado(String estado) {
-        this.Estado = estado;
+        this.estado = estado;
     }
 
     public Set<TrabajadorNivel> getTrabajadorNiveles() {

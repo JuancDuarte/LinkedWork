@@ -13,26 +13,26 @@ export const routes: Routes = [
     path: '',
     component: HomeComponent,
     canActivate: [authGuard],
-    data: { roles: ['user', 'worker'] }
+    data: { roles: ['ROLE_USUARIO', 'ROLE_TRABAJADOR'] }
   },
   { path: 'auth', component: AuthComponent },
   {
     path: 'profile',
     component: ProfileComponent,
     canActivate: [authGuard],
-    data: { roles: ['user', 'worker'] }
+    data: { roles: ['ROLE_USUARIO', 'ROLE_TRABAJADOR'] }
   },
   {
     path: 'requests',
     component: RequestsComponent,
     canActivate: [authGuard],
-    data: { roles: ['user'] }
+    data: { roles: ['ROLE_USUARIO', 'ROLE_TRABAJADOR'] }
   },
   {
     path: 'farmings',
     component: FarmingsComponent,
     canActivate: [authGuard],
-    data: { roles: ['user', 'worker'] }
+    data: { roles: ['ROLE_USUARIO', 'ROLE_TRABAJADOR'] }
   },
   { path: '**', component: NotFoundComponent }
 ];

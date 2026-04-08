@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-LinkedWorkApplication<LinkedWork>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.contact.LinkedWork.LinkedWorkApplication",
+            "projectName": "LinkedWork",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

@@ -13,7 +13,7 @@ public class Usuario {
     @Column(name = "IdUsuario")
     private Long idUsuario;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
     name = "Usuario_Rol",
     joinColumns = @JoinColumn(name = "IdUsuario"),

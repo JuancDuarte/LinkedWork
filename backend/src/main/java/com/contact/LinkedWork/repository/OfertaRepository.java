@@ -8,11 +8,11 @@ import java.util.List;
 
 @Repository("CrudOfertaRepository")
 public interface OfertaRepository extends CrudRepository<Oferta, Long> {
-    List<Oferta> findBySolicitud_IdSolicitud(Long IdSolicitud);
+    List<Oferta> findBySolicitud_idSolicitud(Long IdSolicitud);
     
-    List<Oferta> findByTrabajador_IdTrabajador(Long IdTrabajador);
+    List<Oferta> findByTrabajador_idTrabajador(Long IdTrabajador);
     
     List<Oferta> findByEstado(String Estado);
 
-    boolean existsBySolicitud_IdSolicitudAndTrabajador_IdTrabajador(Long idSolicitud, Long idTrabajador);
+    boolean existsBySolicitud_idSolicitudAndTrabajador_idTrabajador(Long idSolicitud, Long idTrabajador);
 }

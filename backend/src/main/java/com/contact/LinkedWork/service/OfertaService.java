@@ -25,6 +25,7 @@ import com.contact.LinkedWork.repository.OfertaRepository;
 import com.contact.LinkedWork.repository.SolicitudRepository;
 import com.contact.LinkedWork.repository.TrabajadorRepository;
 import com.contact.LinkedWork.repository.UsuarioRepository;
+import java.util.stream.StreamSupport;
 
 @Service("OfertaService")
 @Transactional
@@ -74,7 +75,8 @@ public class OfertaService {
         if(precio.compareTo(MIN) < 0 || precio.compareTo(MAX) > 0) {
             throw new RuntimeException("El precio de la oferta debe estar entre 50000 y 700000.");
         }
-        boolean yaExisteOferta = ofertaRepository.existsBySolicitud_IdSolicitudAndTrabajador_IdTrabajador(crearofertaDTO.getIdSolicitud(), trabajador.getIdTrabajador());
+
+        boolean yaExisteOferta = StreamSupport.stream(ofertaRepository.findAll().spliterator(), false).anyMatch(o -> o.getSolicitud().getIdSolicitud().equals(solicitud.getIdSolicitud()) && o.getTrabajador().getIdTrabajador().equals(trabajador.getIdTrabajador()));
         if (yaExisteOferta) {
             throw new RuntimeException("Ya existe una oferta para la solicitud con ID: " + crearofertaDTO.getIdSolicitud()
                     + " por parte del trabajador con ID: " + trabajador.getIdTrabajador());
@@ -135,7 +137,15 @@ public class OfertaService {
         public void eliminarOferta(Long idOferta, Long idTrabajador) {
             Oferta oferta = ofertaRepository.findById(idOferta)
                     .orElseThrow(() -> new RuntimeException("Oferta no encontrada con ID: " + idOferta));
-            if (!oferta.getTrabajador().getIdTrabajador().equals(idTrabajador)) {
+            Long trabajadorId = oferta.getTrabajador().getIdTrabajador();
+            Long trabajadorUsuarioId = oferta.getTrabajador().getUsuario() != null
+                    ? oferta.getTrabajador().getUsuario().getIdUsuario()
+                    : null;
+
+            boolean autorizado = trabajadorId.equals(idTrabajador)
+                    || (trabajadorUsuarioId != null && trabajadorUsuarioId.equals(idTrabajador));
+
+            if (!autorizado) {
                 throw new RuntimeException("El trabajador con ID: " + idTrabajador
                         + " no es el creador de la oferta con ID: " + idOferta + " y no puede eliminarla.");
                 }
@@ -210,7 +220,21 @@ public class OfertaService {
                         }
                 });
                 ofertaRepository.save(oferta);
-                return new RespuestaAceptarDTO("Oferta aceptada correctamente, Te pondremos en contacto con el Trabajador.");
+                String nombreSolicitante = solicitud.getUsuario().getNombreCompleto() != null
+                                ? solicitud.getUsuario().getNombreCompleto()
+                                : solicitud.getUsuario().getNombreUsuario();
+                String nombreTrabajador = oferta.getTrabajador().getUsuario().getNombreCompleto() != null
+                                ? oferta.getTrabajador().getUsuario().getNombreCompleto()
+                                : oferta.getTrabajador().getUsuario().getNombreUsuario();
+
+                return new RespuestaAceptarDTO(
+                                "Oferta aceptada correctamente.",
+                                solicitud.getIdSolicitud(),
+                                solicitud.getTitulo(),
+                                solicitud.getUsuario().getIdUsuario(),
+                                nombreSolicitante,
+                                oferta.getTrabajador().getIdTrabajador(),
+                                nombreTrabajador);
         }
 
 }

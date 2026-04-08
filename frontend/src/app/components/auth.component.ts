@@ -1,5 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -10,15 +10,13 @@ import { AuthService, UserRole } from '../services/auth.service';
 @Component({
   selector: 'app-auth',
   standalone: true,
-  imports: [FormsModule, NgIf],
+  imports: [FormsModule, NgIf, NgForOf],
   template: `
     <section class="auth">
       <div class="auth-split">
         <aside class="auth-left">
           <div class="brand">
             <img class="brand-logo" src="assets/logo.png" alt="LinkedWork" />
-            <h1 class="brand-title">LinkedWork</h1>
-            <div class="accent-line"></div>
           </div>
 
           <div class="brand-message">
@@ -153,26 +151,69 @@ import { AuthService, UserRole } from '../services/auth.service';
                   <label class="role-option">
                     <input
                       type="checkbox"
-                      [checked]="registerRoles.includes('user')"
-                      (change)="toggleRegisterRole('user', $any($event.target).checked)"
+                      [checked]="registerRoles.includes('ROLE_USUARIO')"
+                      (change)="toggleRegisterRole('ROLE_USUARIO', $any($event.target).checked)"
                     />
                     Usuario
                   </label>
                   <label class="role-option">
                     <input
                       type="checkbox"
-                      [checked]="registerRoles.includes('worker')"
-                      (change)="toggleRegisterRole('worker', $any($event.target).checked)"
+                      [checked]="registerRoles.includes('ROLE_TRABAJADOR')"
+                      (change)="toggleRegisterRole('ROLE_TRABAJADOR', $any($event.target).checked)"
                     />
                     Trabajador
                   </label>
                 </div>
               </div>
 
+              <div *ngIf="registerRoles.includes('ROLE_TRABAJADOR')" class="field">
+                <label for="registerAreaId">Área de Trabajo</label>
+                <div class="field-row">
+                  <select
+                    id="registerAreaId"
+                    [(ngModel)]="registerAreaId"
+                    name="registerAreaId"
+                    required
+                  >
+                    <option value="">Selecciona un área</option>
+                    <option *ngFor="let area of areas" [value]="area.idArea">{{area.nombre}}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div *ngIf="registerRoles.includes('ROLE_TRABAJADOR')" class="field">
+                <label for="registerDescripcion">Descripción</label>
+                <div class="field-row">
+                  <textarea
+                    id="registerDescripcion"
+                    [(ngModel)]="registerDescripcion"
+                    name="registerDescripcion"
+                    placeholder="Describe tus habilidades y experiencia"
+                    maxlength="500"
+                  ></textarea>
+                </div>
+              </div>
+
+              <div *ngIf="registerRoles.includes('ROLE_TRABAJADOR')" class="field">
+                <label for="registerExperiencia">Experiencia (años)</label>
+                <div class="field-row">
+                  <input
+                    id="registerExperiencia"
+                    type="number"
+                    [(ngModel)]="registerExperiencia"
+                    name="registerExperiencia"
+                    min="0"
+                    max="50"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
               <button
                 type="submit"
                 class="btn btn-primary"
-                [disabled]="loading() || registerRoles.length === 0"
+                [disabled]="loading()"
               >
                 {{ loading() ? 'Creando cuenta…' : 'Crear cuenta' }}
               </button>
@@ -260,14 +301,6 @@ import { AuthService, UserRole } from '../services/auth.service';
         line-height: 1.15;
         color: #0f172a;
         letter-spacing: -0.02em;
-      }
-
-      .accent-line {
-        width: 52px;
-        height: 4px;
-        background: linear-gradient(90deg, #8a1c61, #d946a6);
-        border-radius: 2px;
-        margin-bottom: 1.5rem;
       }
 
       .brand-description {
@@ -373,7 +406,8 @@ import { AuthService, UserRole } from '../services/auth.service';
       }
 
       input,
-      select {
+      select,
+      textarea {
         flex: 1;
         border: none;
         background: transparent;
@@ -383,8 +417,10 @@ import { AuthService, UserRole } from '../services/auth.service';
         outline: none;
       }
 
-      input::placeholder {
-        color: rgba(15, 23, 42, 0.38);
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+        max-height: 150px;
       }
 
       .toggle {
@@ -534,20 +570,25 @@ export class AuthComponent implements OnInit {
 
   loginId: string | null = null;
   loginPassword = '';
-  loginRole: UserRole = 'user';
-
   registerCC: string | null = null;
-  registerRoles: UserRole[] = ['user'];
+  registerRoles: UserRole[] = ['ROLE_USUARIO'];
   registerName = '';
   registerEmail = '';
   registerPassword = '';
+  registerAreaId: number | string | null = null;
+  registerDescripcion = '';
+  registerExperiencia: number | null = null;
+  areas: { idArea: number; nombre: string }[] = [];
 
   private clearRegisterForm() {
     this.registerCC = null;
-    this.registerRoles = ['user'];
+    this.registerRoles = ['ROLE_USUARIO'];
     this.registerName = '';
     this.registerEmail = '';
     this.registerPassword = '';
+    this.registerAreaId = null;
+    this.registerDescripcion = '';
+    this.registerExperiencia = null;
     this.clearMessages();
   }
 
@@ -561,11 +602,8 @@ export class AuthComponent implements OnInit {
   }
 
   openRegister() {
-    // Keep current tab on login; open a separate tab for registration.
-    this.activeTab.set('login');
-
-    const url = this.router.createUrlTree(['/auth'], { queryParams: { tab: 'register' } }).toString();
-    window.open(`${window.location.origin}${url}`, '_blank');
+    this.activeTab.set('register');
+    this.router.navigate(['/auth'], { queryParams: { tab: 'register' } });
   }
 
   goToLogin() {
@@ -588,14 +626,20 @@ export class AuthComponent implements OnInit {
     this.loading.set(true);
 
     if (!this.loginId) {
-      this.errorMessage.set('Ingresa tu número de cédula.');
+      this.errorMessage.set('⚠️ Por favor ingresa tu número de cédula.');
+      this.loading.set(false);
+      return;
+    }
+
+    if (!this.loginPassword) {
+      this.errorMessage.set('⚠️ Por favor ingresa tu contraseña.');
       this.loading.set(false);
       return;
     }
 
     const userId = parseInt(this.loginId, 10);
     if (Number.isNaN(userId) || userId <= 0) {
-      this.errorMessage.set('Ingresa un número de cédula válido.');
+      this.errorMessage.set('⚠️ El número de cédula debe ser un número válido.');
       this.loading.set(false);
       return;
     }
@@ -608,15 +652,51 @@ export class AuthComponent implements OnInit {
         })
       );
 
-      // Si la API devuelve información de rol, mantenemos ese rol.
-      const backendRole = (response as any)?.rol_Id;
-      const role: UserRole = backendRole === 2 ? 'worker' : 'user';
+      // Extract roles from backend response (flexible to handle different formats)
+      let roles: UserRole[] = [];
+      const normalizeRole = (raw: string): UserRole | null => {
+        if (!raw) return null;
+        const normalized = raw.toString().trim();
+        if (normalized === 'ROLE_USUARIO' || normalized === 'Usuario') return 'ROLE_USUARIO';
+        if (normalized === 'ROLE_TRABAJADOR' || normalized === 'Trabajador') return 'ROLE_TRABAJADOR';
+        return null;
+      };
 
-      this.auth.login(userId, role || this.loginRole);
-      this.successMessage.set('Sesión iniciada correctamente.');
+      if ((response as any)?.roles && Array.isArray((response as any).roles)) {
+        roles = (response as any).roles
+          .map((r: string) => normalizeRole(r))
+          .filter((r: UserRole | null): r is UserRole => r !== null);
+      } else if ((response as any)?.rol_Id) {
+        const rolId = (response as any).rol_Id;
+        roles = [rolId === 2 ? 'ROLE_TRABAJADOR' : 'ROLE_USUARIO'];
+      } else if ((response as any)?.rol) {
+        const mapped = normalizeRole((response as any).rol);
+        if (mapped) roles = [mapped];
+      }
+
+      if (!roles || roles.length === 0) {
+        roles = ['ROLE_USUARIO'];
+      }
+
+      const userName = (response as any)?.nombreCompleto || (response as any)?.nombre || '';
+      const userEmail = (response as any)?.email || '';
+
+      this.auth.login(userId, roles, roles[0], userName, userEmail);
+      this.successMessage.set('✅ ¡Bienvenido! Sesión iniciada correctamente.');
       this.router.navigate(['/']);
     } catch (error: any) {
-      this.errorMessage.set(error?.message || 'No se pudo iniciar sesión.');
+      const statusCode = error?.status;
+      let friendlyMessage = '❌ No se pudo iniciar sesión.';
+
+      if (statusCode === 401 || statusCode === 400) {
+        friendlyMessage = '❌ Cédula o contraseña incorrecta. Verifica tus datos.';
+      } else if (statusCode === 404) {
+        friendlyMessage = '❌ Esta cuenta no existe. ¿Deseas crear una nueva?';
+      } else if (statusCode === 500) {
+        friendlyMessage = '❌ Error del servidor. Por favor intenta más tarde.';
+      }
+
+      this.errorMessage.set(friendlyMessage);
     } finally {
       this.loading.set(false);
     }
@@ -631,49 +711,121 @@ export class AuthComponent implements OnInit {
     if (this.auth.isLoggedIn()) {
       this.router.navigate(['/']);
     }
+
+    // Load areas for registration
+    this.loadAreas();
+  }
+
+  private async loadAreas() {
+    try {
+      const areas = await firstValueFrom(this.api.getAreas());
+      if (!areas || areas.length === 0) {
+        this.areas = [
+          { idArea: 1, nombre: 'Tecnología' },
+          { idArea: 2, nombre: 'Construcción' },
+          { idArea: 3, nombre: 'Salud' },
+          { idArea: 4, nombre: 'Educación' },
+          { idArea: 5, nombre: 'Transporte' }
+        ];
+      } else {
+        this.areas = areas;
+      }
+    } catch (error) {
+      console.error('Error loading areas:', error);
+      this.areas = [
+        { idArea: 1, nombre: 'Tecnología' },
+        { idArea: 2, nombre: 'Construcción' },
+        { idArea: 3, nombre: 'Salud' },
+        { idArea: 4, nombre: 'Educación' },
+        { idArea: 5, nombre: 'Transporte' }
+      ];
+    }
   }
 
   async submitRegister() {
     this.clearMessages();
     this.loading.set(true);
 
+    // Validation messages
     if (!this.registerCC || !this.registerCC.trim()) {
-      this.errorMessage.set('Ingresa tu número de cédula.');
+      this.errorMessage.set('⚠️ Por favor ingresa tu número de cédula.');
       this.loading.set(false);
       return;
     }
 
-    if (this.registerRoles.length === 0) {
-      this.errorMessage.set('Selecciona al menos un rol para poder crear la cuenta.');
+    if (!this.registerName || !this.registerName.trim()) {
+      this.errorMessage.set('⚠️ Por favor ingresa tu nombre completo.');
+      this.loading.set(false);
+      return;
+    }
+
+    if (!this.registerEmail || !this.registerEmail.trim()) {
+      this.errorMessage.set('⚠️ Por favor ingresa tu correo electrónico.');
+      this.loading.set(false);
+      return;
+    }
+
+    if (!this.registerPassword || this.registerPassword.length < 4) {
+      this.errorMessage.set('⚠️ La contraseña debe tener al menos 4 caracteres.');
+      this.loading.set(false);
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.registerEmail)) {
+      this.errorMessage.set('⚠️ Por favor ingresa un correo electrónico válido.');
       this.loading.set(false);
       return;
     }
 
     const ccValue = parseInt(this.registerCC, 10);
     if (Number.isNaN(ccValue) || ccValue <= 0) {
-      this.errorMessage.set('Ingresa un número de cédula válido.');
+      this.errorMessage.set('⚠️ El número de cédula debe ser un número válido y mayor a 0.');
       this.loading.set(false);
       return;
     }
 
     try {
-      const payload = {
-        usuario_id: ccValue,
-        rol_Id: this.registerRoles.includes('worker') ? 2 : 1,
-        roles: [...this.registerRoles],
+      // Simple payload compatible with your backend
+      const selectedRoles = this.registerRoles.length > 0 ? this.registerRoles : ['ROLE_USUARIO'];
+      const payload: any = {
         nombre: this.registerName,
         email: this.registerEmail,
         password: this.registerPassword,
-        estado: 'activo',
-        create_at: new Date().toISOString()
+        roles: selectedRoles
       };
 
+      if (selectedRoles.includes('ROLE_TRABAJADOR')) {
+        const areaId = Number(this.registerAreaId);
+        if (!areaId || areaId <= 0) {
+          this.errorMessage.set('⚠️ Por favor selecciona un área válida para trabajadores.');
+          this.loading.set(false);
+          return;
+        }
+        payload.areaId = areaId;
+        payload.descripcion = this.registerDescripcion;
+        payload.experiencia = this.registerExperiencia;
+      }
+
       await firstValueFrom(this.api.createUser(payload));
-      this.successMessage.set('Cuenta creada correctamente. Puedes iniciar sesión.');
+      this.successMessage.set('✅ Cuenta creada correctamente. Ahora puedes iniciar sesión.');
       this.clearRegisterForm();
-      this.activeTab.set('login');
+      setTimeout(() => this.activeTab.set('login'), 1500);
     } catch (error: any) {
-      this.errorMessage.set(error?.message || 'No se pudo crear la cuenta.');
+      const statusCode = error?.status;
+
+      let friendlyMessage = 'No pudimos crear tu cuenta en este momento. Intenta de nuevo.';
+
+      if (statusCode === 400) {
+        friendlyMessage = 'Revisa los datos del formulario e inténtalo nuevamente.';
+      } else if (statusCode === 409) {
+        friendlyMessage = 'Ya existe una cuenta con esa cédula o correo.';
+      } else if (statusCode === 500) {
+        friendlyMessage = 'Tenemos un problema temporal en el servidor. Intenta más tarde.';
+      }
+
+      this.errorMessage.set(friendlyMessage);
     } finally {
       this.loading.set(false);
     }
