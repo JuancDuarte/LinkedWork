@@ -1,0 +1,122 @@
+<main class="screen">
+  <section class="login-card">
+    <div class="badge">LinkedWork local</div>
+    <h1>Login y registro</h1>
+    <p>
+      Prueba el backend con login o crea usuarios desde Angular usando los roles y áreas cargados
+      desde la API.
+    </p>
+
+    @if (catalogoError) {
+      <div class="feedback error">{{ catalogoError }}</div>
+    }
+
+    <div class="tab-bar">
+      <button type="button" class="tab" [class.active]="activeTab === 'register'" (click)="switchTab('register')">Crear usuario</button>
+      <button type="button" class="tab" [class.active]="activeTab === 'login'" (click)="switchTab('login')">Login</button>
+    </div>
+
+    @if (activeTab === 'register') {
+      <form (ngSubmit)="onRegister()" #registerForm="ngForm" novalidate>
+        <div class="grid two">
+          <div>
+            <label for="nombreCompleto">Nombre completo</label>
+            <input id="nombreCompleto" name="nombreCompleto" required [(ngModel)]="registro.nombreCompleto" placeholder="Tu nombre completo" />
+          </div>
+          <div>
+            <label for="nombreUsuario">Nombre de usuario</label>
+            <input id="nombreUsuario" name="nombreUsuario" required [(ngModel)]="registro.nombreUsuario" placeholder="usuario_unico" />
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div>
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" required [(ngModel)]="registro.email" placeholder="correo@mail.com" />
+          </div>
+          <div>
+            <label for="claveRegistro">Clave</label>
+            <input id="claveRegistro" name="claveRegistro" type="password" required [(ngModel)]="registro.clave" placeholder="Clave de acceso" />
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div>
+            <label for="idRol">Rol</label>
+            <select id="idRol" name="idRol" required [(ngModel)]="registro.idRol">
+              @for (role of roles; track role.idRol) {
+                <option [ngValue]="role.idRol">{{ role.nombre }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label for="idArea">Área</label>
+            <select id="idArea" name="idArea" [required]="isWorkerRole()" [(ngModel)]="registro.idArea" [disabled]="!isWorkerRole()">
+              <option [ngValue]="null">-- Selecciona --</option>
+              @for (area of areas; track area.idArea) {
+                <option [ngValue]="area.idArea">{{ area.nombre }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div>
+            <label for="experiencia">Experiencia</label>
+            <input id="experiencia" name="experiencia" type="number" min="0" [(ngModel)]="registro.experiencia" [disabled]="!isWorkerRole()" placeholder="0" />
+          </div>
+          <div>
+            <label for="descripcion">Descripción</label>
+            <input id="descripcion" name="descripcion" [(ngModel)]="registro.descripcion" [disabled]="!isWorkerRole()" placeholder="Opcional para trabajador" />
+          </div>
+        </div>
+
+        @if (isWorkerRole()) {
+          <div class="hint">
+            Estás creando un trabajador. El área es obligatoria y, al guardar, te llevamos al login con el usuario y clave ya puestos.
+          </div>
+        }
+
+        <button type="submit" [disabled]="registerLoading || registerForm.invalid">
+          {{ registerLoading ? 'Guardando...' : 'Crear usuario' }}
+        </button>
+      </form>
+    }
+
+    @if (activeTab === 'login') {
+      <form (ngSubmit)="onSubmit()" #loginForm="ngForm" novalidate>
+        <label for="identificador">Usuario, correo o ID</label>
+        <input id="identificador" name="identificador" type="text" required [(ngModel)]="identificador" placeholder="Ej: 1, jota123 o jota@email.com" />
+
+        <label for="clave">Clave</label>
+        <input id="clave" name="clave" type="password" required [(ngModel)]="clave" placeholder="Tu clave" />
+
+        <button type="submit" [disabled]="loginLoading || loginForm.invalid">
+          {{ loginLoading ? 'Validando...' : 'Entrar' }}
+        </button>
+      </form>
+    }
+
+    @if (errorMensaje) {
+      <div class="feedback error">{{ errorMensaje }}</div>
+    }
+
+    @if (okMensaje) {
+      <div class="feedback ok">{{ okMensaje }}</div>
+    }
+
+    @if (respuesta) {
+      <div class="response-box">
+        <h2>Respuesta backend</h2>
+        <pre>{{ respuesta | json }}</pre>
+      </div>
+    }
+
+    @if (payloadPreview) {
+      <div class="response-box">
+        <h2>Payload enviado</h2>
+        <pre>{{ payloadPreview }}</pre>
+      </div>
+    }
+  </section>
+</main>
