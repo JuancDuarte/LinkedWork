@@ -13,6 +13,25 @@ public class SolicitudDTO {
     private String nombreUsuario;
     private Long idArea;
     private String nombreArea;
+    private Long idTrabajador;
+    private String nombreTrabajador;
+    private java.math.BigDecimal precio;
+
+    public Long getIdTrabajador() {
+        return idTrabajador;
+    }
+
+    public void setIdTrabajador(Long idTrabajador) {
+        this.idTrabajador = idTrabajador;
+    }
+
+    public String getNombreTrabajador() {
+        return nombreTrabajador;
+    }
+
+    public void setNombreTrabajador(String nombreTrabajador) {
+        this.nombreTrabajador = nombreTrabajador;
+    }
     
     public SolicitudDTO() {
     }
@@ -89,5 +108,13 @@ public class SolicitudDTO {
     }
     public void setNombreArea(String nombreArea) {
         this.nombreArea = nombreArea;
+    }
+
+    public java.math.BigDecimal getPrecio() {
+        return precio;
+    }
+
+    public void setPrecio(java.math.BigDecimal precio) {
+        this.precio = precio;
     }
 }

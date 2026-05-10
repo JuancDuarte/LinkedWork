@@ -25,8 +25,11 @@ body {
 
 body {
   margin: 0;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--bg);
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #fdfbff;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(108, 43, 217, 0.03) 0, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(233, 30, 99, 0.03) 0, transparent 50%);
   color: var(--text);
   line-height: 1.6;
 }
@@ -309,125 +312,125 @@ button:disabled,
 
 .user-greeting {
   font-size: 0.75rem;
-    color: #f8f9ff;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-  }
+  color: #f8f9ff;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
 
-  .user-name {
-    font-size: 1rem;
-    font-weight: 800;
-    color: #ffffff;
-  }
+.user-name {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #ffffff;
+}
 
-  .role-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.35rem 0.8rem;
-    background: rgba(255, 255, 255, 0.28);
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #1f2937;
-  }
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.8rem;
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1f2937;
+}
 
-  .role-switch {
+.role-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.role-switch-label {
+  color: #f8f9ff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.role-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.role-btn {
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.9);
+  color: #3f2c6d;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.role-btn:hover {
+  border-color: rgba(255, 255, 255, 0.8);
+  background: #ffffff;
+}
+
+.role-btn.active {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.32);
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 180ms ease;
+  white-space: nowrap;
+}
+
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-switch {
+  min-width: 165px;
+}
+
+.menu-content.open {
+  display: flex;
+}
+
+@media (max-width: 900px) {
+  .menu-toggle {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    padding: 0.4rem 0.75rem;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.16);
-    border: 1px solid rgba(255, 255, 255, 0.24);
   }
 
-  .role-switch-label {
-    color: #f8f9ff;
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-  }
-
-  .role-buttons {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .role-btn {
-    padding: 0.65rem 1rem;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.42);
-    background: rgba(255, 255, 255, 0.9);
-    color: #3f2c6d;
-    font-weight: 700;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 180ms ease;
-  }
-
-  .role-btn:hover {
-    border-color: rgba(255, 255, 255, 0.8);
-    background: #ffffff;
-  }
-
-  .role-btn.active {
-    background: rgba(255, 255, 255, 0.18);
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.32);
-    font-weight: 700;
-    font-size: 0.92rem;
-    cursor: pointer;
-    transition: all 180ms ease;
-    white-space: nowrap;
-  }
-
-  .header-buttons {
-    display: flex;
-    align-items: center;
+  .menu-content {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.75rem);
+    right: 1.5rem;
+    left: 1.5rem;
+    padding: 1rem;
+    flex-direction: column;
     gap: 0.75rem;
-    flex-wrap: wrap;
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(18px);
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 28px 60px rgba(15, 23, 42, 0.18);
   }
 
-  .btn-switch {
-    min-width: 165px;
+  .nav-link {
+    width: 100%;
+    text-align: left;
   }
+}
 
-  .menu-content.open {
-    display: flex;
-  }
-
-  @media (max-width: 900px) {
-    .menu-toggle {
-      display: flex;
-    }
-
-    .menu-content {
-      display: none;
-      position: absolute;
-      top: calc(100% + 0.75rem);
-      right: 1.5rem;
-      left: 1.5rem;
-      padding: 1rem;
-      flex-direction: column;
-      gap: 0.75rem;
-      background: rgba(15, 23, 42, 0.96);
-      backdrop-filter: blur(18px);
-      border-radius: 1rem;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 28px 60px rgba(15, 23, 42, 0.18);
-    }
-
-    .nav-link {
-      width: 100%;
-      text-align: left;
-    }
-  }
-
-  .logout-icon {
+.logout-icon {
   font-size: 1.1rem;
   display: inline-flex;
 }
@@ -518,6 +521,7 @@ button:disabled,
     transform: translateX(10px) scale(0.97);
     opacity: 0;
   }
+
   to {
     transform: translateX(0) scale(1);
     opacity: 1;
@@ -682,8 +686,8 @@ button:disabled,
 }
 
 .btn-primary {
-    background: var(--primary);
-    color: #ffffff;
+  background: var(--primary);
+  color: #ffffff;
 }
 
 .btn-primary:hover {

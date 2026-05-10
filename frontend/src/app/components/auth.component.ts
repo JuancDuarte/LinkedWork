@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import { ApiService } from '../services/api.service';
+import { ApiService, ApiCertificado } from '../services/api.service';
 import { AuthService, UserRole } from '../services/auth.service';
 
 @Component({
@@ -29,7 +29,7 @@ import { AuthService, UserRole } from '../services/auth.service';
 
         <div class="auth-right">
           <div class="auth-panel">
-            <h2>{{ activeTab() === 'login' ? 'Iniciar sesión' : 'Crear cuenta' }}</h2>
+            <h2 *ngIf="activeTab() === 'login'">Iniciar sesión</h2>
             <p class="panel-subtitle" *ngIf="activeTab() === 'login'">Ingresa con tus credenciales para continuar.</p>
 
             <form *ngIf="activeTab() === 'login'" (ngSubmit)="submitLogin()" class="panel">
@@ -83,7 +83,9 @@ import { AuthService, UserRole } from '../services/auth.service';
               </div>
             </form>
 
-            <form *ngIf="activeTab() === 'register'" (ngSubmit)="submitRegister()" class="panel">
+            <form *ngIf="activeTab() === 'register'" (ngSubmit)="submitRegister()" class="panel worker-card">
+              <h2 style="margin: 0 0 1.5rem 0;">Crear cuenta</h2>
+
               <div class="field">
                 <label for="registerCC">Cédula (CC)</label>
                 <div class="field-row">
@@ -148,7 +150,7 @@ import { AuthService, UserRole } from '../services/auth.service';
               <div class="field">
                 <label>Roles</label>
                 <div class="field-row field-roles">
-                  <label class="role-option">
+                    <label class="role-option accent-header">
                     <input
                       type="checkbox"
                       [checked]="registerRoles.includes('ROLE_USUARIO')"
@@ -167,46 +169,129 @@ import { AuthService, UserRole } from '../services/auth.service';
                 </div>
               </div>
 
-              <div *ngIf="registerRoles.includes('ROLE_TRABAJADOR')" class="field">
-                <label for="registerAreaId">Área de Trabajo</label>
-                <div class="field-row">
-                  <select
-                    id="registerAreaId"
-                    [(ngModel)]="registerAreaId"
-                    name="registerAreaId"
-                    required
-                  >
-                    <option value="">Selecciona un área</option>
-                    <option *ngFor="let area of areas" [value]="area.idArea">{{area.nombre}}</option>
-                  </select>
-                </div>
-              </div>
+              <div *ngIf="registerRoles.includes('ROLE_TRABAJADOR')" style="display: grid; gap: 0.85rem; margin-top: 0.5rem;">
 
-              <div *ngIf="registerRoles.includes('ROLE_TRABAJADOR')" class="field">
-                <label for="registerDescripcion">Descripción</label>
-                <div class="field-row">
-                  <textarea
-                    id="registerDescripcion"
-                    [(ngModel)]="registerDescripcion"
-                    name="registerDescripcion"
-                    placeholder="Describe tus habilidades y experiencia"
-                    maxlength="500"
-                  ></textarea>
+                <div class="field">
+                  <label for="registerAreaId" class="important-label">Área de Trabajo</label>
+                  <div class="field-row">
+                    <select
+                      id="registerAreaId"
+                      class="form-input"
+                      [(ngModel)]="registerAreaId"
+                      name="registerAreaId"
+                      required
+                    >
+                      <option value="">Selecciona un área</option>
+                      <option *ngFor="let area of areas" [value]="area.idArea">{{area.nombre}}</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              <div *ngIf="registerRoles.includes('ROLE_TRABAJADOR')" class="field">
-                <label for="registerExperiencia">Experiencia (años)</label>
-                <div class="field-row">
-                  <input
-                    id="registerExperiencia"
-                    type="number"
-                    [(ngModel)]="registerExperiencia"
-                    name="registerExperiencia"
-                    min="0"
-                    max="50"
-                    placeholder="0"
-                  />
+                <div class="field certificate-toggle-row">
+                  <button type="button" class="btn btn-outline certificate-toggle" (click)="toggleCertificatePanel()">
+                    {{ certificateModalOpen() ? 'Ocultar certificado' : 'Añadir certificado' }}
+                  </button>
+                </div>
+
+                <div *ngIf="certificateModalOpen()" class="certificate-panel-inline">
+                  <div class="certificate-panel-header">
+                    <h2>Certificados</h2>
+                    <p>Agrega los que quieras cargar desde el inicio. Esto suma puntos desde el primer día.</p>
+                  </div>
+
+                  <div class="certificate-form">
+                    <div class="form-group compact-field">
+                      <label for="draftCertName">Nombre</label>
+                      <input id="draftCertName" [(ngModel)]="certificateDraftForm.nombre" name="draftCertName" class="form-input" placeholder="Ej: Curso de electricidad" />
+                    </div>
+                    <div class="form-group compact-field">
+                      <label for="draftCertEntity">Entidad</label>
+                      <input id="draftCertEntity" [(ngModel)]="certificateDraftForm.entidad" name="draftCertEntity" class="form-input" placeholder="Institución emisora" />
+                    </div>
+                    <div class="form-group compact-field">
+                      <label for="draftCertDescription">Descripción</label>
+                      <textarea id="draftCertDescription" rows="3" [(ngModel)]="certificateDraftForm.descripcion" name="draftCertDescription" class="form-input" placeholder="Describe el certificado"></textarea>
+                    </div>
+                    <div class="form-group compact-field">
+                      <label for="draftCertFile">Archivo (PDF)</label>
+                      <input id="draftCertFile" type="file" accept="application/pdf" (change)="onDraftFileChange($event)" class="form-input" />
+                      <div *ngIf="selectedDraftFile" style="margin-top:0.5rem;color:#475569;font-size:0.9rem">Archivo seleccionado: {{ selectedDraftFile?.name }}</div>
+                    </div>
+                    <button type="button" class="btn btn-primary" (click)="addDraftCertificate()">Agregar certificado</button>
+                  </div>
+
+                  <div class="certificate-list" *ngIf="certificateDrafts.length > 0; else noDraftCertificates">
+                    <article class="certificate-item" *ngFor="let d of certificateDrafts; let i = index">
+                      <strong>{{ d.nombre }}</strong>
+                      <span>{{ d.entidad }}</span>
+                      <small>{{ d.descripcion || 'Sin descripción' }}</small>
+                      <button type="button" class="link certificate-delete" (click)="removeDraft(i)">Eliminar</button>
+                    </article>
+                  </div>
+
+                  <ng-template #noDraftCertificates>
+                    <p class="empty-inline">Todavía no hay certificados registrados.</p>
+                  </ng-template>
+                </div>
+
+                <div class="field">
+                  <label for="registerDescripcion" class="important-label">Descripción</label>
+                  <div class="field-row">
+                    <textarea
+                      id="registerDescripcion"
+                      [(ngModel)]="registerDescripcion"
+                      name="registerDescripcion"
+                      placeholder="Describe tus habilidades y experiencia"
+                      maxlength="500"
+                    ></textarea>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="registerExperiencia" class="important-label">Experiencia (años)</label>
+                  <div class="field-row">
+                    <input
+                      id="registerExperiencia"
+                      type="number"
+                      [(ngModel)]="registerExperiencia"
+                      name="registerExperiencia"
+                      min="0"
+                      max="50"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="registerDepartamento" class="important-label">Departamento</label>
+                  <div class="field-row">
+                    <select
+                      id="registerDepartamento"
+                      [(ngModel)]="registerDepartamentoId"
+                      name="registerDepartamento"
+                      (change)="onDepartamentoChange()"
+                      required
+                    >
+                      <option [value]="0">Selecciona un departamento</option>
+                      <option *ngFor="let depto of departamentos" [value]="depto.idDepartamento">{{depto.nombre}}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="registerCiudad" class="important-label">Ciudad</label>
+                  <div class="field-row">
+                    <select
+                      id="registerCiudad"
+                      [(ngModel)]="registerCiudadId"
+                      name="registerCiudad"
+                      [disabled]="!registerDepartamentoId"
+                      required
+                    >
+                      <option [value]="0">Selecciona una ciudad</option>
+                      <option *ngFor="let ciudad of ciudades" [value]="ciudad.idCiudad">{{ciudad.nombre}}</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -232,6 +317,7 @@ import { AuthService, UserRole } from '../services/auth.service';
           </div>
         </div>
       </div>
+
     </section>
   `,
   styles: [
@@ -354,7 +440,7 @@ import { AuthService, UserRole } from '../services/auth.service';
 
       .auth-panel {
         width: 100%;
-        max-width: 360px;
+        max-width: 680px;
       }
 
       .auth-panel h2 {
@@ -403,6 +489,14 @@ import { AuthService, UserRole } from '../services/auth.service';
         font-size: 0.85rem;
         font-weight: 600;
         color: rgba(15, 23, 42, 0.75);
+      }
+
+      .important-label {
+        color: #6c2bd9;
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+        display: block;
       }
 
       input,
@@ -478,6 +572,211 @@ import { AuthService, UserRole } from '../services/auth.service';
 
       .status.error {
         color: #b91c1c;
+      }
+
+      .certificate-panel-inline {
+        display: grid;
+        gap: 0.9rem;
+        padding: 1rem;
+        margin: 0.15rem 0 0.35rem;
+        border-radius: 1rem;
+        background: #ffffff;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .certificate-panel-header {
+        display: grid;
+        gap: 0.3rem;
+      }
+
+      .certificate-title-row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+
+      .certificate-panel-inline h2 {
+        margin: 0;
+        color: #6c2bd9;
+        font-size: 1.18rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+
+      .certificate-panel-inline p {
+        margin: 0;
+        color: #475569;
+        font-size: 0.9rem;
+        line-height: 1.35;
+      }
+
+      .certificate-form {
+        display: grid;
+        gap: 0.75rem;
+        margin-bottom: 0.25rem;
+        min-width: 0;
+      }
+
+      .compact-field {
+        margin-bottom: 0;
+      }
+
+      .certificate-list {
+        display: grid;
+        gap: 0.6rem;
+      }
+
+      .certificate-item {
+        display: grid;
+        gap: 0.25rem;
+        padding: 0.75rem 0.9rem;
+        border-radius: 0.9rem;
+        background: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        min-width: 0;
+      }
+
+      .certificate-item strong {
+        color: #0f172a;
+      }
+
+      .certificate-item span,
+      .certificate-item small {
+        color: #475569;
+      }
+
+      .certificate-delete {
+        justify-self: start;
+      }
+
+      .empty-inline {
+        margin: 0.1rem 0 0;
+        color: #64748b;
+        font-size: 0.92rem;
+      }
+
+      .certificate-panel-inline .form-group,
+      .certificate-panel-inline input,
+      .certificate-panel-inline select,
+      .certificate-panel-inline textarea {
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+
+      .certificate-panel-inline input[type='file'] {
+        width: 100%;
+        display: block;
+      }
+
+      /* Worker card wrapper to highlight area/description/experience */
+      .worker-card {
+        display: grid;
+        gap: 0.85rem;
+        padding: 1rem;
+        margin: 0.6rem 0 0.6rem;
+        border-radius: 1rem;
+        background: #ffffff;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      }
+
+      .worker-card-header h3 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+      }
+
+      .worker-card-header p {
+        margin: 0.25rem 0 0;
+        color: #475569;
+        font-size: 0.95rem;
+      }
+
+      /* Modal styles - identical to profile.component */
+      .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .modal-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15);
+        max-width: 500px;
+        width: 90%;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .modal-card h3 {
+        margin: 0 0 0.5rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #6c2bd9;
+      }
+
+      .form-group {
+        display: grid;
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+      }
+
+      .form-group label {
+        display: block;
+        color: #6c2bd9;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #fefefe;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: #6c2bd9;
+        box-shadow: 0 0 0 3px rgba(108, 43, 217, 0.1);
+        background: white;
+      }
+
+      .form-input:hover {
+        border-color: #8a1c61;
+      }
+
+      .btn-outline {
+        background: transparent;
+        border: 2px solid #e5e7eb;
+        color: #475569;
+        transition: all 0.3s ease;
+      }
+
+      .btn-outline:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
       }
 
       @media (max-width: 860px) {
@@ -578,7 +877,17 @@ export class AuthComponent implements OnInit {
   registerAreaId: number | string | null = null;
   registerDescripcion = '';
   registerExperiencia: number | null = null;
+  registerDepartamentoId = 0;
+  registerCiudadId = 0;
+  departamentos: any[] = [];
+  ciudades: any[] = [];
   areas: { idArea: number; nombre: string }[] = [];
+
+  // Certificado (modo borradores durante registro)
+  certificateModalOpen = signal(false);
+  certificateDrafts: ApiCertificado[] = [];
+  certificateDraftForm: ApiCertificado = { nombre: '', entidad: '', descripcion: '' };
+  selectedDraftFile: File | null = null;
 
   private clearRegisterForm() {
     this.registerCC = null;
@@ -589,7 +898,10 @@ export class AuthComponent implements OnInit {
     this.registerAreaId = null;
     this.registerDescripcion = '';
     this.registerExperiencia = null;
+    this.registerDepartamentoId = 0;
+    this.registerCiudadId = 0;
     this.clearMessages();
+    this.certificateDrafts = [];
   }
 
   private clearMessages() {
@@ -621,6 +933,51 @@ export class AuthComponent implements OnInit {
     this.registerRoles = [...roles];
   }
 
+  openCertificateModal() {
+    this.certificateModalOpen.set(true);
+  }
+
+  closeCertificateModal() {
+    this.certificateModalOpen.set(false);
+    this.certificateDraftForm = { nombre: '', entidad: '', descripcion: '' };
+    this.selectedDraftFile = null;
+  }
+
+  toggleCertificatePanel() {
+    this.certificateModalOpen.set(!this.certificateModalOpen());
+  }
+
+  onDraftFileChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input || !input.files || input.files.length === 0) {
+      this.selectedDraftFile = null;
+      return;
+    }
+    this.selectedDraftFile = input.files[0];
+  }
+
+  addDraftCertificate() {
+    if (!this.certificateDraftForm.nombre || !this.certificateDraftForm.nombre.trim() ||
+        !this.certificateDraftForm.entidad || !this.certificateDraftForm.entidad.trim()) {
+      this.errorMessage.set('Completa nombre y entidad del certificado.');
+      return;
+    }
+    this.certificateDrafts.push({
+      nombre: this.certificateDraftForm.nombre.trim(),
+      entidad: this.certificateDraftForm.entidad.trim(),
+      descripcion: this.certificateDraftForm.descripcion?.trim() || ''
+    });
+    this.closeCertificateModal();
+    this.successMessage.set('Certificado agregado a borradores. Se guardará al crear la cuenta.');
+    setTimeout(() => this.clearMessages(), 2500);
+  }
+
+  removeDraft(index: number) {
+    if (index >= 0 && index < this.certificateDrafts.length) {
+      this.certificateDrafts.splice(index, 1);
+    }
+  }
+
   async submitLogin() {
     this.clearMessages();
     this.loading.set(true);
@@ -637,17 +994,17 @@ export class AuthComponent implements OnInit {
       return;
     }
 
-    const userId = parseInt(this.loginId, 10);
-    if (Number.isNaN(userId) || userId <= 0) {
-      this.errorMessage.set('⚠️ El número de cédula debe ser un número válido.');
-      this.loading.set(false);
-      return;
-    }
-
     try {
+      // If loginId looks like a positive integer, send it as idUsuario (number),
+      // otherwise send it as nombreUsuario (string).
+      const parsed = parseInt(this.loginId ?? '', 10);
+      const usuarioPayload: number | string = (!Number.isNaN(parsed) && String(parsed) === (this.loginId ?? '').trim())
+        ? parsed
+        : (this.loginId ?? '');
+
       const response = await firstValueFrom(
         this.api.loginUser({
-          usuario_id: userId,
+          usuario: usuarioPayload,
           password: this.loginPassword
         })
       );
@@ -681,7 +1038,10 @@ export class AuthComponent implements OnInit {
       const userName = (response as any)?.nombreCompleto || (response as any)?.nombre || '';
       const userEmail = (response as any)?.email || '';
 
-      this.auth.login(userId, roles, roles[0], userName, userEmail);
+      const returnedId = (response as any)?.idUsuario ?? (response as any)?.IdUsuario ?? null;
+      const numericId = returnedId ? Number(returnedId) : null;
+      const finalUserId = numericId && !Number.isNaN(numericId) ? numericId : null;
+      this.auth.login(finalUserId ?? 0, roles, roles[0], userName, userEmail);
       this.successMessage.set('✅ ¡Bienvenido! Sesión iniciada correctamente.');
       this.router.navigate(['/']);
     } catch (error: any) {
@@ -712,8 +1072,33 @@ export class AuthComponent implements OnInit {
       this.router.navigate(['/']);
     }
 
-    // Load areas for registration
+    // Load areas and departments for registration
     this.loadAreas();
+    this.loadDepartamentos();
+  }
+
+  private async loadDepartamentos() {
+    try {
+      const list = await firstValueFrom(this.api.getDepartamentos());
+      this.departamentos = list || [];
+    } catch (error) {
+      console.error('Error loading departamentos:', error);
+    }
+  }
+
+  async onDepartamentoChange() {
+    if (!this.registerDepartamentoId) {
+      this.ciudades = [];
+      this.registerCiudadId = 0;
+      return;
+    }
+    try {
+      const list = await firstValueFrom(this.api.getCiudades(this.registerDepartamentoId));
+      this.ciudades = list || [];
+      this.registerCiudadId = 0;
+    } catch (error) {
+      console.error('Error loading ciudades:', error);
+    }
   }
 
   private async loadAreas() {
@@ -806,9 +1191,30 @@ export class AuthComponent implements OnInit {
         payload.areaId = areaId;
         payload.descripcion = this.registerDescripcion;
         payload.experiencia = this.registerExperiencia;
+        payload.idDepartamento = this.registerDepartamentoId;
+        payload.idCiudad = this.registerCiudadId;
       }
 
-      await firstValueFrom(this.api.createUser(payload));
+      const created: any = await firstValueFrom(this.api.createUser(payload));
+
+      // Si se cre o trabajador y hay certificados en borrador, los guardamos
+      if (selectedRoles.includes('ROLE_TRABAJADOR') && this.certificateDrafts.length > 0) {
+        const createdUserId = Number(created?.idUsuario ?? created?.IdUsuario ?? created?.id ?? created?.userId ?? 0);
+        if (createdUserId && !Number.isNaN(createdUserId)) {
+          for (const draft of this.certificateDrafts) {
+            try {
+              await firstValueFrom(this.api.addCertificate(createdUserId, {
+                nombre: draft.nombre || '',
+                entidad: draft.entidad || '',
+                descripcion: draft.descripcion || ''
+              }));
+            } catch (err) {
+              console.error('Error guardando certificado draft:', err);
+            }
+          }
+        }
+      }
+
       this.successMessage.set('✅ Cuenta creada correctamente. Ahora puedes iniciar sesión.');
       this.clearRegisterForm();
       setTimeout(() => this.activeTab.set('login'), 1500);

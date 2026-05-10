@@ -83,6 +83,7 @@ public class SolicitudService {
         solicitud.setFechaCreacion(LocalDateTime.now());
         solicitud.setUsuario(usuario);
         solicitud.setArea(area);
+        solicitud.setPrecio(crearSolicitudDto.getPrecio());
 
         solicitud = solicitudRepository.save(solicitud);
 
@@ -103,6 +104,7 @@ public class SolicitudService {
         solicitudDTO.setNombreUsuario(usuario.getNombreCompleto());
         solicitudDTO.setIdArea(area.getIdArea());
         solicitudDTO.setNombreArea(area.getNombre());
+        solicitudDTO.setPrecio(solicitud.getPrecio());
         return solicitudDTO;
     }
 
@@ -119,13 +121,6 @@ public class SolicitudService {
 
         Usuario usuarioTrabajador = usuarioRepository.findById(idTrabajadorUsuario)
                 .orElseThrow(() -> new RuntimeException("Trabajador no encontrado con ID de usuario: " + idTrabajadorUsuario));
-
-        boolean esTrabajador = usuarioTrabajador.getRoles()
-                .stream()
-                .anyMatch(rol -> "ROLE_TRABAJADOR".equals(rol.getNombre()));
-        if (!esTrabajador) {
-            throw new RuntimeException("El usuario destino no tiene rol de trabajador.");
-        }
 
         Trabajador trabajador = trabajadorRepository.findByUsuario_IdUsuario(idTrabajadorUsuario)
                 .orElseThrow(() -> new RuntimeException("No existe perfil trabajador para el usuario destino."));
@@ -147,6 +142,7 @@ public class SolicitudService {
         solicitud.setFechaCreacion(LocalDateTime.now());
         solicitud.setUsuario(usuarioSolicitante);
         solicitud.setArea(area);
+        solicitud.setPrecio(crearSolicitudDto.getPrecio());
         solicitud = solicitudRepository.save(solicitud);
 
         SolicitudHistorial historial = new SolicitudHistorial();
@@ -184,6 +180,7 @@ public class SolicitudService {
         solicitudDTO.setNombreUsuario(usuarioSolicitante.getNombreCompleto());
         solicitudDTO.setIdArea(area.getIdArea());
         solicitudDTO.setNombreArea(area.getNombre());
+        solicitudDTO.setPrecio(solicitud.getPrecio());
         return solicitudDTO;
     }
 
@@ -201,6 +198,7 @@ public class SolicitudService {
                     solicitudDTO.setNombreUsuario(solicitud.getUsuario().getNombreCompleto());
                     solicitudDTO.setIdArea(solicitud.getArea().getIdArea());
                     solicitudDTO.setNombreArea(solicitud.getArea().getNombre());
+                    solicitudDTO.setPrecio(solicitud.getPrecio());
                     return solicitudDTO;
                 })
                 .toList();
@@ -221,6 +219,7 @@ public class SolicitudService {
                     solicitudDTO.setNombreUsuario(solicitud.getUsuario().getNombreCompleto());
                     solicitudDTO.setIdArea(solicitud.getArea().getIdArea());
                     solicitudDTO.setNombreArea(solicitud.getArea().getNombre());
+                    solicitudDTO.setPrecio(solicitud.getPrecio());
                     return solicitudDTO;
                 })
                 .toList();
@@ -231,7 +230,7 @@ public class SolicitudService {
                 .orElseThrow(() -> new RuntimeException("Usuario trabajador no encontrado con ID: " + idUsuarioTrabajador));
 
         Trabajador trabajador = trabajadorRepository.findByUsuario_IdUsuario(usuarioTrabajador.getIdUsuario())
-                .orElseThrow(() -> new RuntimeException("No existe perfil trabajador para el usuario con ID: " + idUsuarioTrabajador));
+            .orElseThrow(() -> new RuntimeException("No existe perfil trabajador para el usuario con ID: " + idUsuarioTrabajador));
 
         List<Solicitud> solicitudesPorArea = trabajador.getArea() != null
                 ? solicitudRepository.findByArea_IdArea(trabajador.getArea().getIdArea())
@@ -294,6 +293,7 @@ public class SolicitudService {
             dto.setNombreUsuario(solicitud.getUsuario().getNombreCompleto());
             dto.setIdArea(solicitud.getArea().getIdArea());
             dto.setNombreArea(solicitud.getArea().getNombre());
+            dto.setPrecio(solicitud.getPrecio());
             resultado.add(dto);
             idsAgregados.add(solicitud.getIdSolicitud());
         }
@@ -320,6 +320,7 @@ public class SolicitudService {
                 dto.setIdArea(solicitud.getArea().getIdArea());
                 dto.setNombreArea(solicitud.getArea().getNombre());
             }
+            dto.setPrecio(solicitud.getPrecio());
             resultado.add(dto);
             idsAgregados.add(solicitud.getIdSolicitud());
         }
@@ -332,7 +333,7 @@ public class SolicitudService {
                 .orElseThrow(() -> new RuntimeException("Usuario trabajador no encontrado con ID: " + idUsuarioTrabajador));
 
         Trabajador trabajador = trabajadorRepository.findByUsuario_IdUsuario(usuarioTrabajador.getIdUsuario())
-                .orElseThrow(() -> new RuntimeException("No existe perfil trabajador para el usuario con ID: " + idUsuarioTrabajador));
+            .orElseThrow(() -> new RuntimeException("No existe perfil trabajador para el usuario con ID: " + idUsuarioTrabajador));
 
         Solicitud solicitud = solicitudRepository.findById(idSolicitud)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada con ID: " + idSolicitud));
@@ -341,19 +342,22 @@ public class SolicitudService {
             throw new RuntimeException("La solicitud ya no se encuentra pendiente.");
         }
 
-        if (trabajador.getArea() == null || solicitud.getArea() == null
-                || !trabajador.getArea().getIdArea().equals(solicitud.getArea().getIdArea())) {
-            throw new RuntimeException("El trabajador no pertenece al area de esta solicitud.");
-        }
-
         boolean existeOfertaTrabajador = ofertaRepository.existsBySolicitud_idSolicitudAndTrabajador_idTrabajador(
                 solicitud.getIdSolicitud(), trabajador.getIdTrabajador());
+
+        // Validar área solo si no es una solicitud directa (oferta preexistente)
+        if (!existeOfertaTrabajador) {
+            if (trabajador.getArea() == null || solicitud.getArea() == null
+                    || !trabajador.getArea().getIdArea().equals(solicitud.getArea().getIdArea())) {
+                throw new RuntimeException("El trabajador no pertenece al area de esta solicitud.");
+            }
+        }
 
         if (!existeOfertaTrabajador) {
             Oferta oferta = new Oferta();
             oferta.setSolicitud(solicitud);
             oferta.setTrabajador(trabajador);
-            oferta.setPrecio(new BigDecimal("50000"));
+            oferta.setPrecio(new java.math.BigDecimal("50000"));
             oferta.setDescripcion("Oferta aceptada por trabajador desde solicitudes por area");
             oferta.setEstado("Aceptada");
             oferta.setFechaCreacion(LocalDateTime.now());
@@ -367,6 +371,14 @@ public class SolicitudService {
             historialOferta.setDescripcionNueva(oferta.getDescripcion());
             historialOferta.setFecha(LocalDateTime.now());
             ofertaHistorialRepository.save(historialOferta);
+        } else {
+            // Si la oferta ya existe (solicitud directa), actualizar su estado a Aceptada
+            Oferta ofertaExistente = ofertaRepository.findBySolicitud_idSolicitudAndTrabajador_idTrabajador(
+                    solicitud.getIdSolicitud(), trabajador.getIdTrabajador());
+            if (ofertaExistente != null) {
+                ofertaExistente.setEstado("Aceptada");
+                ofertaRepository.save(ofertaExistente);
+            }
         }
 
         String estadoAnterior = solicitud.getEstado();

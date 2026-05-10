@@ -85,6 +85,8 @@ public class UsuarioController {
             Long areaId = payload.getAreaId();
             String descripcion = payload.getDescripcion();
             Long experiencia = payload.getExperiencia();
+            Integer idDepartamento = payload.getIdDepartamento();
+            Integer idCiudad = payload.getIdCiudad();
 
             if (nombre == null || nombre.trim().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
@@ -96,7 +98,7 @@ public class UsuarioController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
             }
 
-            UsuarioDTO created = usuarioService.createUser(nombre, email, password, roles, areaId, descripcion, experiencia);
+            UsuarioDTO created = usuarioService.createUser(nombre, email, password, roles, areaId, descripcion, experiencia, idDepartamento, idCiudad);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (RuntimeException ex) {
             ex.printStackTrace();
@@ -115,14 +117,40 @@ public class UsuarioController {
         }
     }
 
+    @PostMapping(path = "/upgradeToWorker/{idUsuario}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UsuarioDTO> upgradeToWorker(@PathVariable Long idUsuario, @RequestBody Map<String, Object> payload) {
+        try {
+            Long areaId = payload.get("areaId") != null ? Long.valueOf(payload.get("areaId").toString()) : null;
+            String descripcion = (String) payload.get("descripcion");
+            Long experiencia = payload.get("experiencia") != null ? Long.valueOf(payload.get("experiencia").toString()) : null;
+            Integer idDepartamento = payload.get("idDepartamento") != null ? Integer.valueOf(payload.get("idDepartamento").toString()) : null;
+            Integer idCiudad = payload.get("idCiudad") != null ? Integer.valueOf(payload.get("idCiudad").toString()) : null;
+            
+            UsuarioDTO updated = usuarioService.upgradeToWorker(idUsuario, areaId, descripcion, experiencia, idDepartamento, idCiudad);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+
     @PutMapping(path = "/EditUser", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UsuarioDTO> editUser(@RequestBody UsuarioDTO payload) {
         try {
-            // Assuming editUser method exists in service, but it doesn't, so add it
             UsuarioDTO updated = usuarioService.editUser(payload);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
+    }
+
+    @GetMapping(path = "/listDepartamentos", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<com.contact.LinkedWork.model.Departamento>> listDepartamentos() {
+        return ResponseEntity.ok(usuarioService.getAllDepartamentos());
+    }
+
+    @GetMapping(path = "/listCiudades/{idDepartamento}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<com.contact.LinkedWork.model.Ciudad>> listCiudades(@PathVariable Integer idDepartamento) {
+        return ResponseEntity.ok(usuarioService.getCiudadesByDepartamento(idDepartamento));
     }
 }

@@ -10,6 +10,8 @@ public class CreateUsuarioDTO {
     private Long areaId;
     private String descripcion;
     private Long experiencia;
+    private Integer idDepartamento;
+    private Integer idCiudad;
 
     // Getters and setters
     public String getNombre() {
@@ -66,5 +68,21 @@ public class CreateUsuarioDTO {
 
     public void setExperiencia(Long experiencia) {
         this.experiencia = experiencia;
+    }
+
+    public Integer getIdDepartamento() {
+        return idDepartamento;
+    }
+
+    public void setIdDepartamento(Integer idDepartamento) {
+        this.idDepartamento = idDepartamento;
+    }
+
+    public Integer getIdCiudad() {
+        return idCiudad;
+    }
+
+    public void setIdCiudad(Integer idCiudad) {
+        this.idCiudad = idCiudad;
     }
 }

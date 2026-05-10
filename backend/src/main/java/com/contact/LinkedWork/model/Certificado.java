@@ -31,6 +31,12 @@ public class Certificado {
     @Column(name = "Fecha")
     private LocalDateTime fecha;
 
+    @Column(name = "Estado", length = 50)
+    private String estado = "Pendiente";
+
+    @Column(name = "PuntosOtorgados")
+    private Integer puntosOtorgados = 0;
+
     public Certificado() {
     }
 
@@ -86,5 +92,21 @@ public class Certificado {
 
     public void setFecha(LocalDateTime fecha) {
         this.fecha = fecha;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+
+    public Integer getPuntosOtorgados() {
+        return puntosOtorgados;
+    }
+
+    public void setPuntosOtorgados(Integer puntosOtorgados) {
+        this.puntosOtorgados = puntosOtorgados;
     }
 }

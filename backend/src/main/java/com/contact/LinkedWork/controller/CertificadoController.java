@@ -48,4 +48,10 @@ public class CertificadoController {
         certificadoService.eliminarCertificado(idCertificado, idTrabajador);
         return ResponseEntity.ok("Certificado eliminado correctamente.");
     }
+
+    @PutMapping(path = "/approveCertificado/{idCertificado}/{puntos}")
+    public ResponseEntity<String> approveCertificado(@PathVariable Long idCertificado, @PathVariable Integer puntos) {
+        certificadoService.aprobarCertificado(idCertificado, puntos);
+        return ResponseEntity.ok("Certificado aprobado y puntos asignados.");
+    }
 }

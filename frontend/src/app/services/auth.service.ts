@@ -60,7 +60,17 @@ export class AuthService {
     this.userId.set(userId);
     this.availableRoles.set(roles);
     this.availableRolesSubject.next(roles);
-    const roleToSet = currentRole || roles[0] || 'guest';
+    
+    // Prioridad: 1. El rol guardado, 2. ROLE_USUARIO si existe, 3. El primer rol disponible
+    let roleToSet: UserRole = currentRole || 'guest';
+    if (roleToSet === 'guest') {
+      if (roles.includes('ROLE_USUARIO')) {
+        roleToSet = 'ROLE_USUARIO';
+      } else if (roles.length > 0) {
+        roleToSet = roles[0];
+      }
+    }
+    
     this.role.set(roleToSet);
     this.roleSubject.next(roleToSet);
     if (userName) this.userName.set(userName);
