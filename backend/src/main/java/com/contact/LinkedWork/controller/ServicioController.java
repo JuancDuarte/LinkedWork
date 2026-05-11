@@ -65,9 +65,29 @@ public class ServicioController {
         return solicitudService.getSolicitudesParaTrabajador(idUsuarioTrabajador);
     }
 
+    @GetMapping(path = "/listAllRequests", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<SolicitudDTO> getAllPendingRequests() {
+        return solicitudService.getTodasSolicitudesPendientes();
+    }
+
+    @GetMapping(path = "/checkOverlap/{idUsuarioTrabajador}/{fechaServicio}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Boolean> checkOverlap(
+            @PathVariable Long idUsuarioTrabajador, 
+            @PathVariable @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fechaServicio) {
+        boolean hasOverlap = solicitudService.hasActiveJobOnDate(idUsuarioTrabajador, fechaServicio);
+        return ResponseEntity.ok(hasOverlap);
+    }
+
     @PostMapping(path = "/acceptRequest/{idSolicitud}/{idUsuarioTrabajador}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public RespuestaAceptarDTO acceptRequest(@PathVariable Long idSolicitud, @PathVariable Long idUsuarioTrabajador) {
-        return solicitudService.aceptarSolicitudPorTrabajador(idSolicitud, idUsuarioTrabajador);
+    public RespuestaAceptarDTO acceptRequest(
+            @PathVariable Long idSolicitud, 
+            @PathVariable Long idUsuarioTrabajador,
+            @RequestBody(required = false) java.util.Map<String, Object> payload) {
+        java.math.BigDecimal precioContraoferta = null;
+        if(payload != null && payload.containsKey("precio")) {
+            precioContraoferta = new java.math.BigDecimal(payload.get("precio").toString());
+        }
+        return solicitudService.aceptarSolicitudPorTrabajador(idSolicitud, idUsuarioTrabajador, precioContraoferta);
     }
 
     @PutMapping(path = "/editSolicitud/{idSolicitud}/{idUsuario}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -75,10 +95,10 @@ public class ServicioController {
         return solicitudService.editarSolicitud(solicitud, idSolicitud, idUsuario);
     }
     @DeleteMapping(path = "/deleteSolicitud/{idSolicitud}/{idUsuario}")
-    public ResponseEntity<String> deleteSolicitudByUsuarioId(@PathVariable Long idSolicitud, @PathVariable Long idUsuario) {
+    public ResponseEntity<?> deleteSolicitudByUsuarioId(@PathVariable Long idSolicitud, @PathVariable Long idUsuario) {
         try {
             solicitudService.deleteSolicitudByUsuarioId(idSolicitud, idUsuario);
-            return ResponseEntity.ok("Solicitud eliminada correctamente.");
+            return ResponseEntity.ok().body(java.util.Map.of("mensaje", "Solicitud eliminada correctamente."));
         } catch (RuntimeException ex) {
             String message = ex.getMessage() == null ? "No se pudo eliminar la solicitud." : ex.getMessage();
             if (message.toLowerCase().contains("no encontrada")) {

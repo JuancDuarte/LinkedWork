@@ -3,19 +3,20 @@ package com.contact.LinkedWork.dto;
 public class ListarTrabajadorDTO {
     private long idTrabajador;
     private long idUsuario;
-    private String nombreUsusario;
+    private String nombreUsuario;
     private String nombreArea;
     private long experiencia;
     private long puntajeTotal;
     private String nivel;
     private String departamento;
     private String ciudad;
+    private boolean esFarming;
 
     public ListarTrabajadorDTO() {
     }
-    public ListarTrabajadorDTO(long idTrabajador, String nombreUsusario, String nombreArea, long experiencia, long puntajeTotal) {
+    public ListarTrabajadorDTO(long idTrabajador, String nombreUsuario, String nombreArea, long experiencia, long puntajeTotal) {
         this.idTrabajador = idTrabajador;
-        this.nombreUsusario = nombreUsusario;
+        this.nombreUsuario = nombreUsuario;
         this.nombreArea = nombreArea;
         this.experiencia = experiencia;
         this.puntajeTotal = puntajeTotal;
@@ -32,11 +33,11 @@ public class ListarTrabajadorDTO {
     public void setIdUsuario(long idUsuario) {
         this.idUsuario = idUsuario;
     }
-    public String getNombreUsusario() {
-        return nombreUsusario;
+    public String getNombreUsuario() {
+        return nombreUsuario;
     }
-    public void setNombreUsusario(String nombreUsusario) {
-        this.nombreUsusario = nombreUsusario;
+    public void setNombreUsuario(String nombreUsuario) {
+        this.nombreUsuario = nombreUsuario;
     }
     public String getNombreArea() {
         return nombreArea;
@@ -79,6 +80,14 @@ public class ListarTrabajadorDTO {
 
     public void setCiudad(String ciudad) {
         this.ciudad = ciudad;
+    }
+
+    public boolean isEsFarming() {
+        return esFarming;
+    }
+
+    public void setEsFarming(boolean esFarming) {
+        this.esFarming = esFarming;
     }
 
 

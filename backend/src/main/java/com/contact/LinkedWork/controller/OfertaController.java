@@ -54,4 +54,9 @@ public class OfertaController {
     public RespuestaAceptarDTO aceptarOferta(@PathVariable Long idSolicitud, @PathVariable Long idOferta, @PathVariable Long idUsuario) {
         return ofertaService.aceptarOferta(idSolicitud, idOferta, idUsuario);
     }
+
+    @GetMapping(path = "/listWorkerOffers/{idUsuarioTrabajador}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<OfertaVistaDTO> listWorkerOffers(@PathVariable Long idUsuarioTrabajador) {
+        return ofertaService.listarOfertasPorTrabajador(idUsuarioTrabajador);
+    }
 }

@@ -6,6 +6,7 @@ public class CrearSolicituDto {
     private Long idUsuario;
     private Long idArea;
     private java.math.BigDecimal precio;
+    private java.time.LocalDate fechaServicio;
 
     public CrearSolicituDto() {
     }
@@ -47,5 +48,13 @@ public class CrearSolicituDto {
 
     public void setPrecio(java.math.BigDecimal precio) {
         this.precio = precio;
+    }
+
+    public java.time.LocalDate getFechaServicio() {
+        return fechaServicio;
+    }
+
+    public void setFechaServicio(java.time.LocalDate fechaServicio) {
+        this.fechaServicio = fechaServicio;
     }
 }

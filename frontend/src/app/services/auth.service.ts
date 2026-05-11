@@ -100,6 +100,16 @@ export class AuthService {
     return of(role);
   }
 
+  addAvailableRole(role: UserRole) {
+    const current = this.availableRoles();
+    if (!current.includes(role)) {
+      const updated = [...current, role];
+      this.availableRoles.set(updated);
+      this.availableRolesSubject.next(updated);
+      localStorage.setItem(this.ROLES_STORAGE_KEY, JSON.stringify(updated));
+    }
+  }
+
   setAvailableRoles(roles: UserRole[]) {
     const valid = roles.filter(role => role === 'ROLE_USUARIO' || role === 'ROLE_TRABAJADOR');
     const unique = Array.from(new Set(valid));

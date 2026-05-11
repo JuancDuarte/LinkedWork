@@ -2,6 +2,7 @@ package com.contact.LinkedWork.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -130,8 +131,11 @@ public class CalificacionService {
     }
 
     public List<CalificacionDTO> listarCalificacionesTrabajador(Long idUsuarioTrabajador) {
-        Trabajador trabajador = trabajadorRepository.findByUsuario_IdUsuario(idUsuarioTrabajador)
-                .orElseThrow(() -> new RuntimeException("Perfil de trabajador no encontrado."));
+        Optional<Trabajador> trabajadorOpt = trabajadorRepository.findByUsuario_IdUsuario(idUsuarioTrabajador);
+        if (trabajadorOpt.isEmpty()) {
+            return List.of();
+        }
+        Trabajador trabajador = trabajadorOpt.get();
 
         return calificacionRepository.findByTrabajador_IdTrabajador(trabajador.getIdTrabajador()).stream()
                 .map(c -> {

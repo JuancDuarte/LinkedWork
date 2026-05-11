@@ -30,7 +30,7 @@ public class Calificacion {
     @JsonIgnore
     private Solicitud solicitud;
 
-    @Column(name = "Puntuacion")
+    @Column(name = "puntuacion")
     private Long puntuacion;
 
     @Column(name = "Comentario", columnDefinition = "TEXT")

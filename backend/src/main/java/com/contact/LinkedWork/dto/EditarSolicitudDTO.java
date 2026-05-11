@@ -6,14 +6,16 @@ public class EditarSolicitudDTO {
 
     private String titulo;
     private String descripcion;
+    private java.time.LocalDate fechaServicio;
 
     public EditarSolicitudDTO() {
     }
-    public EditarSolicitudDTO(Long idSolicitud, Long idUsuario, String titulo, String descripcion) {
+    public EditarSolicitudDTO(Long idSolicitud, Long idUsuario, String titulo, String descripcion, java.time.LocalDate fechaServicio) {
         this.idSolicitud = idSolicitud;
         this.idUsuario = idUsuario;
         this.titulo = titulo;
         this.descripcion = descripcion;
+        this.fechaServicio = fechaServicio;
     }
     public Long getIdSolicitud() {
         return idSolicitud;
@@ -38,6 +40,14 @@ public class EditarSolicitudDTO {
     }
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
+    }
+
+    public java.time.LocalDate getFechaServicio() {
+        return fechaServicio;
+    }
+
+    public void setFechaServicio(java.time.LocalDate fechaServicio) {
+        this.fechaServicio = fechaServicio;
     }
 
 }

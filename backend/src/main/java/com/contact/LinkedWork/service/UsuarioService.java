@@ -58,6 +58,7 @@ public class UsuarioService {
         return switch (roleName) {
             case "ROLE_USUARIO" -> "Usuario";
             case "ROLE_TRABAJADOR" -> "Trabajador";
+            case "ROLE_FARMING" -> "FARMING";
             default -> roleName;
         };
     }
@@ -66,6 +67,7 @@ public class UsuarioService {
         return switch (dbRoleName) {
             case "Usuario" -> "ROLE_USUARIO";
             case "Trabajador" -> "ROLE_TRABAJADOR";
+            case "FARMING" -> "ROLE_FARMING";
             default -> dbRoleName;
         };
     }
@@ -92,6 +94,7 @@ public class UsuarioService {
 
 
     public UsuarioDTO SeeProfile(Long idUsuario) {
+        System.out.println("[UsuarioService] Requested profile for ID: " + idUsuario);
         Usuario usuario = usuarioRepository.findByidUsuario(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idUsuario));
         
@@ -124,6 +127,7 @@ public class UsuarioService {
                     if (trabajador.getCiudad() != null) {
                         trabajadorDTO.setCiudad(trabajador.getCiudad().getNombre());
                     }
+                    trabajadorDTO.setEsFarming(trabajador.getEsFarming() != null && trabajador.getEsFarming());
                 });
         if (trabajadorDTO.getIdTrabajador() != null) {
             usuarioDTO.setTrabajador(trabajadorDTO);
@@ -142,7 +146,7 @@ public class UsuarioService {
                     ListarTrabajadorDTO trabajadorDTO = new ListarTrabajadorDTO();
                     trabajadorDTO.setIdTrabajador(trabajador.getIdTrabajador());
                     trabajadorDTO.setIdUsuario(trabajador.getUsuario().getIdUsuario());
-                    trabajadorDTO.setNombreUsusario(trabajador.getUsuario().getNombreUsuario());
+                    trabajadorDTO.setNombreUsuario(trabajador.getUsuario().getNombreUsuario());
                     if (trabajador.getArea() != null) {
                         trabajadorDTO.setNombreArea(trabajador.getArea().getNombre());
                     }
@@ -158,6 +162,7 @@ public class UsuarioService {
                     if (trabajador.getCiudad() != null) {
                         trabajadorDTO.setCiudad(trabajador.getCiudad().getNombre());
                     }
+                    trabajadorDTO.setEsFarming(trabajador.getEsFarming() != null && trabajador.getEsFarming());
                     return trabajadorDTO;
                 })
                 .toList();
@@ -172,9 +177,9 @@ public class UsuarioService {
         return "Aprendiz";
     }
 
-    public UsuarioDTO createUser(String nombre, String email, String password, List<String> roleNames, Long areaId, String descripcion, Long experiencia, Integer idDepartamento, Integer idCiudad) {
+    public UsuarioDTO createUser(String nombreUsuario, String nombre, String email, String password, List<String> roleNames, Long areaId, String descripcion, Long experiencia, Integer idDepartamento, Integer idCiudad) {
         Usuario usuario = new Usuario();
-        usuario.setNombreUsuario(nombre);
+        usuario.setNombreUsuario(nombreUsuario);
         usuario.setNombreCompleto(nombre);
         usuario.setEmail(email);
         usuario.setClaveHash(password); // Note: should hash, but for now plain
@@ -239,6 +244,7 @@ public class UsuarioService {
             if (trabajador.getCiudad() != null) {
                 trabajadorDTO.setCiudad(trabajador.getCiudad().getNombre());
             }
+            trabajadorDTO.setEsFarming(false);
             usuarioDTO.setTrabajador(trabajadorDTO);
         }
 
@@ -253,12 +259,21 @@ public class UsuarioService {
         Optional<Usuario> usuarioEncontrado;
         if (loginDTO.getIdUsuario() != null) {
             usuarioEncontrado = usuarioRepository.findByidUsuario(loginDTO.getIdUsuario());
-        } else if (loginDTO.getNombreUsuario() != null && !loginDTO.getNombreUsuario().isBlank()) {
-            usuarioEncontrado = usuarioRepository.findByNombreUsuario(loginDTO.getNombreUsuario());
-        } else if (loginDTO.getEmail() != null && !loginDTO.getEmail().isBlank()) {
-            usuarioEncontrado = usuarioRepository.findByEmail(loginDTO.getEmail());
         } else {
-            throw new RuntimeException("Debes enviar idUsuario, nombreUsuario o email");
+            String identifier = (loginDTO.getNombreUsuario() != null && !loginDTO.getNombreUsuario().isBlank()) 
+                ? loginDTO.getNombreUsuario() 
+                : loginDTO.getEmail();
+
+            if (identifier != null && !identifier.isBlank()) {
+                // Intenta buscar por nombre de usuario (Cédula) primero
+                usuarioEncontrado = usuarioRepository.findByNombreUsuario(identifier);
+                // Si no lo encuentra, intenta buscar por Email
+                if (usuarioEncontrado.isEmpty()) {
+                    usuarioEncontrado = usuarioRepository.findByEmail(identifier);
+                }
+            } else {
+                throw new RuntimeException("Debes enviar idUsuario, nombreUsuario o email");
+            }
         }
 
         Usuario usuario = usuarioEncontrado.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -303,9 +318,9 @@ public class UsuarioService {
                 trabajadorDTO.setAreaId(trabajador.getArea().getIdArea());
                 trabajadorDTO.setAreaNombre(trabajador.getArea().getNombre());
                 }
-                trabajadorDTO.setDescripcion(trabajador.getDescripcion());
                 trabajadorDTO.setExperiencia(trabajador.getExperiencia());
                 trabajadorDTO.setPuntuacion(trabajador.getPuntuacion());
+                trabajadorDTO.setEsFarming(trabajador.getEsFarming() != null && trabajador.getEsFarming());
                 usuarioDTO.setTrabajador(trabajadorDTO);
             });
         return usuarioDTO;

@@ -12,540 +12,195 @@ import { AuthService } from '../services/auth.service';
   standalone: true,
   imports: [NgIf, NgForOf, FormsModule, RouterLink],
   template: `
-    <section class="active-jobs-page">
-      <div class="page-header">
-        <div class="header-content">
-          <p class="eyebrow">Mi Actividad</p>
-          <h1 class="page-title">Trabajos en curso</h1>
-          <p class="page-description">Administra tus servicios activos, finaliza contratos y califica la experiencia con los profesionales.</p>
+    <div class="active-jobs-layout">
+      <!-- Premium Header -->
+      <header class="jobs-premium-header">
+        <div class="header-overlay"></div>
+        <div class="header-content-premium">
+           <div class="badge-activity">MI ACTIVIDAD</div>
+           <h1 class="main-title">Trabajos en curso</h1>
+           <p class="subtitle">Gestiona tus servicios activos y califica tu experiencia profesional.</p>
         </div>
-        <div class="header-decoration">
-          <div class="deco-blob"></div>
+      </header>
+
+      <div class="container-premium">
+        <!-- Messages -->
+        <div class="status-msg error" *ngIf="errorMessage()">{{ errorMessage() }}</div>
+        <div class="status-msg success" *ngIf="successMessage()">{{ successMessage() }}</div>
+
+        <!-- Loading State -->
+        <div class="loading-premium" *ngIf="loading()">
+           <div class="spinner"></div>
+           <p>Sincronizando con el servidor...</p>
+        </div>
+
+        <!-- Jobs Grid -->
+        <div class="jobs-grid-premium" *ngIf="!loading() && activeJobs().length > 0">
+           <div *ngFor="let job of activeJobs()" class="job-card-premium">
+              <div class="card-header-premium">
+                 <span class="job-tag">#{{ job.idSolicitud }}</span>
+                 <div class="status-indicator">
+                    <span class="pulse"></span>
+                    EN PROGRESO
+                 </div>
+              </div>
+              
+              <div class="card-body-premium">
+                 <h3 class="job-title-premium">{{ job.titulo }}</h3>
+                 <p class="job-desc-premium">{{ job.descripcion }}</p>
+                 
+                 <div class="job-meta-grid">
+                    <div class="meta-box">
+                       <span class="meta-label">Categoría</span>
+                       <span class="meta-value">{{ job.nombreArea }}</span>
+                    </div>
+                    <div class="meta-box">
+                       <span class="meta-label">{{ auth.role() === 'ROLE_TRABAJADOR' ? 'Cliente' : 'Profesional' }}</span>
+                       <span class="meta-value highlight">{{ auth.role() === 'ROLE_TRABAJADOR' ? job.nombreUsuario : job.nombreTrabajador }}</span>
+                    </div>
+                 </div>
+              </div>
+
+              <div class="card-actions-premium" *ngIf="auth.role() === 'ROLE_USUARIO'">
+                 <button class="btn-premium-action" (click)="finishJob(job.idSolicitud)">
+                    Finalizar y Calificar
+                 </button>
+              </div>
+           </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state-premium" *ngIf="!loading() && activeJobs().length === 0">
+           <div class="empty-icon-box">📂</div>
+           <h2>No tienes trabajos activos</h2>
+           <p>Cuando aceptes una oferta o un técnico acepte tu solicitud, aparecerán aquí para que puedas gestionarlos.</p>
+           <button class="btn-lw-primary mt-3" routerLink="/requests">Explorar Solicitudes</button>
         </div>
       </div>
+    </div>
 
-      <div *ngIf="loading()" class="loading-state">
-        <p>Actualizando lista de trabajos...</p>
-      </div>
+    <!-- Modals -->
+    <div class="modal-overlay-premium" *ngIf="showConfirmModal()">
+       <div class="modal-card-finish">
+          <div class="modal-icon-big">🏁</div>
+          <h3>¿Deseas finalizar el trabajo?</h3>
+          <p>Confirmarás que el servicio ha sido completado satisfactoriamente. Esta acción habilitará la calificación.</p>
+          <div class="modal-footer-btns">
+             <button class="btn-ghost-cancel" (click)="cancelFinish()">Volver</button>
+             <button class="btn-confirm-finish" (click)="confirmFinish()">Sí, Finalizar</button>
+          </div>
+       </div>
+    </div>
 
-      <div class="status" *ngIf="errorMessage()" class="status error">{{ errorMessage() }}</div>
-      <div class="status" *ngIf="successMessage()" class="status">{{ successMessage() }}</div>
-
-      <div class="jobs-container" *ngIf="!loading()">
-        <div class="card" *ngIf="activeJobs().length > 0; else noJobs">
-          <div class="jobs-grid">
-            <div *ngFor="let job of activeJobs()" class="job-card">
-              <div class="job-main">
-                <div class="job-header">
-                  <span class="job-id">#{{ job.idSolicitud }}</span>
-                  <span class="job-status-tag">En progreso</span>
+    <!-- Rating Modal -->
+    <div class="modal-overlay-premium" *ngIf="ratingSolicitudId()">
+       <div class="modal-card-rating">
+          <div class="modal-header-rating">
+             <span class="icon-stars">⭐</span>
+             <h2>Califica tu experiencia</h2>
+          </div>
+          <div class="modal-body-rating">
+             <form (ngSubmit)="submitRating()">
+                <div class="stars-selector">
+                   <input type="radio" id="s5" name="st" [value]="5" [(ngModel)]="ratingForm.puntuacion" /><label for="s5">★</label>
+                   <input type="radio" id="s4" name="st" [value]="4" [(ngModel)]="ratingForm.puntuacion" /><label for="s4">★</label>
+                   <input type="radio" id="s3" name="st" [value]="3" [(ngModel)]="ratingForm.puntuacion" /><label for="s3">★</label>
+                   <input type="radio" id="s2" name="st" [value]="2" [(ngModel)]="ratingForm.puntuacion" /><label for="s2">★</label>
+                   <input type="radio" id="s1" name="st" [value]="1" [(ngModel)]="ratingForm.puntuacion" /><label for="s1">★</label>
                 </div>
-                <h3>{{ job.titulo }}</h3>
-                <p>{{ job.descripcion }}</p>
                 
-                <div class="job-details">
-                  <div class="detail-item">
-                    <span class="detail-label">Área</span>
-                    <span class="detail-value">{{ job.nombreArea }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">{{ auth.role() === 'ROLE_TRABAJADOR' ? 'Cliente' : 'Técnico' }}</span>
-                    <span class="detail-value highlight">
-                      {{ auth.role() === 'ROLE_TRABAJADOR' ? job.nombreUsuario : job.nombreTrabajador }}
-                    </span>
-                  </div>
+                <div class="form-group-premium">
+                   <label>Comentario adicional</label>
+                   <textarea [(ngModel)]="ratingForm.comentario" name="com" class="textarea-premium" placeholder="Escribe tu reseña aquí..."></textarea>
                 </div>
-              </div>
 
-              <div class="job-footer" *ngIf="auth.role() === 'ROLE_USUARIO'">
-                <button class="btn btn-primary" (click)="finishJob(job.idSolicitud)">
-                  Marcar como Finalizado
+                <button type="submit" class="btn-submit-premium" [disabled]="loading()">
+                   {{ loading() ? 'Enviando...' : 'Publicar Calificación' }}
                 </button>
-              </div>
-            </div>
+                <button type="button" class="btn-skip-premium" (click)="ratingSolicitudId.set(null)">Omitir</button>
+             </form>
           </div>
-        </div>
-
-        <ng-template #noJobs>
-          <div class="empty-state-container">
-            <div class="empty-state-card">
-              <div class="empty-illustration">
-                <div class="circle-bg"></div>
-                <span class="icon">📂</span>
-              </div>
-              <h2>Sin trabajos activos</h2>
-              <p>Parece que no tienes contratos en curso en este momento. Cuando aceptes una solicitud o un técnico acepte la tuya, aparecerá aquí.</p>
-              <div class="empty-actions">
-                <button class="btn btn-primary" routerLink="/requests">
-                  Explorar Solicitudes
-                </button>
-              </div>
-            </div>
-          </div>
-        </ng-template>
-      </div>
-
-      <!-- Custom Confirmation Modal -->
-      <div class="modal-overlay" *ngIf="showConfirmModal()">
-        <div class="modal-card confirm-modal">
-          <div class="modal-icon">🏁</div>
-          <h2>¿Finalizar trabajo?</h2>
-          <p>Al confirmar, marcarás este servicio como completado. Esta acción no se puede deshacer.</p>
-          <div class="modal-actions-horizontal">
-            <button type="button" class="btn btn-outline" (click)="cancelFinish()">Cancelar</button>
-            <button type="button" class="btn btn-finish" (click)="confirmFinish()">Sí, finalizar trabajo</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Rating Modal -->
-      <div class="modal-overlay" *ngIf="ratingSolicitudId()">
-        <div class="modal-card glass-modal">
-          <div class="modal-icon-small">✨</div>
-          <h2>Calificar Servicio</h2>
-          <p class="subtitle">Tu opinión ayuda a mejorar la comunidad de LinkedWork.</p>
-          
-          <form (ngSubmit)="submitRating()" class="rating-form">
-            <div class="star-rating">
-              <input type="radio" id="star5" name="rating" [value]="5" [(ngModel)]="ratingForm.puntuacion" /><label for="star5">★</label>
-              <input type="radio" id="star4" name="rating" [value]="4" [(ngModel)]="ratingForm.puntuacion" /><label for="star4">★</label>
-              <input type="radio" id="star3" name="rating" [value]="3" [(ngModel)]="ratingForm.puntuacion" /><label for="star3">★</label>
-              <input type="radio" id="star2" name="rating" [value]="2" [(ngModel)]="ratingForm.puntuacion" /><label for="star2">★</label>
-              <input type="radio" id="star1" name="rating" [value]="1" [(ngModel)]="ratingForm.puntuacion" /><label for="star1">★</label>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Tu experiencia</label>
-              <textarea [(ngModel)]="ratingForm.comentario" name="comentario" class="form-input custom-textarea" rows="4" placeholder="Cuéntanos qué tal fue el servicio, puntualidad y calidad..."></textarea>
-            </div>
-
-            <div class="modal-actions-vertical">
-              <button type="submit" class="btn btn-submit-rating" [disabled]="loading()">
-                {{ loading() ? 'Enviando...' : 'Enviar Calificación' }}
-              </button>
-              <button type="button" class="btn btn-skip" (click)="ratingSolicitudId.set(null)">Omitir por ahora</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </section>
+       </div>
+    </div>
   `,
   styles: [`
-    .active-jobs-page {
-      max-width: 1000px;
-      margin: 2rem auto;
-      padding: 0 1.5rem;
-      animation: fadeIn 0.4s ease-out;
+    .active-jobs-layout { min-height: 100vh; background: #f8fafc; padding-bottom: 4rem; }
+    
+    .jobs-premium-header { 
+      height: 280px; background: linear-gradient(135deg, #0a66c2 0%, #004182 100%); position: relative; display: flex; align-items: center; justify-content: center; text-align: center; color: white;
     }
+    .header-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('https://www.transparenttextures.com/patterns/cubes.png'); opacity: 0.1; }
+    .header-content-premium { position: relative; z-index: 2; padding: 0 1rem; }
+    .badge-activity { background: rgba(255,255,255,0.2); display: inline-block; padding: 4px 12px; border-radius: 2rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 1px; margin-bottom: 1rem; }
+    .main-title { font-size: 2.5rem; font-weight: 800; margin: 0; }
+    .subtitle { font-size: 1.1rem; opacity: 0.9; margin-top: 0.5rem; }
 
-      .page-header {
-        margin-bottom: 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 2.5rem 3rem;
-        background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%);
-        border-radius: 2.5rem;
-        border: 1px solid #ede9fe;
-        position: relative;
-        overflow: hidden;
-      }
+    .container-premium { max-width: 1100px; margin: -50px auto 0; padding: 0 1.5rem; position: relative; z-index: 3; }
+    
+    .status-msg { padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem; font-weight: 600; text-align: center; }
+    .status-msg.error { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .status-msg.success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
 
-      .header-content {
-        position: relative;
-        z-index: 2;
-      }
+    .loading-premium { text-align: center; padding: 4rem; color: #64748b; }
+    .spinner { width: 40px; height: 40px; border: 4px solid #f1f5f9; border-top: 4px solid #0a66c2; border-radius: 50%; margin: 0 auto 1rem; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-      .eyebrow {
-        font-size: 0.85rem;
-        font-weight: 800;
-        color: #7c3aed;
-        text-transform: uppercase;
-        letter-spacing: 0.15em;
-        margin-bottom: 0.75rem;
-      }
+    .jobs-grid-premium { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
+    .job-card-premium { background: white; border-radius: 1rem; border: 1px solid #e2e8f0; padding: 1.5rem; transition: 0.3s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+    .job-card-premium:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-color: #0a66c2; }
+    
+    .card-header-premium { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .job-tag { font-size: 0.75rem; font-weight: 800; color: #94a3b8; }
+    .status-indicator { display: flex; align-items: center; gap: 0.5rem; font-size: 0.7rem; font-weight: 800; color: #0369a1; background: #e0f2fe; padding: 4px 10px; border-radius: 2rem; }
+    .pulse { width: 8px; height: 8px; background: #0ea5e9; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(14, 165, 233, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); } }
 
-      .page-title {
-        font-size: 2.5rem;
-        font-weight: 900;
-        color: #1e1b4b;
-        letter-spacing: -0.04em;
-        margin: 0;
-        line-height: 1;
-      }
+    .job-title-premium { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0 0 0.75rem; }
+    .job-desc-premium { font-size: 0.95rem; color: #64748b; line-height: 1.5; margin-bottom: 1.5rem; flex: 1; }
+    
+    .job-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; }
+    .meta-box { display: flex; flex-direction: column; }
+    .meta-label { font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+    .meta-value { font-size: 0.9rem; font-weight: 600; color: #334155; }
+    .meta-value.highlight { color: #0a66c2; }
 
-      .page-description {
-        color: #4b5563;
-        font-size: 1.1rem;
-        margin-top: 1rem;
-        max-width: 600px;
-        line-height: 1.6;
-      }
+    .card-actions-premium { margin-top: 1.5rem; }
+    .btn-premium-action { width: 100%; background: #0a66c2; color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
+    .btn-premium-action:hover { background: #004182; }
 
-    .header-decoration {
-      position: absolute;
-      right: -5%;
-      top: -20%;
-      z-index: 1;
-    }
+    .empty-state-premium { background: white; border: 2px dashed #e2e8f0; border-radius: 1.5rem; padding: 4rem 2rem; text-align: center; }
+    .empty-icon-box { font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; }
+    .empty-state-premium h2 { margin: 0 0 0.5rem; color: #1e293b; }
+    .empty-state-premium p { color: #64748b; margin-bottom: 1.5rem; }
+    
+    .btn-lw-primary { background: #0a66c2; color: white; border: none; padding: 0.75rem 2rem; border-radius: 2rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
 
-    .deco-blob {
-      width: 300px;
-      height: 300px;
-      background: radial-gradient(circle, rgba(124, 58, 237, 0.1) 0%, rgba(124, 58, 237, 0) 70%);
-      filter: blur(40px);
-      border-radius: 50%;
-    }
+    /* Modal Overlay */
+    .modal-overlay-premium { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+    .modal-card-finish, .modal-card-rating { background: white; width: 90%; max-width: 450px; border-radius: 1.5rem; padding: 2.5rem; text-align: center; animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-    .jobs-grid {
-      display: grid;
-      gap: 1.5rem;
-      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    }
+    .modal-icon-big { font-size: 4rem; margin-bottom: 1.5rem; }
+    .modal-footer-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem; }
+    .btn-ghost-cancel { background: #f1f5f9; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 700; color: #475569; cursor: pointer; }
+    .btn-confirm-finish { background: #10b981; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 700; color: white; cursor: pointer; }
 
-    .job-card {
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 1.25rem;
-      padding: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      transition: all 0.3s ease;
-    }
-
-    .job-card:hover {
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-      border-color: #cbd5e1;
-      transform: translateY(-2px);
-    }
-
-    .job-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
-    .job-id {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #94a3b8;
-      text-transform: uppercase;
-    }
-
-    .job-status-tag {
-      padding: 0.35rem 0.75rem;
-      background: #f0f9ff;
-      color: #0369a1;
-      border-radius: 2rem;
-      font-size: 0.75rem;
-      font-weight: 700;
-    }
-
-    .job-card h3 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #1e293b;
-      margin: 0 0 0.5rem;
-    }
-
-    .job-card p {
-      color: #64748b;
-      font-size: 0.95rem;
-      line-height: 1.5;
-      margin-bottom: 1.5rem;
-    }
-
-    .job-details {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      padding-top: 1.25rem;
-      border-top: 1px dashed #e2e8f0;
-      margin-bottom: 1.5rem;
-    }
-
-    .detail-item {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .detail-label {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      font-weight: 700;
-      color: #94a3b8;
-      letter-spacing: 0.05em;
-    }
-
-    .detail-value {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #334155;
-    }
-
-    .detail-value.highlight {
-      color: #6c2bd9;
-    }
-
-    .job-footer {
-      display: flex;
-      gap: 1rem;
-    }
-
-    .btn {
-      padding: 0.8rem 1.5rem;
-      border-radius: 1rem;
-      font-weight: 700;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      border: none;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
-      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-    }
-
-    .btn-outline {
-      background: #f1f5f9;
-      color: #475569;
-    }
-
-    .btn-outline:hover {
-      background: #e2e8f0;
-      color: #1e293b;
-    }
-
-    .btn-finish {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
-    }
-
-    .btn-finish:hover {
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-    }
-
-    .btn-submit-rating {
-      background: #7c3aed;
-      color: white;
-      padding: 1.1rem;
-      font-size: 1.1rem;
-      box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3);
-    }
-
-    .btn-submit-rating:hover {
-      background: #6d28d9;
-      transform: translateY(-2px);
-    }
-
-    .btn-skip {
-      background: transparent;
-      color: #94a3b8;
-      font-size: 0.9rem;
-      padding: 0.5rem;
-    }
-
-    .btn-skip:hover {
-      color: #64748b;
-      text-decoration: underline;
-    }
-
-    /* Modal Enhancements */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(12px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 1.5rem;
-    }
-
-    .modal-card {
-      background: #ffffff;
-      width: 100%;
-      max-width: 480px;
-      padding: 3rem;
-      border-radius: 2.5rem;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      position: relative;
-      overflow: hidden;
-      animation: modalSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .glass-modal {
-      background: rgba(255, 255, 255, 0.98);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .modal-icon { font-size: 4rem; margin-bottom: 1.5rem; display: block; }
-    .modal-icon-small { font-size: 2.5rem; margin-bottom: 1rem; }
-
-    .subtitle {
-      color: #64748b;
-      font-size: 1.05rem;
-      line-height: 1.5;
-      margin-bottom: 2.5rem;
-    }
-
-    .star-rating {
-      display: flex;
-      flex-direction: row-reverse;
-      justify-content: center;
-      gap: 0.5rem;
-      margin-bottom: 2.5rem;
-    }
-
-    .star-rating input { display: none; }
-    .star-rating label {
-      font-size: 3.5rem;
-      color: #f1f5f9;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    .star-rating input:checked ~ label,
-    .star-rating label:hover,
-    .star-rating label:hover ~ label {
-      color: #ffb800;
-      text-shadow: 0 0 15px rgba(255, 184, 0, 0.4);
-    }
-
-    .form-group {
-      margin-bottom: 1.5rem;
-      text-align: left;
-    }
-
-    .form-label {
-      display: block;
-      font-weight: 800;
-      font-size: 0.9rem;
-      color: #334155;
-      margin-bottom: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .custom-textarea {
-      width: 100%;
-      padding: 1.25rem;
-      border: 2px solid #f1f5f9;
-      border-radius: 1.25rem;
-      font-size: 1rem;
-      background: #f8fafc;
-      font-family: inherit;
-      color: #1e293b;
-      resize: none;
-      transition: all 0.2s;
-    }
-
-    .custom-textarea:focus {
-      outline: none;
-      border-color: #6366f1;
-      background: white;
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-    }
-
-    .modal-actions-horizontal {
-      display: grid;
-      grid-template-columns: 1fr 1.5fr;
-      gap: 1rem;
-      margin-top: 2rem;
-    }
-
-    .modal-actions-vertical {
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-      margin-top: 2rem;
-    }
-
-    @keyframes modalSlideUp {
-      from { opacity: 0; transform: translateY(40px) scale(0.92); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    .empty-state-container {
-      display: flex;
-      justify-content: center;
-      padding: 4rem 1rem;
-    }
-
-    .empty-state-card {
-      background: white;
-      border: 2px dashed #e2e8f0;
-      border-radius: 2rem;
-      padding: 2.5rem 1.5rem;
-      max-width: 460px;
-      text-align: center;
-      transition: all 0.3s ease;
-    }
-
-    .empty-state-card:hover {
-      border-color: #7c3aed;
-      background: #fdfcff;
-    }
-
-    .empty-illustration {
-      position: relative;
-      margin-bottom: 1.5rem;
-      display: flex;
-      justify-content: center;
-    }
-
-    .circle-bg {
-      position: absolute;
-      width: 70px;
-      height: 70px;
-      background: #f1f5f9;
-      border-radius: 50%;
-      z-index: 1;
-    }
-
-    .empty-illustration .icon {
-      font-size: 3rem;
-      position: relative;
-      z-index: 2;
-      filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
-    }
-
-    .empty-state-card h2 {
-      font-size: 1.5rem;
-      font-weight: 900;
-      color: #0f172a;
-      margin-bottom: 0.5rem;
-    }
-
-    .empty-state-card p {
-      color: #64748b;
-      font-size: 1rem;
-      line-height: 1.5;
-      margin-bottom: 1.5rem;
-    }
-
-    .empty-actions {
-      display: flex;
-      justify-content: center;
-    }
-
+    .modal-header-rating { margin-bottom: 2rem; }
+    .icon-stars { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+    .stars-selector { display: flex; flex-direction: row-reverse; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; }
+    .stars-selector input { display: none; }
+    .stars-selector label { font-size: 3rem; color: #f1f5f9; cursor: pointer; transition: 0.2s; }
+    .stars-selector input:checked ~ label, .stars-selector label:hover, .stars-selector label:hover ~ label { color: #f59e0b; }
+    
+    .form-group-premium { text-align: left; margin-bottom: 1.5rem; }
+    .form-group-premium label { display: block; font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; }
+    .textarea-premium { width: 100%; height: 100px; padding: 0.75rem; border: 1.5px solid #e2e8f0; border-radius: 0.75rem; resize: none; outline: none; box-sizing: border-box; }
+    .btn-submit-premium { width: 100%; background: #0a66c2; color: white; border: none; padding: 1rem; border-radius: 0.75rem; font-weight: 800; font-size: 1rem; cursor: pointer; }
+    .btn-skip-premium { background: transparent; border: none; color: #94a3b8; font-weight: 600; margin-top: 1rem; cursor: pointer; }
+    
     @media (max-width: 600px) {
-      .jobs-grid { grid-template-columns: 1fr; }
+      .jobs-grid-premium { grid-template-columns: 1fr; }
+      .modal-footer-btns { grid-template-columns: 1fr; }
     }
   `]
 })

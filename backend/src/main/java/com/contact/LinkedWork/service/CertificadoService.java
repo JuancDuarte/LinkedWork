@@ -12,6 +12,7 @@ import com.contact.LinkedWork.model.Certificado;
 import com.contact.LinkedWork.model.Trabajador;
 import com.contact.LinkedWork.repository.CertificadoRepository;
 import com.contact.LinkedWork.repository.TrabajadorRepository;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service("CertificadoService")
 @Transactional
@@ -34,14 +35,15 @@ public class CertificadoService {
     private PuntuacionService puntuacionService;
 
     public CertificadoDTO agregarCertificado(CertificadoDTO certificadoDTO, Long idTrabajador) {
-        // Intentamos localizar al trabajador por su id (idTrabajador). Si no existe,
-        // también intentamos interpretarlo como id de usuario y buscar por usuario.
+        return this.agregarCertificadoConArchivo(certificadoDTO, idTrabajador, null);
+    }
+
+    public CertificadoDTO agregarCertificadoConArchivo(CertificadoDTO certificadoDTO, Long idTrabajador, MultipartFile file) {
         Trabajador trabajador = trabajadorRepository.findById(idTrabajador).orElse(null);
         if (trabajador == null) {
             trabajador = trabajadorRepository.findByUsuario_IdUsuario(idTrabajador).orElse(null);
         }
         if (trabajador == null) {
-            // Si aún no existe, intentamos crear un trabajador ligado al usuario con ese id.
             var usuarioOpt = usuarioRepository.findByidUsuario(idTrabajador);
             if (usuarioOpt.isPresent()) {
                 Trabajador nuevo = new Trabajador();
@@ -54,13 +56,22 @@ public class CertificadoService {
         }
 
         Certificado certificado = new Certificado(trabajador, certificadoDTO.getNombre(), certificadoDTO.getEntidad());
-        certificadoRepository.save(certificado);
+        certificado.setDescripcion(certificadoDTO.getDescripcion());
+        
+        if (file != null && !file.isEmpty()) {
+            // En un entorno real, guardaríamos el archivo en disco o S3.
+            // Por ahora guardamos el nombre original como URL simulada.
+            certificado.setUrlArchivo("uploads/certs/" + file.getOriginalFilename());
+        }
 
-        // Didáctico: automáticamente aprobar y otorgar 50 puntos
+        certificadoRepository.save(certificado);
         aprobarCertificado(certificado.getIdCertificado(), 50);
 
         certificadoDTO.setIdCertificado(certificado.getIdCertificado().intValue());
         certificadoDTO.setIdTrabajador(idTrabajador.intValue());
+        if (certificado.getUrlArchivo() != null) {
+            certificadoDTO.setUrlArchivo(certificado.getUrlArchivo());
+        }
         return certificadoDTO;
     }
 

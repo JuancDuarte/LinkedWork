@@ -14,7 +14,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.contact.LinkedWork.dto.CertificadoDTO;
 import com.contact.LinkedWork.service.CertificadoService;
@@ -31,6 +34,20 @@ public class CertificadoController {
     @PostMapping(path="/addCertificado/{idTrabajador}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public CertificadoDTO addCertificado(@RequestBody CertificadoDTO certificadoDTO, @PathVariable Long idTrabajador) {
         return certificadoService.agregarCertificado(certificadoDTO, idTrabajador);
+    }
+
+    @PostMapping(path="/addCertificadoFile/{idTrabajador}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public CertificadoDTO addCertificadoWithFile(
+            @RequestParam("nombre") String nombre,
+            @RequestParam("entidad") String entidad,
+            @RequestParam("descripcion") String descripcion,
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @PathVariable Long idTrabajador) {
+        CertificadoDTO dto = new CertificadoDTO();
+        dto.setNombre(nombre);
+        dto.setEntidad(entidad);
+        dto.setDescripcion(descripcion);
+        return certificadoService.agregarCertificadoConArchivo(dto, idTrabajador, file);
     }
 
     @GetMapping(path = "/listCertificados/{idTrabajador}", produces = MediaType.APPLICATION_JSON_VALUE)

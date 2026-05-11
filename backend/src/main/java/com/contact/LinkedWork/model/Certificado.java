@@ -37,6 +37,9 @@ public class Certificado {
     @Column(name = "PuntosOtorgados")
     private Integer puntosOtorgados = 0;
 
+    @Column(name = "url_archivo", length = 255)
+    private String urlArchivo;
+
     public Certificado() {
     }
 
@@ -108,5 +111,13 @@ public class Certificado {
 
     public void setPuntosOtorgados(Integer puntosOtorgados) {
         this.puntosOtorgados = puntosOtorgados;
+    }
+
+    public String getUrlArchivo() {
+        return urlArchivo;
+    }
+
+    public void setUrlArchivo(String urlArchivo) {
+        this.urlArchivo = urlArchivo;
     }
 }

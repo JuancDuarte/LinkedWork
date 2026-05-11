@@ -41,6 +41,9 @@ public class Solicitud {
     @Column(name = "Precio", precision = 12, scale = 2)
     private java.math.BigDecimal precio;
 
+    @Column(name = "FechaServicio")
+    private java.time.LocalDate fechaServicio;
+
     @OneToMany(mappedBy = "solicitud", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<SolicitudHistorial> historiales = new HashSet<>();
 
@@ -124,6 +127,14 @@ public class Solicitud {
 
     public void setPrecio(java.math.BigDecimal precio) {
         this.precio = precio;
+    }
+
+    public java.time.LocalDate getFechaServicio() {
+        return fechaServicio;
+    }
+
+    public void setFechaServicio(java.time.LocalDate fechaServicio) {
+        this.fechaServicio = fechaServicio;
     }
 
     public Set<SolicitudHistorial> getHistoriales() {

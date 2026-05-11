@@ -16,6 +16,7 @@ public class SolicitudDTO {
     private Long idTrabajador;
     private String nombreTrabajador;
     private java.math.BigDecimal precio;
+    private java.time.LocalDate fechaServicio;
 
     public Long getIdTrabajador() {
         return idTrabajador;
@@ -116,5 +117,13 @@ public class SolicitudDTO {
 
     public void setPrecio(java.math.BigDecimal precio) {
         this.precio = precio;
+    }
+
+    public java.time.LocalDate getFechaServicio() {
+        return fechaServicio;
+    }
+
+    public void setFechaServicio(java.time.LocalDate fechaServicio) {
+        this.fechaServicio = fechaServicio;
     }
 }

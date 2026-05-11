@@ -267,7 +267,7 @@ import { AuthService, UserRole } from '../services/auth.service';
                   <div class="field-row">
                     <select
                       id="registerDepartamento"
-                      [(ngModel)]="registerDepartamentoId"
+                      [(ngModel)]="registerIdDepartamento"
                       name="registerDepartamento"
                       (change)="onDepartamentoChange()"
                       required
@@ -283,14 +283,35 @@ import { AuthService, UserRole } from '../services/auth.service';
                   <div class="field-row">
                     <select
                       id="registerCiudad"
-                      [(ngModel)]="registerCiudadId"
+                      [(ngModel)]="registerIdCiudad"
                       name="registerCiudad"
-                      [disabled]="!registerDepartamentoId"
+                      [disabled]="!registerIdDepartamento"
                       required
                     >
                       <option [value]="0">Selecciona una ciudad</option>
                       <option *ngFor="let ciudad of ciudades" [value]="ciudad.idCiudad">{{ciudad.nombre}}</option>
                     </select>
+                  </div>
+                </div>
+                <!-- Farming Onboarding con detalle de áreas -->
+                <div class="farming-onboarding" *ngIf="registerRoles.includes('ROLE_TRABAJADOR')">
+                  <div class="onboarding-card">
+                    <span class="icon">🎓</span>
+                    <div class="onboarding-text">
+                      <h4>Capacitación y Certificación Oficial</h4>
+                      <p>Como trabajador de LinkedWork, puedes acceder a cursos técnicos y certificarte en:</p>
+                      
+                      <div class="onboarding-areas-list">
+                        <div class="mini-area-item">⚡ <strong>Electricidad:</strong> Seguridad y redes residenciales.</div>
+                        <div class="mini-area-item">🚰 <strong>Fontanería:</strong> Sistemas hidráulicos y mantenimiento.</div>
+                        <div class="mini-area-item">🪑 <strong>Carpintería:</strong> Ensambles y acabados profesionales.</div>
+                      </div>
+
+                      <label class="onboarding-check mt-3">
+                        <input type="checkbox" [(ngModel)]="wantFarmingCertification" name="wantFarmingCertification" />
+                        <span>Deseo certificarme al finalizar el registro para obtener mi primer sello.</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -328,7 +349,6 @@ import { AuthService, UserRole } from '../services/auth.service';
         align-items: center;
         justify-content: center;
         background: #f7f8fa;
-        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         color: #0f172a;
       }
 
@@ -746,6 +766,18 @@ import { AuthService, UserRole } from '../services/auth.service';
         font-size: 0.9rem;
       }
 
+      .empty-inline { text-align: center; color: #94a3b8; font-size: 0.9rem; padding: 1rem; border: 1px dashed #e2e8f0; border-radius: 0.75rem; }
+
+      .farming-onboarding { margin-top: 1.5rem; }
+      .onboarding-card { background: #fff1f9; border: 1px solid #fbcfe8; border-radius: 1.25rem; padding: 1.5rem; display: flex; gap: 1rem; }
+      .onboarding-card .icon { font-size: 2rem; }
+      .onboarding-card h4 { margin: 0 0 0.25rem 0; color: #8a1c61; font-size: 1.1rem; }
+      .onboarding-card p { margin: 0 0 1rem 0; font-size: 0.9rem; color: #701a50; line-height: 1.4; }
+      .onboarding-areas-list { display: grid; gap: 0.5rem; margin-bottom: 1rem; }
+      .mini-area-item { background: rgba(255,255,255,0.5); padding: 0.5rem 0.75rem; border-radius: 0.75rem; font-size: 0.8rem; color: #1e1b4b; border: 1px solid rgba(138, 28, 97, 0.1); }
+      .onboarding-check { display: flex; align-items: flex-start; gap: 0.75rem; font-size: 0.9rem; color: #1e1b4b; font-weight: 700; cursor: pointer; line-height: 1.3; }
+      .onboarding-check input { width: 1.2rem; height: 1.2rem; accent-color: #8a1c61; margin-top: 0.1rem; }
+
       .form-input {
         width: 100%;
         padding: 0.875rem 1rem;
@@ -869,16 +901,17 @@ export class AuthComponent implements OnInit {
 
   loginId: string | null = null;
   loginPassword = '';
-  registerCC: string | null = null;
-  registerRoles: UserRole[] = ['ROLE_USUARIO'];
+  registerCC = '';
   registerName = '';
   registerEmail = '';
   registerPassword = '';
-  registerAreaId: number | string | null = null;
+  registerRoles: UserRole[] = ['ROLE_USUARIO'];
+  registerAreaId = '';
   registerDescripcion = '';
   registerExperiencia: number | null = null;
-  registerDepartamentoId = 0;
-  registerCiudadId = 0;
+  registerIdDepartamento: number | null = null;
+  registerIdCiudad: number | null = null;
+  wantFarmingCertification = false;
   departamentos: any[] = [];
   ciudades: any[] = [];
   areas: { idArea: number; nombre: string }[] = [];
@@ -887,19 +920,20 @@ export class AuthComponent implements OnInit {
   certificateModalOpen = signal(false);
   certificateDrafts: ApiCertificado[] = [];
   certificateDraftForm: ApiCertificado = { nombre: '', entidad: '', descripcion: '' };
-  selectedDraftFile: File | null = null;
+  selectedDraftFile: any = null;
 
   private clearRegisterForm() {
-    this.registerCC = null;
+    this.registerCC = '';
     this.registerRoles = ['ROLE_USUARIO'];
     this.registerName = '';
     this.registerEmail = '';
     this.registerPassword = '';
-    this.registerAreaId = null;
+    this.registerAreaId = '';
     this.registerDescripcion = '';
     this.registerExperiencia = null;
-    this.registerDepartamentoId = 0;
-    this.registerCiudadId = 0;
+    this.registerIdDepartamento = null;
+    this.registerIdCiudad = null;
+    this.wantFarmingCertification = false;
     this.clearMessages();
     this.certificateDrafts = [];
   }
@@ -1087,15 +1121,15 @@ export class AuthComponent implements OnInit {
   }
 
   async onDepartamentoChange() {
-    if (!this.registerDepartamentoId) {
+    if (!this.registerIdDepartamento) {
       this.ciudades = [];
-      this.registerCiudadId = 0;
+      this.registerIdCiudad = null;
       return;
     }
     try {
-      const list = await firstValueFrom(this.api.getCiudades(this.registerDepartamentoId));
+      const list = await firstValueFrom(this.api.getCiudades(this.registerIdDepartamento));
       this.ciudades = list || [];
-      this.registerCiudadId = 0;
+      this.registerIdCiudad = null;
     } catch (error) {
       console.error('Error loading ciudades:', error);
     }
@@ -1175,6 +1209,7 @@ export class AuthComponent implements OnInit {
       // Simple payload compatible with your backend
       const selectedRoles = this.registerRoles.length > 0 ? this.registerRoles : ['ROLE_USUARIO'];
       const payload: any = {
+        nombreUsuario: this.registerCC,
         nombre: this.registerName,
         email: this.registerEmail,
         password: this.registerPassword,
@@ -1191,8 +1226,8 @@ export class AuthComponent implements OnInit {
         payload.areaId = areaId;
         payload.descripcion = this.registerDescripcion;
         payload.experiencia = this.registerExperiencia;
-        payload.idDepartamento = this.registerDepartamentoId;
-        payload.idCiudad = this.registerCiudadId;
+        payload.idDepartamento = this.registerIdDepartamento;
+        payload.idCiudad = this.registerIdCiudad;
       }
 
       const created: any = await firstValueFrom(this.api.createUser(payload));
@@ -1215,9 +1250,33 @@ export class AuthComponent implements OnInit {
         }
       }
 
-      this.successMessage.set('✅ Cuenta creada correctamente. Ahora puedes iniciar sesión.');
-      this.clearRegisterForm();
-      setTimeout(() => this.activeTab.set('login'), 1500);
+      this.successMessage.set('✅ Cuenta creada correctamente. Iniciando sesión...');
+      
+      // Intentar login automático
+      try {
+        const loginRes = await firstValueFrom(this.api.loginUser({
+          usuario: this.registerCC,
+          password: this.registerPassword
+        }));
+
+        this.auth.login(
+          loginRes.idUsuario,
+          loginRes.roles,
+          loginRes.roles.includes('ROLE_TRABAJADOR') ? 'ROLE_TRABAJADOR' : 'ROLE_USUARIO',
+          loginRes.nombreUsuario,
+          loginRes.email
+        );
+
+        if (this.wantFarmingCertification && selectedRoles.includes('ROLE_TRABAJADOR')) {
+          this.router.navigate(['/certification']);
+        } else {
+          this.router.navigate(['/']);
+        }
+      } catch (e) {
+        // Si falla el login automático, ir a login normal
+        this.clearRegisterForm();
+        setTimeout(() => this.activeTab.set('login'), 1500);
+      }
     } catch (error: any) {
       const statusCode = error?.status;
 

@@ -21,8 +21,12 @@ export class LoggingInterceptor {
         },
         error: (error) => {
           const elapsed = Date.now() - started;
-          console.error('[HttpInterceptor] Error:', req.method, req.urlWithParams, error, 'in', elapsed, 'ms');
-          this.notification.error('Ups, algo salió mal', 'No pudimos completar la acción. Intenta nuevamente.');
+          const urlShort = req.url.split('/').pop() || req.url;
+          console.error(`[HttpInterceptor] Error: ${req.method} ${req.urlWithParams}`, error, `in ${elapsed} ms`);
+          this.notification.error(
+            'Ups, algo salió mal', 
+            `Error en ${req.method} /${urlShort}. Intenta nuevamente.`
+          );
         }
       })
     );

@@ -10,6 +10,7 @@ public class TrabajadorDTO {
     private Integer puntuacion;
     private String departamento;
     private String ciudad;
+    private Boolean esFarming;
     
     public TrabajadorDTO() {
     }
@@ -80,6 +81,14 @@ public class TrabajadorDTO {
 
     public void setCiudad(String ciudad) {
         this.ciudad = ciudad;
+    }
+
+    public Boolean getEsFarming() {
+        return esFarming;
+    }
+
+    public void setEsFarming(Boolean esFarming) {
+        this.esFarming = esFarming;
     }
 
 }

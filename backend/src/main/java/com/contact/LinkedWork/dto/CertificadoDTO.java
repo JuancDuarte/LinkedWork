@@ -10,6 +10,7 @@ public class CertificadoDTO {
     private String entidad;
     private String descripcion;
     private LocalDateTime fecha;
+    private String urlArchivo;
     
     public CertificadoDTO() {
     }
@@ -66,5 +67,13 @@ public class CertificadoDTO {
     
     public void setFecha(LocalDateTime fecha) {
         this.fecha = fecha;
+    }
+
+    public String getUrlArchivo() {
+        return urlArchivo;
+    }
+
+    public void setUrlArchivo(String urlArchivo) {
+        this.urlArchivo = urlArchivo;
     }
 }

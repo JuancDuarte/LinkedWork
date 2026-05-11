@@ -180,10 +180,12 @@ public class OfertaService {
                         .map(oferta -> {
                                 OfertaVistaDTO ofertaVistaDTO = new OfertaVistaDTO();
                                 ofertaVistaDTO.setIdOferta(oferta.getIdOferta());
+                                ofertaVistaDTO.setIdUsuario(oferta.getTrabajador().getUsuario().getIdUsuario());
                                 ofertaVistaDTO.setNombreTrabajador(oferta.getTrabajador().getUsuario().getNombreUsuario());
                                 ofertaVistaDTO.setNombreArea(oferta.getTrabajador().getArea().getNombre());
                                 ofertaVistaDTO.setDescripcion(oferta.getDescripcion());
                                 ofertaVistaDTO.setPrecio(oferta.getPrecio());
+                                ofertaVistaDTO.setEstado(oferta.getEstado());
                                 ofertaVistaDTO.setFechaPublicacion(oferta.getFechaCreacion().toLocalDate());
                                 Double calificacionPromedio = oferta.getTrabajador().getCalificaciones()
                                         .stream()
@@ -210,6 +212,9 @@ public class OfertaService {
                                 + " no es el creador de la solicitud asociada a la oferta con ID: " + idOferta + " y no puede aceptar esta oferta.");
                 }
                 solicitud.setEstado("Aceptada");
+                if (oferta.getPrecio() != null) {
+                    solicitud.setPrecio(oferta.getPrecio());
+                }
                 solicitudRepository.save(solicitud);
                 oferta.setEstado("Aceptada");
                 ofertaRepository.save(oferta);
@@ -237,4 +242,26 @@ public class OfertaService {
                                 nombreTrabajador);
         }
 
+        public List<OfertaVistaDTO> listarOfertasPorTrabajador(Long idUsuarioTrabajador) {
+                Trabajador trabajador = trabajadorRepository.findByUsuario_IdUsuario(idUsuarioTrabajador)
+                        .orElseThrow(() -> new RuntimeException("Trabajador no encontrado para el usuario con ID: " + idUsuarioTrabajador));
+                
+                return trabajador.getOfertas()
+                        .stream()
+                        .sorted(Comparator.comparing(Oferta::getFechaCreacion).reversed())
+                        .map(oferta -> {
+                                OfertaVistaDTO dto = new OfertaVistaDTO();
+                                dto.setIdOferta(oferta.getIdOferta());
+                                dto.setIdSolicitud(oferta.getSolicitud().getIdSolicitud());
+                                dto.setTituloSolicitud(oferta.getSolicitud().getTitulo());
+                                dto.setFechaServicio(oferta.getSolicitud().getFechaServicio());
+                                dto.setPrecio(oferta.getPrecio());
+                                dto.setEstado(oferta.getEstado());
+                                dto.setDescripcion(oferta.getDescripcion());
+                                dto.setFechaPublicacion(oferta.getFechaCreacion().toLocalDate());
+                                dto.setNombreTrabajador(trabajador.getUsuario().getNombreUsuario());
+                                return dto;
+                        })
+                        .toList();
+        }
 }

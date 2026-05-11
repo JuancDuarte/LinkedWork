@@ -32,12 +32,7 @@ import com.contact.LinkedWork.service.UsuarioService;
 
 @RestController
 @RequestMapping("/")
-@CrossOrigin(origins = {
-    "http://localhost:4200",
-    "http://127.0.0.1:4200",
-    "http://localhost:4201",
-    "http://127.0.0.1:4201"
-})
+@CrossOrigin(origins = "*")
 public class UsuarioController {
     @Autowired
     @Qualifier("UsuarioService")
@@ -87,6 +82,7 @@ public class UsuarioController {
             Long experiencia = payload.getExperiencia();
             Integer idDepartamento = payload.getIdDepartamento();
             Integer idCiudad = payload.getIdCiudad();
+            String nombreUsuario = payload.getNombreUsuario();
 
             if (nombre == null || nombre.trim().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
@@ -98,7 +94,7 @@ public class UsuarioController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
             }
 
-            UsuarioDTO created = usuarioService.createUser(nombre, email, password, roles, areaId, descripcion, experiencia, idDepartamento, idCiudad);
+            UsuarioDTO created = usuarioService.createUser(nombreUsuario, nombre, email, password, roles, areaId, descripcion, experiencia, idDepartamento, idCiudad);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (RuntimeException ex) {
             ex.printStackTrace();
