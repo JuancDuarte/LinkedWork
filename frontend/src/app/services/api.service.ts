@@ -16,12 +16,15 @@ export interface ApiUser {
   roles?: string[];
   trabajador?: {
     idTrabajador?: number;
+    areaId?: number;
     areaNombre?: string;
     experiencia?: number;
     descripcion?: string;
     puntuacion?: number;
     departamento?: string;
     ciudad?: string;
+    esFarming?: boolean;
+    area?: any;
   };
 }
 
@@ -103,8 +106,16 @@ export class ApiService {
     );
   }
 
-  addCertificate(workerId: number, payload: ApiCertificado): Observable<ApiCertificado> {
-    return this.http.post<ApiCertificado>(`${API_BASE}/addCertificado/${encodeURIComponent(workerId)}`, payload).pipe(
+  addCertificate(workerId: number, payload: ApiCertificado, file?: File): Observable<ApiCertificado> {
+    const formData = new FormData();
+    formData.append('nombre', payload.nombre || '');
+    formData.append('entidad', payload.entidad || '');
+    formData.append('descripcion', payload.descripcion || '');
+    if (file) {
+      formData.append('file', file);
+    }
+    const endpoint = file ? 'addCertificadoFile' : 'addCertificado';
+    return this.http.post<ApiCertificado>(`${API_BASE}/${endpoint}/${encodeURIComponent(workerId)}`, formData).pipe(
       tap(() => console.log('[ApiService] addCertificate workerId:', workerId, 'payload:', payload)),
       catchError(this.handleError('addCertificate'))
     );
@@ -141,10 +152,23 @@ export class ApiService {
     );
   }
 
-  acceptRequestByWorker(requestId: number, workerUserId: number): Observable<any> {
-    return this.http.post(`${API_BASE}/acceptRequest/${encodeURIComponent(requestId)}/${encodeURIComponent(workerUserId)}`, {}).pipe(
-      tap(() => console.log('[ApiService] acceptRequestByWorker requestId:', requestId, 'workerUserId:', workerUserId)),
+  listAllRequests(): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/listAllRequests`).pipe(
+      catchError(this.handleError('listAllRequests'))
+    );
+  }
+
+  acceptRequestByWorker(requestId: number, workerUserId: number, payload: any = {}): Observable<any> {
+    return this.http.post(`${API_BASE}/acceptRequest/${encodeURIComponent(requestId)}/${encodeURIComponent(workerUserId)}`, payload).pipe(
+      tap(() => console.log('[ApiService] acceptRequestByWorker requestId:', requestId, 'workerUserId:', workerUserId, 'payload:', payload)),
       catchError(this.handleError('acceptRequestByWorker'))
+    );
+  }
+
+  checkOverlap(workerUserId: number, fechaServicio: string): Observable<boolean> {
+    return this.http.get<boolean>(`${API_BASE}/checkOverlap/${encodeURIComponent(workerUserId)}/${encodeURIComponent(fechaServicio)}`).pipe(
+      tap((res) => console.log('[ApiService] checkOverlap res:', res)),
+      catchError(this.handleError('checkOverlap'))
     );
   }
 
@@ -256,6 +280,25 @@ export class ApiService {
     return this.http.get<any[]>(`${API_BASE}/listCalificaciones/${encodeURIComponent(workerUserId)}`).pipe(
       tap((response) => console.log('[ApiService] listCalificaciones workerUserId:', workerUserId, 'response:', response)),
       catchError(this.handleError('listCalificaciones'))
+    );
+  }
+
+  getCertificationContent(area: string): Observable<any> {
+    return this.http.get<any>(`${API_BASE}/farming/content/${area}`).pipe(
+      catchError(this.handleError('getCertificationContent'))
+    );
+  }
+
+  submitCertification(usuarioId: number, payload: { area: string, aciertos: number }): Observable<any> {
+    return this.http.post<any>(`${API_BASE}/farming/submit/${usuarioId}`, payload).pipe(
+      catchError(this.handleError('submitCertification'))
+    );
+  }
+
+  listWorkerOffers(userId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/listWorkerOffers/${encodeURIComponent(userId)}`).pipe(
+      tap((res) => console.log('[ApiService] listWorkerOffers response:', res)),
+      catchError(this.handleError('listWorkerOffers'))
     );
   }
 }

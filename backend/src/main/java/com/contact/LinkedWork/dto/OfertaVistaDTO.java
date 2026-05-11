@@ -11,6 +11,12 @@ public class OfertaVistaDTO {
     private LocalDate fechaPublicacion;
     private BigDecimal precio;
     private Double calificacionPromedio;
+    private Long idUsuario;
+    private String estado;
+    private Long idSolicitud;
+    private String tituloSolicitud;
+    private LocalDate fechaServicio;
+
     public OfertaVistaDTO() {
     }
     public OfertaVistaDTO(Long idOferta, String nombreTrabajador, String nombreArea, String descripcion, BigDecimal precio, Double calificacionPromedio, LocalDate fechaPublicacion) {
@@ -65,4 +71,34 @@ public class OfertaVistaDTO {
         this.fechaPublicacion = fechaPublicacion;
     }
 
+    public Long getIdUsuario() {
+        return idUsuario;
+    }
+    public void setIdUsuario(Long idUsuario) {
+        this.idUsuario = idUsuario;
+    }
+    public String getEstado() {
+        return estado;
+    }
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+    public Long getIdSolicitud() {
+        return idSolicitud;
+    }
+    public void setIdSolicitud(Long idSolicitud) {
+        this.idSolicitud = idSolicitud;
+    }
+    public String getTituloSolicitud() {
+        return tituloSolicitud;
+    }
+    public void setTituloSolicitud(String tituloSolicitud) {
+        this.tituloSolicitud = tituloSolicitud;
+    }
+    public LocalDate getFechaServicio() {
+        return fechaServicio;
+    }
+    public void setFechaServicio(LocalDate fechaServicio) {
+        this.fechaServicio = fechaServicio;
+    }
 }

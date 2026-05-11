@@ -84,6 +84,7 @@ public class SolicitudService {
         solicitud.setUsuario(usuario);
         solicitud.setArea(area);
         solicitud.setPrecio(crearSolicitudDto.getPrecio());
+        solicitud.setFechaServicio(crearSolicitudDto.getFechaServicio());
 
         solicitud = solicitudRepository.save(solicitud);
 
@@ -105,6 +106,7 @@ public class SolicitudService {
         solicitudDTO.setIdArea(area.getIdArea());
         solicitudDTO.setNombreArea(area.getNombre());
         solicitudDTO.setPrecio(solicitud.getPrecio());
+        solicitudDTO.setFechaServicio(solicitud.getFechaServicio());
         return solicitudDTO;
     }
 
@@ -143,6 +145,7 @@ public class SolicitudService {
         solicitud.setUsuario(usuarioSolicitante);
         solicitud.setArea(area);
         solicitud.setPrecio(crearSolicitudDto.getPrecio());
+        solicitud.setFechaServicio(crearSolicitudDto.getFechaServicio());
         solicitud = solicitudRepository.save(solicitud);
 
         SolicitudHistorial historial = new SolicitudHistorial();
@@ -155,7 +158,12 @@ public class SolicitudService {
         Oferta oferta = new Oferta();
         oferta.setSolicitud(solicitud);
         oferta.setTrabajador(trabajador);
-        oferta.setPrecio(new BigDecimal("50000"));
+        
+        if (solicitud.getPrecio() != null && solicitud.getPrecio().compareTo(java.math.BigDecimal.ZERO) > 0) {
+            oferta.setPrecio(solicitud.getPrecio());
+        } else {
+            oferta.setPrecio(new java.math.BigDecimal("50000"));
+        }
         oferta.setDescripcion("Solicitud directa generada desde perfil del trabajador");
         oferta.setEstado("Pendiente");
         oferta.setFechaCreacion(LocalDateTime.now());
@@ -181,6 +189,7 @@ public class SolicitudService {
         solicitudDTO.setIdArea(area.getIdArea());
         solicitudDTO.setNombreArea(area.getNombre());
         solicitudDTO.setPrecio(solicitud.getPrecio());
+        solicitudDTO.setFechaServicio(solicitud.getFechaServicio());
         return solicitudDTO;
     }
 
@@ -199,6 +208,7 @@ public class SolicitudService {
                     solicitudDTO.setIdArea(solicitud.getArea().getIdArea());
                     solicitudDTO.setNombreArea(solicitud.getArea().getNombre());
                     solicitudDTO.setPrecio(solicitud.getPrecio());
+                    solicitudDTO.setFechaServicio(solicitud.getFechaServicio());
                     return solicitudDTO;
                 })
                 .toList();
@@ -220,6 +230,7 @@ public class SolicitudService {
                     solicitudDTO.setIdArea(solicitud.getArea().getIdArea());
                     solicitudDTO.setNombreArea(solicitud.getArea().getNombre());
                     solicitudDTO.setPrecio(solicitud.getPrecio());
+                    solicitudDTO.setFechaServicio(solicitud.getFechaServicio());
                     return solicitudDTO;
                 })
                 .toList();
@@ -294,6 +305,7 @@ public class SolicitudService {
             dto.setIdArea(solicitud.getArea().getIdArea());
             dto.setNombreArea(solicitud.getArea().getNombre());
             dto.setPrecio(solicitud.getPrecio());
+            dto.setFechaServicio(solicitud.getFechaServicio());
             resultado.add(dto);
             idsAgregados.add(solicitud.getIdSolicitud());
         }
@@ -321,6 +333,7 @@ public class SolicitudService {
                 dto.setNombreArea(solicitud.getArea().getNombre());
             }
             dto.setPrecio(solicitud.getPrecio());
+            dto.setFechaServicio(solicitud.getFechaServicio());
             resultado.add(dto);
             idsAgregados.add(solicitud.getIdSolicitud());
         }
@@ -328,7 +341,29 @@ public class SolicitudService {
         return resultado;
     }
 
-    public RespuestaAceptarDTO aceptarSolicitudPorTrabajador(Long idSolicitud, Long idUsuarioTrabajador) {
+    public List<SolicitudDTO> getTodasSolicitudesPendientes() {
+        return ((List<Solicitud>) solicitudRepository.findAll())
+                .stream()
+                .filter(s -> "Pendiente".equalsIgnoreCase(s.getEstado()))
+                .map(solicitud -> {
+                    SolicitudDTO dto = new SolicitudDTO();
+                    dto.setIdSolicitud(solicitud.getIdSolicitud());
+                    dto.setTitulo(solicitud.getTitulo());
+                    dto.setDescripcion(solicitud.getDescripcion());
+                    dto.setEstado(solicitud.getEstado());
+                    dto.setFechaCreacion(solicitud.getFechaCreacion());
+                    dto.setIdUsuario(solicitud.getUsuario().getIdUsuario());
+                    dto.setNombreUsuario(solicitud.getUsuario().getNombreCompleto());
+                    dto.setIdArea(solicitud.getArea().getIdArea());
+                    dto.setNombreArea(solicitud.getArea().getNombre());
+                    dto.setPrecio(solicitud.getPrecio());
+                    dto.setFechaServicio(solicitud.getFechaServicio());
+                    return dto;
+                })
+                .toList();
+    }
+
+    public RespuestaAceptarDTO aceptarSolicitudPorTrabajador(Long idSolicitud, Long idUsuarioTrabajador, java.math.BigDecimal precioContraoferta) {
         Usuario usuarioTrabajador = usuarioRepository.findById(idUsuarioTrabajador)
                 .orElseThrow(() -> new RuntimeException("Usuario trabajador no encontrado con ID: " + idUsuarioTrabajador));
 
@@ -357,9 +392,17 @@ public class SolicitudService {
             Oferta oferta = new Oferta();
             oferta.setSolicitud(solicitud);
             oferta.setTrabajador(trabajador);
-            oferta.setPrecio(new java.math.BigDecimal("50000"));
-            oferta.setDescripcion("Oferta aceptada por trabajador desde solicitudes por area");
-            oferta.setEstado("Aceptada");
+            
+            if (precioContraoferta != null && precioContraoferta.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                oferta.setPrecio(precioContraoferta);
+            } else if (solicitud.getPrecio() != null && solicitud.getPrecio().compareTo(java.math.BigDecimal.ZERO) > 0) {
+                oferta.setPrecio(solicitud.getPrecio());
+            } else {
+                oferta.setPrecio(new java.math.BigDecimal("50000"));
+            }
+            
+            oferta.setDescripcion("Postulación de trabajador a solicitud general");
+            oferta.setEstado("Pendiente");
             oferta.setFechaCreacion(LocalDateTime.now());
             oferta = ofertaRepository.save(oferta);
 
@@ -371,6 +414,23 @@ public class SolicitudService {
             historialOferta.setDescripcionNueva(oferta.getDescripcion());
             historialOferta.setFecha(LocalDateTime.now());
             ofertaHistorialRepository.save(historialOferta);
+            
+            String nombreSolicitante = solicitud.getUsuario().getNombreCompleto() != null
+                ? solicitud.getUsuario().getNombreCompleto()
+                : solicitud.getUsuario().getNombreUsuario();
+            String nombreTrabajador = trabajador.getUsuario().getNombreCompleto() != null
+                ? trabajador.getUsuario().getNombreCompleto()
+                : trabajador.getUsuario().getNombreUsuario();
+
+            return new RespuestaAceptarDTO(
+                "Postulación enviada correctamente. El solicitante debe aceptarla.",
+                solicitud.getIdSolicitud(),
+                solicitud.getTitulo(),
+                solicitud.getUsuario().getIdUsuario(),
+                nombreSolicitante,
+                trabajador.getIdTrabajador(),
+                nombreTrabajador
+            );
         } else {
             // Si la oferta ya existe (solicitud directa), actualizar su estado a Aceptada
             Oferta ofertaExistente = ofertaRepository.findBySolicitud_idSolicitudAndTrabajador_idTrabajador(
@@ -379,37 +439,52 @@ public class SolicitudService {
                 ofertaExistente.setEstado("Aceptada");
                 ofertaRepository.save(ofertaExistente);
             }
+
+            String estadoAnterior = solicitud.getEstado();
+            solicitud.setEstado("Aceptada");
+            solicitud = solicitudRepository.save(solicitud);
+
+            SolicitudHistorial historial = new SolicitudHistorial();
+            historial.setSolicitud(solicitud);
+            historial.setEstadoAnterior(estadoAnterior);
+            historial.setEstadoNuevo("Aceptada");
+            historial.setFecha(LocalDateTime.now());
+            solicitudHistorialRepository.save(historial);
+
+            String nombreSolicitante = solicitud.getUsuario().getNombreCompleto() != null
+                ? solicitud.getUsuario().getNombreCompleto()
+                : solicitud.getUsuario().getNombreUsuario();
+            String nombreTrabajador = trabajador.getUsuario().getNombreCompleto() != null
+                ? trabajador.getUsuario().getNombreCompleto()
+                : trabajador.getUsuario().getNombreUsuario();
+
+            return new RespuestaAceptarDTO(
+                "Solicitud directa aceptada correctamente.",
+                solicitud.getIdSolicitud(),
+                solicitud.getTitulo(),
+                solicitud.getUsuario().getIdUsuario(),
+                nombreSolicitante,
+                trabajador.getIdTrabajador(),
+                nombreTrabajador
+            );
         }
-
-        String estadoAnterior = solicitud.getEstado();
-        solicitud.setEstado("Aceptada");
-        solicitud = solicitudRepository.save(solicitud);
-
-        SolicitudHistorial historial = new SolicitudHistorial();
-        historial.setSolicitud(solicitud);
-        historial.setEstadoAnterior(estadoAnterior);
-        historial.setEstadoNuevo("Aceptada");
-        historial.setFecha(LocalDateTime.now());
-        solicitudHistorialRepository.save(historial);
-
-        String nombreSolicitante = solicitud.getUsuario().getNombreCompleto() != null
-            ? solicitud.getUsuario().getNombreCompleto()
-            : solicitud.getUsuario().getNombreUsuario();
-        String nombreTrabajador = trabajador.getUsuario().getNombreCompleto() != null
-            ? trabajador.getUsuario().getNombreCompleto()
-            : trabajador.getUsuario().getNombreUsuario();
-
-        return new RespuestaAceptarDTO(
-            "Solicitud aceptada correctamente.",
-            solicitud.getIdSolicitud(),
-            solicitud.getTitulo(),
-            solicitud.getUsuario().getIdUsuario(),
-            nombreSolicitante,
-            trabajador.getIdTrabajador(),
-            nombreTrabajador
-        );
     }
     
+    public boolean hasActiveJobOnDate(Long idUsuarioTrabajador, java.time.LocalDate fechaServicio) {
+        if (fechaServicio == null) return false;
+        Usuario usuarioTrabajador = usuarioRepository.findById(idUsuarioTrabajador)
+                .orElseThrow(() -> new RuntimeException("Usuario trabajador no encontrado"));
+        Trabajador trabajador = trabajadorRepository.findByUsuario_IdUsuario(usuarioTrabajador.getIdUsuario())
+                .orElseThrow(() -> new RuntimeException("Perfil trabajador no encontrado"));
+                
+        // Check if there is any offer Aceptada with the same fechaServicio for this worker
+        return ((List<Oferta>) ofertaRepository.findAll()).stream()
+            .filter(o -> "Aceptada".equalsIgnoreCase(o.getEstado()))
+            .filter(o -> o.getTrabajador() != null && o.getTrabajador().getIdTrabajador().equals(trabajador.getIdTrabajador()))
+            .filter(o -> o.getSolicitud() != null && o.getSolicitud().getFechaServicio() != null)
+            .anyMatch(o -> o.getSolicitud().getFechaServicio().equals(fechaServicio));
+    }
+
     public void deleteSolicitudByUsuarioId(Long idSolicitud, Long idUsuario) {
         Optional<Solicitud> solicitudExistente = solicitudRepository.findById(idSolicitud);
         if (solicitudExistente.isEmpty()) {
@@ -421,7 +496,11 @@ public class SolicitudService {
             throw new RuntimeException("El usuario no tiene permiso para eliminar esta solicitud.");
         }
 
-        solicitudRepository.deleteById(idSolicitud);
+        // Limpiar colecciones explícitamente para asegurar que JPA procese los huérfanos/cascada
+        solicitud.getOfertas().clear();
+        solicitud.getHistoriales().clear();
+        solicitud.getCalificaciones().clear();
+        solicitudRepository.delete(solicitud);
     }
     public SolicitudDTO editarSolicitud(EditarSolicitudDTO editarSolicitudDTO, Long idSolicitud, Long idUsuario) {
         Solicitud solicitud = solicitudRepository.findById(idSolicitud)
@@ -438,6 +517,9 @@ public class SolicitudService {
         solicitudHistorialRepository.save(historial);
         solicitud.setTitulo(editarSolicitudDTO.getTitulo());
         solicitud.setDescripcion(editarSolicitudDTO.getDescripcion());
+        if (editarSolicitudDTO.getFechaServicio() != null) {
+            solicitud.setFechaServicio(editarSolicitudDTO.getFechaServicio());
+        }
         Solicitud solicitudActualizada = solicitudRepository.save(solicitud);
         SolicitudDTO solicitudDTO = new SolicitudDTO();
         solicitudDTO.setIdSolicitud(solicitudActualizada.getIdSolicitud());
@@ -449,6 +531,8 @@ public class SolicitudService {
         solicitudDTO.setNombreUsuario(solicitudActualizada.getUsuario().getNombreCompleto());
         solicitudDTO.setIdArea(solicitudActualizada.getArea().getIdArea());
         solicitudDTO.setNombreArea(solicitudActualizada.getArea().getNombre());
+        solicitudDTO.setPrecio(solicitudActualizada.getPrecio());
+        solicitudDTO.setFechaServicio(solicitudActualizada.getFechaServicio());
         return solicitudDTO;
     }
     public void eliminarSolicitud(Long idSolicitud, Long idUsuario) {

@@ -56,6 +56,9 @@ public class Trabajador {
     @OneToMany(mappedBy = "trabajador", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Observacion> observaciones = new HashSet<>();
 
+    @Column(name = "es_farming")
+    private Boolean esFarming = false;
+
     public Trabajador() {
     }
 
@@ -178,5 +181,13 @@ public class Trabajador {
 
     public void setObservaciones(Set<Observacion> observaciones) {
         this.observaciones = observaciones;
+    }
+
+    public Boolean getEsFarming() {
+        return esFarming;
+    }
+
+    public void setEsFarming(Boolean esFarming) {
+        this.esFarming = esFarming;
     }
 }

@@ -12,8 +12,16 @@ public class CreateUsuarioDTO {
     private Long experiencia;
     private Integer idDepartamento;
     private Integer idCiudad;
+    private String nombreUsuario;
 
     // Getters and setters
+    public String getNombreUsuario() {
+        return nombreUsuario;
+    }
+
+    public void setNombreUsuario(String nombreUsuario) {
+        this.nombreUsuario = nombreUsuario;
+    }
     public String getNombre() {
         return nombre;
     }
