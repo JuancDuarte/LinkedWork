@@ -2,10 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, retry, throwError, tap } from 'rxjs';
 
-const API_BASE = 'http://127.0.0.1:8082/LinkedApi';
+const API_BASE = 'http://localhost:8082/LinkedApi';
 
 export interface ApiUser {
   idUsuario?: number;
+  idTrabajador?: number;
   nombreCompleto?: string;
   nombreUsuario?: string;
   email: string;
@@ -14,10 +15,23 @@ export interface ApiUser {
   create_at?: string;
   roles?: string[];
   trabajador?: {
+    idTrabajador?: number;
     areaNombre?: string;
     experiencia?: number;
     descripcion?: string;
+    puntuacion?: number;
+    departamento?: string;
+    ciudad?: string;
   };
+}
+
+export interface ApiCertificado {
+  idCertificado?: number;
+  idTrabajador?: number;
+  nombre?: string;
+  entidad?: string;
+  descripcion?: string;
+  fecha?: string;
 }
 
 @Injectable({
@@ -40,13 +54,15 @@ export class ApiService {
     );
   }
 
-  loginUser(payload: { usuario_id: number; password: string }): Observable<any> {
-    const loginPayload = {
-      idUsuario: payload.usuario_id,
-      clave: payload.password
-    };
+  loginUser(payload: { usuario: number | string; password: string }): Observable<any> {
+    const loginPayload: any = { clave: payload.password };
+    if (typeof payload.usuario === 'number' && !Number.isNaN(payload.usuario)) {
+      loginPayload.idUsuario = payload.usuario;
+    } else if (typeof payload.usuario === 'string') {
+      loginPayload.nombreUsuario = payload.usuario;
+    }
+    console.log('[ApiService] loginUser payload:', loginPayload);
     return this.http.post(`${API_BASE}/Login`, loginPayload).pipe(
-      tap(() => console.log('[ApiService] loginUser payload:', loginPayload)),
       catchError(this.handleError('loginUser'))
     );
   }
@@ -77,6 +93,20 @@ export class ApiService {
       tap((response) => console.log('[ApiService] listFarming response:', response)),
       retry(1),
       catchError(this.handleError('listFarming'))
+    );
+  }
+
+  getCertificates(workerId: number): Observable<ApiCertificado[]> {
+    return this.http.get<ApiCertificado[]>(`${API_BASE}/listCertificados/${encodeURIComponent(workerId)}`).pipe(
+      tap((response) => console.log('[ApiService] getCertificates workerId:', workerId, 'response:', response)),
+      catchError(this.handleError('getCertificates'))
+    );
+  }
+
+  addCertificate(workerId: number, payload: ApiCertificado): Observable<ApiCertificado> {
+    return this.http.post<ApiCertificado>(`${API_BASE}/addCertificado/${encodeURIComponent(workerId)}`, payload).pipe(
+      tap(() => console.log('[ApiService] addCertificate workerId:', workerId, 'payload:', payload)),
+      catchError(this.handleError('addCertificate'))
     );
   }
 
@@ -179,6 +209,53 @@ export class ApiService {
     return this.http.post(`${API_BASE}/aceptarOferta/${encodeURIComponent(solicitudId)}/${encodeURIComponent(ofertaId)}/${encodeURIComponent(usuarioId)}`, {}).pipe(
       tap(() => console.log('[ApiService] acceptOffer solicitudId:', solicitudId, 'ofertaId:', ofertaId, 'usuarioId:', usuarioId)),
       catchError(this.handleError('acceptOffer'))
+    );
+  }
+
+  // Calificacion methods
+  finishJob(solicitudId: number, userId: number): Observable<any> {
+    return this.http.post(`${API_BASE}/finalizarTrabajo/${encodeURIComponent(solicitudId)}/${encodeURIComponent(userId)}`, {}).pipe(
+      tap(() => console.log('[ApiService] finishJob solicitudId:', solicitudId, 'userId:', userId)),
+      catchError(this.handleError('finishJob'))
+    );
+  }
+
+  rateWorker(userId: number, solicitudId: number, payload: { puntuacion: number; comentario: string }): Observable<any> {
+    return this.http.post(`${API_BASE}/calificarTrabajador/${encodeURIComponent(userId)}/${encodeURIComponent(solicitudId)}`, payload).pipe(
+      tap(() => console.log('[ApiService] rateWorker userId:', userId, 'solicitudId:', solicitudId, 'payload:', payload)),
+      catchError(this.handleError('rateWorker'))
+    );
+  }
+
+  listActiveJobsUser(userId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/trabajosActivosUsuario/${encodeURIComponent(userId)}`).pipe(
+      tap((response) => console.log('[ApiService] listActiveJobsUser userId:', userId, 'response:', response)),
+      catchError(this.handleError('listActiveJobsUser'))
+    );
+  }
+
+  listActiveJobsWorker(userId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/trabajosActivosTrabajador/${encodeURIComponent(userId)}`).pipe(
+      tap((response) => console.log('[ApiService] listActiveJobsWorker userId:', userId, 'response:', response)),
+      catchError(this.handleError('listActiveJobsWorker'))
+    );
+  }
+  upgradeToWorker(idUsuario: number, data: any): Observable<ApiUser> {
+    return this.http.post<ApiUser>(`${API_BASE}/upgradeToWorker/${idUsuario}`, data);
+  }
+
+  getDepartamentos(): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/listDepartamentos`);
+  }
+
+  getCiudades(idDepartamento: number): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/listCiudades/${idDepartamento}`);
+  }
+
+  listCalificaciones(workerUserId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/listCalificaciones/${encodeURIComponent(workerUserId)}`).pipe(
+      tap((response) => console.log('[ApiService] listCalificaciones workerUserId:', workerUserId, 'response:', response)),
+      catchError(this.handleError('listCalificaciones'))
     );
   }
 }

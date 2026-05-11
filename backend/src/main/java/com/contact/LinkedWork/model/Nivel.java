@@ -16,14 +16,11 @@ public class Nivel {
     @Column(name = "nombre", length = 50)
     private String nombre;
     
-    @Column(name = "puntaje_min")
+    @Column(name = "PuntajeMin")
     private Long puntajeMin;
     
-    @Column(name = "puntaje_max")
+    @Column(name = "PuntajeMax")
     private Long puntajeMax;
-    
-    @OneToMany(mappedBy = "nivel", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<TrabajadorNivel> trabajadorNiveles = new HashSet<>();
     
     public Nivel() {
     }
@@ -66,11 +63,4 @@ public class Nivel {
         this.puntajeMax = puntajeMax;
     }
     
-    public Set<TrabajadorNivel> getTrabajadorNiveles() {
-        return trabajadorNiveles;
-    }
-    
-    public void setTrabajadorNiveles(Set<TrabajadorNivel> trabajadorNiveles) {
-        this.trabajadorNiveles = trabajadorNiveles;
-    }
 }

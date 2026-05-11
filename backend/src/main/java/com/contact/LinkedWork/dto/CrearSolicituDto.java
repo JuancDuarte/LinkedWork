@@ -5,6 +5,7 @@ public class CrearSolicituDto {
     private String descripcion;
     private Long idUsuario;
     private Long idArea;
+    private java.math.BigDecimal precio;
 
     public CrearSolicituDto() {
     }
@@ -40,4 +41,11 @@ public class CrearSolicituDto {
         this.idArea = idArea;
     }
 
+    public java.math.BigDecimal getPrecio() {
+        return precio;
+    }
+
+    public void setPrecio(java.math.BigDecimal precio) {
+        this.precio = precio;
+    }
 }

@@ -15,10 +15,14 @@ import com.contact.LinkedWork.dto.LoginDTO;
 import com.contact.LinkedWork.dto.TrabajadorDTO;
 import com.contact.LinkedWork.dto.UsuarioDTO;
 import com.contact.LinkedWork.model.Area;
+import com.contact.LinkedWork.model.Ciudad;
+import com.contact.LinkedWork.model.Departamento;
 import com.contact.LinkedWork.model.Usuario;
 import com.contact.LinkedWork.model.Rol;
 import com.contact.LinkedWork.model.Trabajador;
 import com.contact.LinkedWork.repository.AreaRepository;
+import com.contact.LinkedWork.repository.CiudadRepository;
+import com.contact.LinkedWork.repository.DepartamentoRepository;
 import com.contact.LinkedWork.repository.TrabajadorRepository;
 import com.contact.LinkedWork.repository.UsuarioRepository;
 import com.contact.LinkedWork.repository.RolRepository;
@@ -41,6 +45,14 @@ public class UsuarioService {
     @Autowired
     @Qualifier("CrudRolRepository")
     private RolRepository rolRepository;
+
+    @Autowired
+    @Qualifier("CrudDepartamentoRepository")
+    private DepartamentoRepository departamentoRepository;
+
+    @Autowired
+    @Qualifier("CrudCiudadRepository")
+    private CiudadRepository ciudadRepository;
 
     private String mapToDbRole(String roleName) {
         return switch (roleName) {
@@ -94,18 +106,26 @@ public class UsuarioService {
                 .map(rol -> mapToFrontendRole(rol.getNombre()))
                 .toList();
         usuarioDTO.setRoles(roles);
-        boolean esTrabajador = roles.contains("ROLE_TRABAJADOR");
-        if (esTrabajador) {
-            TrabajadorDTO trabajadorDTO = new TrabajadorDTO();
-            trabajadorRepository.findByUsuario_IdUsuario(usuario.getIdUsuario())
-                    .ifPresent(trabajador -> {
-                        if (trabajador.getArea() != null) {
-                            trabajadorDTO.setAreaId(trabajador.getArea().getIdArea());
-                            trabajadorDTO.setAreaNombre(trabajador.getArea().getNombre());
-                        }
-                        trabajadorDTO.setDescripcion(trabajador.getDescripcion());
-                        trabajadorDTO.setExperiencia(trabajador.getExperiencia());
-                    });
+        // Intentaremos siempre cargar información de trabajador si existe.
+        TrabajadorDTO trabajadorDTO = new TrabajadorDTO();
+        trabajadorRepository.findByUsuario_IdUsuario(usuario.getIdUsuario())
+                .ifPresent(trabajador -> {
+                    trabajadorDTO.setIdTrabajador(trabajador.getIdTrabajador());
+                    if (trabajador.getArea() != null) {
+                        trabajadorDTO.setAreaId(trabajador.getArea().getIdArea());
+                        trabajadorDTO.setAreaNombre(trabajador.getArea().getNombre());
+                    }
+                    trabajadorDTO.setDescripcion(trabajador.getDescripcion());
+                    trabajadorDTO.setExperiencia(trabajador.getExperiencia());
+                    trabajadorDTO.setPuntuacion(trabajador.getPuntuacion());
+                    if (trabajador.getDepartamento() != null) {
+                        trabajadorDTO.setDepartamento(trabajador.getDepartamento().getNombre());
+                    }
+                    if (trabajador.getCiudad() != null) {
+                        trabajadorDTO.setCiudad(trabajador.getCiudad().getNombre());
+                    }
+                });
+        if (trabajadorDTO.getIdTrabajador() != null) {
             usuarioDTO.setTrabajador(trabajadorDTO);
         }
         return usuarioDTO;
@@ -113,25 +133,46 @@ public class UsuarioService {
     public List<ListarTrabajadorDTO> listarTrabajadores(){
         return ((List<Trabajador>) trabajadorRepository.findAll())
                 .stream()
+                .sorted((t1, t2) -> {
+                    Integer p1 = t1.getPuntuacion() != null ? t1.getPuntuacion() : 0;
+                    Integer p2 = t2.getPuntuacion() != null ? t2.getPuntuacion() : 0;
+                    return p2.compareTo(p1); // Orden descendente
+                })
                 .map(trabajador -> {
                     ListarTrabajadorDTO trabajadorDTO = new ListarTrabajadorDTO();
                     trabajadorDTO.setIdTrabajador(trabajador.getIdTrabajador());
+                    trabajadorDTO.setIdUsuario(trabajador.getUsuario().getIdUsuario());
                     trabajadorDTO.setNombreUsusario(trabajador.getUsuario().getNombreUsuario());
                     if (trabajador.getArea() != null) {
                         trabajadorDTO.setNombreArea(trabajador.getArea().getNombre());
                     }
-                    trabajadorDTO.setExperiencia(trabajador.getExperiencia());
-                    Long nivel = trabajador.getCalificaciones()
-                            .stream()
-                            .mapToLong(calificacion -> calificacion.getPuntuacion())
-                            .sum(); 
-                    trabajadorDTO.setPuntajeTotal(nivel);
+                    trabajadorDTO.setExperiencia(trabajador.getExperiencia() == null ? 0L : trabajador.getExperiencia());
+                    Long puntajeTotal = trabajador.getPuntuacion() == null
+                            ? 0L
+                            : trabajador.getPuntuacion().longValue();
+                    trabajadorDTO.setPuntajeTotal(puntajeTotal);
+                    trabajadorDTO.setNivel(getNivelLabel(puntajeTotal));
+                    if (trabajador.getDepartamento() != null) {
+                        trabajadorDTO.setDepartamento(trabajador.getDepartamento().getNombre());
+                    }
+                    if (trabajador.getCiudad() != null) {
+                        trabajadorDTO.setCiudad(trabajador.getCiudad().getNombre());
+                    }
                     return trabajadorDTO;
                 })
                 .toList();
     }
 
-    public UsuarioDTO createUser(String nombre, String email, String password, List<String> roleNames, Long areaId, String descripcion, Long experiencia) {
+    private String getNivelLabel(Long puntajeTotal) {
+        long puntos = puntajeTotal == null ? 0L : puntajeTotal;
+        if (puntos >= 3001) return "Maestro";
+        if (puntos >= 1501) return "Elite";
+        if (puntos >= 501) return "Experto";
+        if (puntos >= 101) return "Profesional";
+        return "Aprendiz";
+    }
+
+    public UsuarioDTO createUser(String nombre, String email, String password, List<String> roleNames, Long areaId, String descripcion, Long experiencia, Integer idDepartamento, Integer idCiudad) {
         Usuario usuario = new Usuario();
         usuario.setNombreUsuario(nombre);
         usuario.setNombreCompleto(nombre);
@@ -175,6 +216,12 @@ public class UsuarioService {
             if (experiencia != null) {
                 trabajador.setExperiencia(experiencia);
             }
+            if (idDepartamento != null) {
+                departamentoRepository.findById(idDepartamento).ifPresent(trabajador::setDepartamento);
+            }
+            if (idCiudad != null) {
+                ciudadRepository.findById(idCiudad).ifPresent(trabajador::setCiudad);
+            }
             trabajador.setEstado("activo");
             trabajadorRepository.save(trabajador);
 
@@ -185,6 +232,13 @@ public class UsuarioService {
             }
             trabajadorDTO.setDescripcion(trabajador.getDescripcion());
             trabajadorDTO.setExperiencia(trabajador.getExperiencia());
+            trabajadorDTO.setPuntuacion(trabajador.getPuntuacion());
+            if (trabajador.getDepartamento() != null) {
+                trabajadorDTO.setDepartamento(trabajador.getDepartamento().getNombre());
+            }
+            if (trabajador.getCiudad() != null) {
+                trabajadorDTO.setCiudad(trabajador.getCiudad().getNombre());
+            }
             usuarioDTO.setTrabajador(trabajadorDTO);
         }
 
@@ -235,10 +289,25 @@ public class UsuarioService {
         usuarioDTO.setNombreUsuario(usuario.getNombreUsuario());
         usuarioDTO.setEstado(usuario.getEstado());
         List<String> roles = usuario.getRoles()
-                .stream()
-                .map(Rol::getNombre)
-                .toList();
+            .stream()
+            .map(rol -> mapToFrontendRole(rol.getNombre()))
+            .toList();
         usuarioDTO.setRoles(roles);
+
+        // Añadir datos de Trabajador si existe, para que el cliente tenga el idTrabajador y puntuacion
+        trabajadorRepository.findByUsuario_IdUsuario(usuario.getIdUsuario())
+            .ifPresent(trabajador -> {
+                TrabajadorDTO trabajadorDTO = new TrabajadorDTO();
+                trabajadorDTO.setIdTrabajador(trabajador.getIdTrabajador());
+                if (trabajador.getArea() != null) {
+                trabajadorDTO.setAreaId(trabajador.getArea().getIdArea());
+                trabajadorDTO.setAreaNombre(trabajador.getArea().getNombre());
+                }
+                trabajadorDTO.setDescripcion(trabajador.getDescripcion());
+                trabajadorDTO.setExperiencia(trabajador.getExperiencia());
+                trabajadorDTO.setPuntuacion(trabajador.getPuntuacion());
+                usuarioDTO.setTrabajador(trabajadorDTO);
+            });
         return usuarioDTO;
     }
 
@@ -249,9 +318,16 @@ public class UsuarioService {
         List<Rol> roles = new ArrayList<>();
         if (newRoles != null && !newRoles.isEmpty()) {
             for (String roleName : newRoles) {
-                Optional<Rol> rolOpt = rolRepository.findByNombre(mapToDbRole(roleName));
+                String dbName = mapToDbRole(roleName);
+                Optional<Rol> rolOpt = rolRepository.findByNombre(dbName);
                 if (rolOpt.isPresent()) {
                     roles.add(rolOpt.get());
+                } else {
+                    // Si no existe el rol en BD, lo creamos para asegurar la asignación
+                    Rol nuevoRol = new Rol();
+                    nuevoRol.setNombre(dbName);
+                    rolRepository.save(nuevoRol);
+                    roles.add(nuevoRol);
                 }
             }
         }
@@ -273,6 +349,60 @@ public class UsuarioService {
         usuarioDTO.setEstado(usuario.getEstado());
         usuarioDTO.setRoles(newRoles != null ? newRoles : new ArrayList<>());
         return usuarioDTO;
+    }
+
+    public UsuarioDTO upgradeToWorker(Long idUsuario, Long areaId, String descripcion, Long experiencia, Integer idDepartamento, Integer idCiudad) {
+        Usuario usuario = usuarioRepository.findByidUsuario(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idUsuario));
+        
+        // Agregar el rol si no lo tiene (verificar por nombre)
+        boolean yaTieneRol = usuario.getRoles().stream()
+                .anyMatch(r -> "Trabajador".equalsIgnoreCase(r.getNombre()));
+
+        if (!yaTieneRol) {
+            Optional<Rol> rolOpt = rolRepository.findByNombre("Trabajador");
+            Rol rolTrabajador = rolOpt.orElseGet(() -> {
+                Rol r = new Rol();
+                r.setNombre("Trabajador");
+                return rolRepository.save(r);
+            });
+            usuario.getRoles().add(rolTrabajador);
+            usuarioRepository.save(usuario);
+        }
+
+        // Crear o actualizar el registro de Trabajador
+        Trabajador trabajador = trabajadorRepository.findByUsuario_IdUsuario(usuario.getIdUsuario())
+                .orElseGet(() -> new Trabajador(usuario));
+        
+        if (areaId != null) {
+            Area area = areaRepository.findById(areaId)
+                    .orElseThrow(() -> new RuntimeException("Area no encontrada con ID: " + areaId));
+            trabajador.setArea(area);
+        }
+        if (descripcion != null) {
+            trabajador.setDescripcion(descripcion.trim());
+        }
+        if (experiencia != null) {
+            trabajador.setExperiencia(experiencia);
+        }
+        if (idDepartamento != null) {
+            departamentoRepository.findById(idDepartamento).ifPresent(trabajador::setDepartamento);
+        }
+        if (idCiudad != null) {
+            ciudadRepository.findById(idCiudad).ifPresent(trabajador::setCiudad);
+        }
+        trabajador.setEstado("activo");
+        trabajadorRepository.save(trabajador);
+
+        return SeeProfile(idUsuario);
+    }
+
+    public List<Departamento> getAllDepartamentos() {
+        return (List<Departamento>) departamentoRepository.findAll();
+    }
+
+    public List<Ciudad> getCiudadesByDepartamento(Integer idDepartamento) {
+        return ciudadRepository.findByDepartamento_IdDepartamento(idDepartamento);
     }
 
     public UsuarioDTO editUser(UsuarioDTO usuarioDTO) {

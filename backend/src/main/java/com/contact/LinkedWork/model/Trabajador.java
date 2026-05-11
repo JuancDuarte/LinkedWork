@@ -30,8 +30,16 @@ public class Trabajador {
     @Column(length = 50)
     private String estado = "activo";
 
-    @OneToMany(mappedBy = "trabajador", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<TrabajadorNivel> trabajadorNiveles = new HashSet<>();
+    @Column(name = "Puntuacion")
+    private Integer puntuacion = 0;
+
+    @ManyToOne
+    @JoinColumn(name = "IdDepartamento")
+    private Departamento departamento;
+
+    @ManyToOne
+    @JoinColumn(name = "IdCiudad")
+    private Ciudad ciudad;
 
     @OneToMany(mappedBy = "trabajador", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Oferta> ofertas = new HashSet<>();
@@ -108,12 +116,28 @@ public class Trabajador {
         this.estado = estado;
     }
 
-    public Set<TrabajadorNivel> getTrabajadorNiveles() {
-        return trabajadorNiveles;
+    public Integer getPuntuacion() {
+        return puntuacion;
     }
 
-    public void setTrabajadorNiveles(Set<TrabajadorNivel> trabajadorNiveles) {
-        this.trabajadorNiveles = trabajadorNiveles;
+    public void setPuntuacion(Integer puntuacion) {
+        this.puntuacion = puntuacion;
+    }
+
+    public Departamento getDepartamento() {
+        return departamento;
+    }
+
+    public void setDepartamento(Departamento departamento) {
+        this.departamento = departamento;
+    }
+
+    public Ciudad getCiudad() {
+        return ciudad;
+    }
+
+    public void setCiudad(Ciudad ciudad) {
+        this.ciudad = ciudad;
     }
 
     public Set<Oferta> getOfertas() {

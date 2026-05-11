@@ -10,6 +10,7 @@ public class CalificacionDTO {
     private Integer idSolicitud;
     private Integer puntuacion;
     private String comentario;
+    private String nombreUsuario;
     private LocalDateTime fechaCreacion;
     
     public CalificacionDTO() {
@@ -75,5 +76,13 @@ public class CalificacionDTO {
     
     public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
+    }
+
+    public String getNombreUsuario() {
+        return nombreUsuario;
+    }
+
+    public void setNombreUsuario(String nombreUsuario) {
+        this.nombreUsuario = nombreUsuario;
     }
 }

@@ -25,12 +25,39 @@ public class CertificadoService {
     @Qualifier("CrudTrabajadorRepository")
     private TrabajadorRepository trabajadorRepository;
 
+    @Autowired
+    @Qualifier("CrudUsuarioRepository")
+    private com.contact.LinkedWork.repository.UsuarioRepository usuarioRepository;
+
+    @Autowired
+    @Qualifier("PuntuacionService")
+    private PuntuacionService puntuacionService;
+
     public CertificadoDTO agregarCertificado(CertificadoDTO certificadoDTO, Long idTrabajador) {
-        Trabajador trabajador = trabajadorRepository.findById(idTrabajador)
-                .orElseThrow(() -> new RuntimeException("Trabajador no encontrado con ID: " + idTrabajador));
+        // Intentamos localizar al trabajador por su id (idTrabajador). Si no existe,
+        // también intentamos interpretarlo como id de usuario y buscar por usuario.
+        Trabajador trabajador = trabajadorRepository.findById(idTrabajador).orElse(null);
+        if (trabajador == null) {
+            trabajador = trabajadorRepository.findByUsuario_IdUsuario(idTrabajador).orElse(null);
+        }
+        if (trabajador == null) {
+            // Si aún no existe, intentamos crear un trabajador ligado al usuario con ese id.
+            var usuarioOpt = usuarioRepository.findByidUsuario(idTrabajador);
+            if (usuarioOpt.isPresent()) {
+                Trabajador nuevo = new Trabajador();
+                nuevo.setUsuario(usuarioOpt.get());
+                nuevo.setPuntuacion(0);
+                trabajador = trabajadorRepository.save(nuevo);
+            } else {
+                throw new RuntimeException("Trabajador/Usuario no encontrado con ID: " + idTrabajador);
+            }
+        }
 
         Certificado certificado = new Certificado(trabajador, certificadoDTO.getNombre(), certificadoDTO.getEntidad());
         certificadoRepository.save(certificado);
+
+        // Didáctico: automáticamente aprobar y otorgar 50 puntos
+        aprobarCertificado(certificado.getIdCertificado(), 50);
 
         certificadoDTO.setIdCertificado(certificado.getIdCertificado().intValue());
         certificadoDTO.setIdTrabajador(idTrabajador.intValue());
@@ -87,5 +114,20 @@ public class CertificadoService {
         }
 
         certificadoRepository.delete(certificado);
+    }
+
+    public void aprobarCertificado(Long idCertificado, Integer puntosOtorgados) {
+        Certificado certificado = certificadoRepository.findById(idCertificado)
+                .orElseThrow(() -> new RuntimeException("Certificado no encontrado con ID: " + idCertificado));
+        if ("Aprobado".equalsIgnoreCase(certificado.getEstado())) {
+            return;
+        }
+        certificado.setEstado("Aprobado");
+        certificado.setPuntosOtorgados(puntosOtorgados == null ? 0 : puntosOtorgados);
+        certificadoRepository.save(certificado);
+        Trabajador trabajador = certificado.getTrabajador();
+        if (trabajador != null) {
+            puntuacionService.addPuntosToTrabajador(trabajador.getIdTrabajador(), certificado.getPuntosOtorgados());
+        }
     }
 }
