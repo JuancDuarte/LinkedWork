@@ -79,3 +79,12 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Angular cache
+.angular/
+
+# Node modules
+node_modules/
+
+# Angular build
+dist/
