@@ -1,0 +1,67 @@
+<header class="lw-navbar" *ngIf="auth.isLoggedIn()">
+  <div class="navbar-container">
+    <div class="navbar-left">
+      <a routerLink="/" class="navbar-logo">
+        <span class="logo-box">LW</span>
+      </a>
+      <div class="navbar-search">
+        <input type="text" placeholder="Buscar profesionales, empleos..." />
+      </div>
+    </div>
+
+    <nav class="navbar-center">
+      <a routerLink="/" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Inicio</span>
+      </a>
+      <a routerLink="/farmings" class="nav-item" routerLinkActive="active">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">Técnicos</span>
+      </a>
+      <a routerLink="/requests" class="nav-item" routerLinkActive="active">
+        <span class="nav-icon">💼</span>
+        <span class="nav-label">{{ auth.role() === 'ROLE_TRABAJADOR' ? 'Solicitudes' : 'Solicitar' }}</span>
+      </a>
+      <a routerLink="/active-jobs" class="nav-item" routerLinkActive="active">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Mis Trabajos</span>
+      </a>
+      <a routerLink="/postulations" class="nav-item" routerLinkActive="active" *ngIf="auth.role() === 'ROLE_TRABAJADOR'">
+        <span class="nav-icon">📩</span>
+        <span class="nav-label">Mis Postulaciones</span>
+      </a>
+      <a routerLink="/certification" class="nav-item" routerLinkActive="active" *ngIf="auth.role() === 'ROLE_TRABAJADOR'">
+        <span class="nav-icon">🎓</span>
+        <span class="nav-label">Certificarme</span>
+      </a>
+    </nav>
+
+    <div class="navbar-right">
+      <div class="user-menu-trigger" (click)="toggleMenu()">
+        <img [src]="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + auth.userName()" alt="Me" class="nav-avatar" />
+        <span class="nav-label-me">Yo ▼</span>
+      </div>
+
+      <div class="user-dropdown" *ngIf="menuOpen()">
+        <div class="dropdown-header">
+           <img [src]="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + auth.userName()" alt="Me" class="dropdown-avatar" />
+           <div class="dropdown-user-info">
+             <h4>{{ auth.userName() }}</h4>
+             <p>{{ auth.role() === 'ROLE_TRABAJADOR' ? 'Trabajador Profesional' : 'Usuario LinkedWork' }}</p>
+           </div>
+        </div>
+        <a routerLink="/profile" class="btn-view-profile" (click)="closeMenu()">Ver Perfil</a>
+        
+        <div class="dropdown-section">
+           <h5>Cuenta</h5>
+           <a href="javascript:void(0)" (click)="switchRole()">{{ toggleRoleLabel() }}</a>
+           <a href="javascript:void(0)">Configuración y Privacidad</a>
+        </div>
+
+        <div class="dropdown-footer">
+           <a href="javascript:void(0)" (click)="logout()">Cerrar sesión</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

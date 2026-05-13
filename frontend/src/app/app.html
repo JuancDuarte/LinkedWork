@@ -1,0 +1,17 @@
+<div class="app-wrapper">
+  <app-header></app-header>
+
+  <main class="main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <div class="toast-container">
+    <div *ngFor="let toast of notification.toasts()" class="toast" [class.toast-success]="toast.type === 'success'" [class.toast-error]="toast.type === 'error'" [class.toast-info]="toast.type === 'info'" [class.toast-warning]="toast.type === 'warning'">
+      <div class="toast-body">
+        <strong>{{ toast.title }}</strong>
+        <p *ngIf="toast.description">{{ toast.description }}</p>
+      </div>
+      <button type="button" class="toast-close" (click)="notification.dismiss(toast.id)">×</button>
+    </div>
+  </div>
+</div>
