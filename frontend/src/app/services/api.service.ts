@@ -2,7 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, retry, throwError, tap } from 'rxjs';
 
-const API_BASE = 'http://localhost:8082/LinkedApi';
+import { environment } from '../../environments/environment';
+
+const API_BASE = 'https://regulations-wanted-smtp-intake.trycloudflare.com/LinkedApi';
 
 export interface ApiUser {
   idUsuario?: number;
@@ -35,6 +37,26 @@ export interface ApiCertificado {
   entidad?: string;
   descripcion?: string;
   fecha?: string;
+}
+
+export interface SolicitudDTO {
+  idSolicitud: number;
+  titulo: string;
+  descripcion: string;
+  estado: string;
+  fechaCreacion?: string;
+  idUsuario: number;
+  nombreUsuario: string;
+  idArea?: number;
+  nombreArea?: string;
+  idTrabajador?: number;
+  nombreTrabajador?: string;
+  idUsuarioTrabajador?: number;
+  precio?: number;
+  fechaServicio?: string;
+  direccion?: string;
+  horaEncuentro?: string;
+  notas?: string;
 }
 
 @Injectable({
@@ -96,43 +118,6 @@ export class ApiService {
       tap((response) => console.log('[ApiService] listFarming response:', response)),
       retry(1),
       catchError(this.handleError('listFarming'))
-    );
-  }
-
-  getCertificates(workerId: number): Observable<ApiCertificado[]> {
-    return this.http.get<ApiCertificado[]>(`${API_BASE}/listCertificados/${encodeURIComponent(workerId)}`).pipe(
-      tap((response) => console.log('[ApiService] getCertificates workerId:', workerId, 'response:', response)),
-      catchError(this.handleError('getCertificates'))
-    );
-  }
-
-  addCertificate(workerId: number, payload: ApiCertificado, file?: File): Observable<ApiCertificado> {
-    const formData = new FormData();
-    formData.append('nombre', payload.nombre || '');
-    formData.append('entidad', payload.entidad || '');
-    formData.append('descripcion', payload.descripcion || '');
-    if (file) {
-      formData.append('file', file);
-    }
-    const endpoint = file ? 'addCertificadoFile' : 'addCertificado';
-    return this.http.post<ApiCertificado>(`${API_BASE}/${endpoint}/${encodeURIComponent(workerId)}`, formData).pipe(
-      tap(() => console.log('[ApiService] addCertificate workerId:', workerId, 'payload:', payload)),
-      catchError(this.handleError('addCertificate'))
-    );
-  }
-
-  getAreas(): Observable<any[]> {
-    return this.http.get<any[]>(`${API_BASE}/listAreas`).pipe(
-      tap((response) => console.log('[ApiService] getAreas response:', response)),
-      retry(1),
-      catchError(this.handleError('getAreas'))
-    );
-  }
-
-  farmProfile(id: number): Observable<any> {
-    return this.http.get<any>(`${API_BASE}/seeProfile/${encodeURIComponent(id)}`).pipe(
-      tap(() => console.log('[ApiService] farmProfile id:', id)),
-      catchError(this.handleError('farmProfile'))
     );
   }
 
@@ -244,6 +229,12 @@ export class ApiService {
     );
   }
 
+  updateEncounterDetails(idSolicitud: number, payload: { direccion: string, horaEncuentro: string, notas: string }): Observable<SolicitudDTO> {
+    return this.http.post<SolicitudDTO>(`${API_BASE}/updateEncounter/${idSolicitud}`, payload).pipe(
+      catchError(this.handleError('updateEncounterDetails'))
+    );
+  }
+
   rateWorker(userId: number, solicitudId: number, payload: { puntuacion: number; comentario: string }): Observable<any> {
     return this.http.post(`${API_BASE}/calificarTrabajador/${encodeURIComponent(userId)}/${encodeURIComponent(solicitudId)}`, payload).pipe(
       tap(() => console.log('[ApiService] rateWorker userId:', userId, 'solicitudId:', solicitudId, 'payload:', payload)),
@@ -300,5 +291,34 @@ export class ApiService {
       tap((res) => console.log('[ApiService] listWorkerOffers response:', res)),
       catchError(this.handleError('listWorkerOffers'))
     );
+  }
+
+  getAreas(): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/listAreas`).pipe(
+      catchError(this.handleError('getAreas'))
+    );
+  }
+
+  getCertificates(trabajadorId: number): Observable<ApiCertificado[]> {
+    return this.http.get<ApiCertificado[]>(`${API_BASE}/listCertificados/${trabajadorId}`).pipe(
+      catchError(this.handleError('getCertificates'))
+    );
+  }
+
+  addCertificate(trabajadorId: number, payload: any, file?: File): Observable<any> {
+    if (file) {
+      const formData = new FormData();
+      formData.append('nombre', payload.nombre);
+      formData.append('entidad', payload.entidad);
+      formData.append('descripcion', payload.descripcion);
+      formData.append('file', file);
+      return this.http.post(`${API_BASE}/addCertificadoFile/${trabajadorId}`, formData).pipe(
+        catchError(this.handleError('addCertificateWithFile'))
+      );
+    } else {
+      return this.http.post(`${API_BASE}/addCertificado/${trabajadorId}`, payload).pipe(
+        catchError(this.handleError('addCertificate'))
+      );
+    }
   }
 }

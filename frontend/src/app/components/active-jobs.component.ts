@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import { ApiService } from '../services/api.service';
+import { ApiService, SolicitudDTO } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
 
 @Component({
@@ -49,6 +49,17 @@ import { AuthService } from '../services/auth.service';
                  <h3 class="job-title-premium">{{ job.titulo }}</h3>
                  <p class="job-desc-premium">{{ job.descripcion }}</p>
                  
+                 <!-- Encuentro Details (Visible to both if set) -->
+                 <div class="encounter-info-box" *ngIf="job.direccion || job.horaEncuentro || job.notas">
+                    <h4 class="info-title">Detalles de Encuentro</h4>
+                    <p *ngIf="job.direccion">📍 <strong>Ubicación:</strong> {{ job.direccion }}</p>
+                    <p *ngIf="job.horaEncuentro">⏰ <strong>Hora:</strong> {{ job.horaEncuentro }}</p>
+                    <div class="note-box" *ngIf="job.notas">
+                       <span class="note-icon">📝</span>
+                       <p>{{ job.notas }}</p>
+                    </div>
+                 </div>
+
                  <div class="job-meta-grid">
                     <div class="meta-box">
                        <span class="meta-label">Categoría</span>
@@ -56,13 +67,18 @@ import { AuthService } from '../services/auth.service';
                     </div>
                     <div class="meta-box">
                        <span class="meta-label">{{ auth.role() === 'ROLE_TRABAJADOR' ? 'Cliente' : 'Profesional' }}</span>
-                       <span class="meta-value highlight">{{ auth.role() === 'ROLE_TRABAJADOR' ? job.nombreUsuario : job.nombreTrabajador }}</span>
+                       <a [routerLink]="['/profile', auth.role() === 'ROLE_TRABAJADOR' ? job.idUsuario : job.idUsuarioTrabajador]" class="meta-value highlight link-profile">
+                          {{ auth.role() === 'ROLE_TRABAJADOR' ? job.nombreUsuario : (job.nombreTrabajador || 'Asignado') }}
+                       </a>
                     </div>
                  </div>
               </div>
 
-              <div class="card-actions-premium" *ngIf="auth.role() === 'ROLE_USUARIO'">
-                 <button class="btn-premium-action" (click)="finishJob(job.idSolicitud)">
+              <div class="card-actions-premium">
+                 <button class="btn-outline-details" (click)="openDetailsModal(job)">
+                    {{ auth.role() === 'ROLE_USUARIO' ? 'Gestionar Encuentro' : 'Ver/Añadir Notas' }}
+                 </button>
+                 <button class="btn-premium-action mt-2" *ngIf="auth.role() === 'ROLE_USUARIO'" (click)="finishJob(job.idSolicitud)">
                     Finalizar y Calificar
                  </button>
               </div>
@@ -77,6 +93,41 @@ import { AuthService } from '../services/auth.service';
            <button class="btn-lw-primary mt-3" routerLink="/requests">Explorar Solicitudes</button>
         </div>
       </div>
+    </div>
+
+    <!-- Encounter Details Modal -->
+    <div class="modal-overlay-premium" *ngIf="selectedJob()">
+       <div class="modal-card-encounter">
+          <div class="modal-header-premium">
+             <h2>Logística del Servicio</h2>
+             <button class="close-btn" (click)="selectedJob.set(null)">×</button>
+          </div>
+          <div class="modal-body-premium">
+             <p class="modal-hint">Coordina los detalles finales para que el encuentro sea exitoso.</p>
+             
+             <form (ngSubmit)="saveEncounterDetails()">
+                <div class="form-group-premium">
+                   <label>Dirección o Punto de Encuentro</label>
+                   <input type="text" [(ngModel)]="encounterForm.direccion" name="dir" class="input-premium" placeholder="Ej: Calle 123 #45-67, Edificio Sol" />
+                </div>
+                <div class="form-group-premium">
+                   <label>Hora Sugerida</label>
+                   <input type="text" [(ngModel)]="encounterForm.horaEncuentro" name="hora" class="input-premium" placeholder="Ej: 2:30 PM" />
+                </div>
+                <div class="form-group-premium">
+                   <label>Mensaje o Notas (Para coordinar)</label>
+                   <textarea [(ngModel)]="encounterForm.notas" name="notas" class="textarea-premium" placeholder="Deja un mensaje corto sobre herramientas, acceso, etc."></textarea>
+                </div>
+
+                <div class="modal-footer-premium">
+                   <button type="button" class="btn-ghost-cancel" (click)="selectedJob.set(null)">Cancelar</button>
+                   <button type="submit" class="btn-lw-primary" [disabled]="loading()">
+                      {{ loading() ? 'Guardando...' : 'Guardar Detalles' }}
+                   </button>
+                </div>
+             </form>
+          </div>
+       </div>
     </div>
 
     <!-- Modals -->
@@ -156,17 +207,28 @@ import { AuthService } from '../services/auth.service';
     @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(14, 165, 233, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); } }
 
     .job-title-premium { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0 0 0.75rem; }
-    .job-desc-premium { font-size: 0.95rem; color: #64748b; line-height: 1.5; margin-bottom: 1.5rem; flex: 1; }
+    .job-desc-premium { font-size: 0.9rem; color: #64748b; line-height: 1.5; margin-bottom: 1.25rem; }
     
+    .encounter-info-box { background: #f1f5f9; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1.25rem; border-left: 4px solid #0a66c2; }
+    .info-title { font-size: 0.85rem; font-weight: 800; color: #334155; margin: 0 0 0.5rem; text-transform: uppercase; }
+    .encounter-info-box p { font-size: 0.85rem; margin: 4px 0; color: #475569; }
+    .note-box { display: flex; gap: 8px; background: white; padding: 8px; border-radius: 0.5rem; margin-top: 8px; border: 1px solid #e2e8f0; }
+    .note-icon { font-size: 1.1rem; }
+    .note-box p { font-style: italic; font-size: 0.8rem; color: #64748b; margin: 0; line-height: 1.4; }
+
     .job-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; }
     .meta-box { display: flex; flex-direction: column; }
     .meta-label { font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
     .meta-value { font-size: 0.9rem; font-weight: 600; color: #334155; }
     .meta-value.highlight { color: #0a66c2; }
+    .link-profile { text-decoration: none; transition: 0.2s; }
+    .link-profile:hover { text-decoration: underline; color: #004182; }
 
     .card-actions-premium { margin-top: 1.5rem; }
     .btn-premium-action { width: 100%; background: #0a66c2; color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
     .btn-premium-action:hover { background: #004182; }
+    .btn-outline-details { width: 100%; background: transparent; color: #0a66c2; border: 2px solid #0a66c2; padding: 0.7rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
+    .btn-outline-details:hover { background: #f0f7ff; }
 
     .empty-state-premium { background: white; border: 2px dashed #e2e8f0; border-radius: 1.5rem; padding: 4rem 2rem; text-align: center; }
     .empty-icon-box { font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; }
@@ -177,15 +239,24 @@ import { AuthService } from '../services/auth.service';
 
     /* Modal Overlay */
     .modal-overlay-premium { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-    .modal-card-finish, .modal-card-rating { background: white; width: 90%; max-width: 450px; border-radius: 1.5rem; padding: 2.5rem; text-align: center; animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .modal-card-encounter, .modal-card-finish, .modal-card-rating { background: white; width: 90%; max-width: 500px; border-radius: 1.5rem; padding: 2.5rem; animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; }
     @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-    .modal-icon-big { font-size: 4rem; margin-bottom: 1.5rem; }
+    .modal-header-premium { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .modal-header-premium h2 { margin: 0; font-size: 1.5rem; color: #1e293b; }
+    .close-btn { background: none; border: none; font-size: 2rem; color: #94a3b8; cursor: pointer; }
+    .modal-hint { font-size: 0.9rem; color: #64748b; margin-bottom: 2rem; }
+
+    .input-premium { width: 100%; padding: 0.75rem; border: 1.5px solid #e2e8f0; border-radius: 0.75rem; margin-top: 4px; box-sizing: border-box; }
+    .textarea-premium { width: 100%; height: 120px; padding: 0.75rem; border: 1.5px solid #e2e8f0; border-radius: 0.75rem; resize: none; margin-top: 4px; box-sizing: border-box; }
+    
+    .modal-footer-premium { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
+    .modal-icon-big { font-size: 4rem; text-align: center; margin-bottom: 1.5rem; }
     .modal-footer-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem; }
-    .btn-ghost-cancel { background: #f1f5f9; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 700; color: #475569; cursor: pointer; }
+    .btn-ghost-cancel { background: #f1f5f9; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 700; color: #475569; cursor: pointer; }
     .btn-confirm-finish { background: #10b981; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 700; color: white; cursor: pointer; }
 
-    .modal-header-rating { margin-bottom: 2rem; }
+    .modal-header-rating { margin-bottom: 2rem; text-align: center; }
     .icon-stars { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
     .stars-selector { display: flex; flex-direction: row-reverse; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; }
     .stars-selector input { display: none; }
@@ -194,9 +265,8 @@ import { AuthService } from '../services/auth.service';
     
     .form-group-premium { text-align: left; margin-bottom: 1.5rem; }
     .form-group-premium label { display: block; font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; }
-    .textarea-premium { width: 100%; height: 100px; padding: 0.75rem; border: 1.5px solid #e2e8f0; border-radius: 0.75rem; resize: none; outline: none; box-sizing: border-box; }
     .btn-submit-premium { width: 100%; background: #0a66c2; color: white; border: none; padding: 1rem; border-radius: 0.75rem; font-weight: 800; font-size: 1rem; cursor: pointer; }
-    .btn-skip-premium { background: transparent; border: none; color: #94a3b8; font-weight: 600; margin-top: 1rem; cursor: pointer; }
+    .btn-skip-premium { background: transparent; border: none; color: #94a3b8; font-weight: 600; margin-top: 1rem; cursor: pointer; display: block; width: 100%; text-align: center; }
     
     @media (max-width: 600px) {
       .jobs-grid-premium { grid-template-columns: 1fr; }
@@ -217,6 +287,14 @@ export class ActiveJobsComponent implements OnInit {
   ratingSolicitudId = signal<number | null>(null);
   showConfirmModal = signal(false);
   pendingFinishId = signal<number | null>(null);
+  
+  selectedJob = signal<any | null>(null);
+  encounterForm = {
+    direccion: '',
+    horaEncuentro: '',
+    notas: ''
+  };
+
   ratingForm = {
     puntuacion: 5,
     comentario: ''
@@ -242,6 +320,33 @@ export class ActiveJobsComponent implements OnInit {
     } catch (error) {
       console.error('Error al cargar trabajos:', error);
       this.errorMessage.set('No se pudieron cargar los trabajos activos.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  openDetailsModal(job: any) {
+    this.selectedJob.set(job);
+    this.encounterForm = {
+      direccion: job.direccion || '',
+      horaEncuentro: job.horaEncuentro || '',
+      notas: job.notas || ''
+    };
+  }
+
+  async saveEncounterDetails() {
+    const job = this.selectedJob();
+    if (!job) return;
+
+    this.loading.set(true);
+    try {
+      await firstValueFrom(this.api.updateEncounterDetails(job.idSolicitud, this.encounterForm));
+      this.successMessage.set('Detalles de encuentro actualizados correctamente.');
+      this.selectedJob.set(null);
+      await this.loadActiveJobs();
+      setTimeout(() => this.successMessage.set(null), 3000);
+    } catch (error) {
+      this.errorMessage.set('Error al actualizar los detalles.');
     } finally {
       this.loading.set(false);
     }

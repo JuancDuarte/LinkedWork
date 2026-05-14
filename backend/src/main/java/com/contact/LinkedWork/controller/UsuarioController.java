@@ -28,6 +28,8 @@ import com.contact.LinkedWork.dto.CreateUsuarioDTO;
 import com.contact.LinkedWork.dto.UsuarioDTO;
 import com.contact.LinkedWork.dto.LoginDTO;
 import com.contact.LinkedWork.dto.ListarTrabajadorDTO;
+import com.contact.LinkedWork.dto.UpdateEncounterDTO;
+import com.contact.LinkedWork.dto.CertificadoDTO;
 import com.contact.LinkedWork.service.UsuarioService;
 
 @RestController
@@ -83,6 +85,7 @@ public class UsuarioController {
             Integer idDepartamento = payload.getIdDepartamento();
             Integer idCiudad = payload.getIdCiudad();
             String nombreUsuario = payload.getNombreUsuario();
+            List<CertificadoDTO> certificados = payload.getCertificados();
 
             if (nombre == null || nombre.trim().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
@@ -94,7 +97,7 @@ public class UsuarioController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
             }
 
-            UsuarioDTO created = usuarioService.createUser(nombreUsuario, nombre, email, password, roles, areaId, descripcion, experiencia, idDepartamento, idCiudad);
+            UsuarioDTO created = usuarioService.createUser(nombreUsuario, nombre, email, password, roles, areaId, descripcion, experiencia, idDepartamento, idCiudad, certificados);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (RuntimeException ex) {
             ex.printStackTrace();

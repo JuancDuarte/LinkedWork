@@ -178,61 +178,52 @@ public class SolicitudService {
         ofertaHistorial.setFecha(LocalDateTime.now());
         ofertaHistorialRepository.save(ofertaHistorial);
 
-        SolicitudDTO solicitudDTO = new SolicitudDTO();
-        solicitudDTO.setIdSolicitud(solicitud.getIdSolicitud());
-        solicitudDTO.setTitulo(solicitud.getTitulo());
-        solicitudDTO.setDescripcion(solicitud.getDescripcion());
-        solicitudDTO.setEstado(solicitud.getEstado());
-        solicitudDTO.setFechaCreacion(solicitud.getFechaCreacion());
-        solicitudDTO.setIdUsuario(usuarioSolicitante.getIdUsuario());
-        solicitudDTO.setNombreUsuario(usuarioSolicitante.getNombreCompleto());
-        solicitudDTO.setIdArea(area.getIdArea());
-        solicitudDTO.setNombreArea(area.getNombre());
-        solicitudDTO.setPrecio(solicitud.getPrecio());
-        solicitudDTO.setFechaServicio(solicitud.getFechaServicio());
-        return solicitudDTO;
+        return convertToDTO(solicitud);
+    }
+
+    private SolicitudDTO convertToDTO(Solicitud solicitud) {
+        SolicitudDTO dto = new SolicitudDTO();
+        dto.setIdSolicitud(solicitud.getIdSolicitud());
+        dto.setTitulo(solicitud.getTitulo());
+        dto.setDescripcion(solicitud.getDescripcion());
+        dto.setEstado(solicitud.getEstado());
+        dto.setFechaCreacion(solicitud.getFechaCreacion());
+        dto.setIdUsuario(solicitud.getUsuario().getIdUsuario());
+        dto.setNombreUsuario(solicitud.getUsuario().getNombreCompleto());
+        if (solicitud.getArea() != null) {
+            dto.setIdArea(solicitud.getArea().getIdArea());
+            dto.setNombreArea(solicitud.getArea().getNombre());
+        }
+        dto.setPrecio(solicitud.getPrecio());
+        dto.setFechaServicio(solicitud.getFechaServicio());
+        dto.setDireccion(solicitud.getDireccion());
+        dto.setHoraEncuentro(solicitud.getHoraEncuentro());
+        dto.setNotas(solicitud.getNotas());
+        
+        if ("Aceptada".equalsIgnoreCase(solicitud.getEstado()) || "En Progreso".equalsIgnoreCase(solicitud.getEstado())) {
+            Oferta ofertaAceptada = solicitud.getOfertas().stream()
+                .filter(o -> "Aceptada".equalsIgnoreCase(o.getEstado()))
+                .findFirst().orElse(null);
+            if (ofertaAceptada != null && ofertaAceptada.getTrabajador() != null) {
+                dto.setIdTrabajador(ofertaAceptada.getTrabajador().getIdTrabajador());
+                dto.setNombreTrabajador(ofertaAceptada.getTrabajador().getUsuario().getNombreCompleto());
+                dto.setIdUsuarioTrabajador(ofertaAceptada.getTrabajador().getUsuario().getIdUsuario());
+            }
+        }
+        return dto;
     }
 
     public List<SolicitudDTO> getAllSolicitudes() {
         return ((List<Solicitud>) solicitudRepository.findAll())
                 .stream()
-                .map(solicitud -> {
-                    SolicitudDTO solicitudDTO = new SolicitudDTO();
-                    solicitudDTO.setIdSolicitud(solicitud.getIdSolicitud());
-                    solicitudDTO.setTitulo(solicitud.getTitulo());
-                    solicitudDTO.setDescripcion(solicitud.getDescripcion());
-                    solicitudDTO.setEstado(solicitud.getEstado());
-                    solicitudDTO.setFechaCreacion(solicitud.getFechaCreacion());
-                    solicitudDTO.setIdUsuario(solicitud.getUsuario().getIdUsuario());
-                    solicitudDTO.setNombreUsuario(solicitud.getUsuario().getNombreCompleto());
-                    solicitudDTO.setIdArea(solicitud.getArea().getIdArea());
-                    solicitudDTO.setNombreArea(solicitud.getArea().getNombre());
-                    solicitudDTO.setPrecio(solicitud.getPrecio());
-                    solicitudDTO.setFechaServicio(solicitud.getFechaServicio());
-                    return solicitudDTO;
-                })
+                .map(this::convertToDTO)
                 .toList();
-        
     }
 
     public List<SolicitudDTO> getSolicitudesByUsuario(Long idUsuario) {
         List<Solicitud> solicitudes = solicitudRepository.findAllByUsuario_IdUsuario(idUsuario);
         return solicitudes.stream()
-                .map(solicitud -> {
-                    SolicitudDTO solicitudDTO = new SolicitudDTO();
-                    solicitudDTO.setIdSolicitud(solicitud.getIdSolicitud());
-                    solicitudDTO.setTitulo(solicitud.getTitulo());
-                    solicitudDTO.setDescripcion(solicitud.getDescripcion());
-                    solicitudDTO.setEstado(solicitud.getEstado());
-                    solicitudDTO.setFechaCreacion(solicitud.getFechaCreacion());
-                    solicitudDTO.setIdUsuario(solicitud.getUsuario().getIdUsuario());
-                    solicitudDTO.setNombreUsuario(solicitud.getUsuario().getNombreCompleto());
-                    solicitudDTO.setIdArea(solicitud.getArea().getIdArea());
-                    solicitudDTO.setNombreArea(solicitud.getArea().getNombre());
-                    solicitudDTO.setPrecio(solicitud.getPrecio());
-                    solicitudDTO.setFechaServicio(solicitud.getFechaServicio());
-                    return solicitudDTO;
-                })
+                .map(this::convertToDTO)
                 .toList();
     }
 
@@ -297,16 +288,7 @@ public class SolicitudService {
             SolicitudDTO dto = new SolicitudDTO();
             dto.setIdSolicitud(solicitud.getIdSolicitud());
             dto.setTitulo(solicitud.getTitulo());
-            dto.setDescripcion(solicitud.getDescripcion());
-            dto.setEstado(solicitud.getEstado());
-            dto.setFechaCreacion(solicitud.getFechaCreacion());
-            dto.setIdUsuario(solicitud.getUsuario().getIdUsuario());
-            dto.setNombreUsuario(solicitud.getUsuario().getNombreCompleto());
-            dto.setIdArea(solicitud.getArea().getIdArea());
-            dto.setNombreArea(solicitud.getArea().getNombre());
-            dto.setPrecio(solicitud.getPrecio());
-            dto.setFechaServicio(solicitud.getFechaServicio());
-            resultado.add(dto);
+            resultado.add(convertToDTO(solicitud));
             idsAgregados.add(solicitud.getIdSolicitud());
         }
 
@@ -320,21 +302,7 @@ public class SolicitudService {
                 continue;
             }
 
-            SolicitudDTO dto = new SolicitudDTO();
-            dto.setIdSolicitud(solicitud.getIdSolicitud());
-            dto.setTitulo(solicitud.getTitulo());
-            dto.setDescripcion(solicitud.getDescripcion());
-            dto.setEstado(solicitud.getEstado());
-            dto.setFechaCreacion(solicitud.getFechaCreacion());
-            dto.setIdUsuario(solicitud.getUsuario().getIdUsuario());
-            dto.setNombreUsuario(solicitud.getUsuario().getNombreCompleto());
-            if (solicitud.getArea() != null) {
-                dto.setIdArea(solicitud.getArea().getIdArea());
-                dto.setNombreArea(solicitud.getArea().getNombre());
-            }
-            dto.setPrecio(solicitud.getPrecio());
-            dto.setFechaServicio(solicitud.getFechaServicio());
-            resultado.add(dto);
+            resultado.add(convertToDTO(solicitud));
             idsAgregados.add(solicitud.getIdSolicitud());
         }
 
@@ -345,21 +313,7 @@ public class SolicitudService {
         return ((List<Solicitud>) solicitudRepository.findAll())
                 .stream()
                 .filter(s -> "Pendiente".equalsIgnoreCase(s.getEstado()))
-                .map(solicitud -> {
-                    SolicitudDTO dto = new SolicitudDTO();
-                    dto.setIdSolicitud(solicitud.getIdSolicitud());
-                    dto.setTitulo(solicitud.getTitulo());
-                    dto.setDescripcion(solicitud.getDescripcion());
-                    dto.setEstado(solicitud.getEstado());
-                    dto.setFechaCreacion(solicitud.getFechaCreacion());
-                    dto.setIdUsuario(solicitud.getUsuario().getIdUsuario());
-                    dto.setNombreUsuario(solicitud.getUsuario().getNombreCompleto());
-                    dto.setIdArea(solicitud.getArea().getIdArea());
-                    dto.setNombreArea(solicitud.getArea().getNombre());
-                    dto.setPrecio(solicitud.getPrecio());
-                    dto.setFechaServicio(solicitud.getFechaServicio());
-                    return dto;
-                })
+                .map(this::convertToDTO)
                 .toList();
     }
 
@@ -521,19 +475,19 @@ public class SolicitudService {
             solicitud.setFechaServicio(editarSolicitudDTO.getFechaServicio());
         }
         Solicitud solicitudActualizada = solicitudRepository.save(solicitud);
-        SolicitudDTO solicitudDTO = new SolicitudDTO();
-        solicitudDTO.setIdSolicitud(solicitudActualizada.getIdSolicitud());
-        solicitudDTO.setTitulo(solicitudActualizada.getTitulo());
-        solicitudDTO.setDescripcion(solicitudActualizada.getDescripcion());
-        solicitudDTO.setEstado(solicitudActualizada.getEstado());
-        solicitudDTO.setFechaCreacion(solicitudActualizada.getFechaCreacion());
-        solicitudDTO.setIdUsuario(solicitudActualizada.getUsuario().getIdUsuario());
-        solicitudDTO.setNombreUsuario(solicitudActualizada.getUsuario().getNombreCompleto());
-        solicitudDTO.setIdArea(solicitudActualizada.getArea().getIdArea());
-        solicitudDTO.setNombreArea(solicitudActualizada.getArea().getNombre());
-        solicitudDTO.setPrecio(solicitudActualizada.getPrecio());
-        solicitudDTO.setFechaServicio(solicitudActualizada.getFechaServicio());
-        return solicitudDTO;
+        return convertToDTO(solicitudActualizada);
+    }
+
+    public SolicitudDTO updateEncounterDetails(Long idSolicitud, String direccion, String horaEncuentro, String notas) {
+        Solicitud solicitud = solicitudRepository.findById(idSolicitud)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+        
+        if (direccion != null) solicitud.setDireccion(direccion);
+        if (horaEncuentro != null) solicitud.setHoraEncuentro(horaEncuentro);
+        if (notas != null) solicitud.setNotas(notas);
+        
+        Solicitud guardada = solicitudRepository.save(solicitud);
+        return convertToDTO(guardada);
     }
     public void eliminarSolicitud(Long idSolicitud, Long idUsuario) {
         Optional<Solicitud> solicitudExistente = solicitudRepository.findById(idSolicitud);

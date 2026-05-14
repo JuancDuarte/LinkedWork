@@ -26,6 +26,7 @@ import com.contact.LinkedWork.repository.DepartamentoRepository;
 import com.contact.LinkedWork.repository.TrabajadorRepository;
 import com.contact.LinkedWork.repository.UsuarioRepository;
 import com.contact.LinkedWork.repository.RolRepository;
+import com.contact.LinkedWork.dto.CertificadoDTO;
 
 @Service("UsuarioService")
 @Transactional
@@ -53,6 +54,10 @@ public class UsuarioService {
     @Autowired
     @Qualifier("CrudCiudadRepository")
     private CiudadRepository ciudadRepository;
+
+    @Autowired
+    @Qualifier("CertificadoService")
+    private CertificadoService certificadoService;
 
     private String mapToDbRole(String roleName) {
         return switch (roleName) {
@@ -177,7 +182,7 @@ public class UsuarioService {
         return "Aprendiz";
     }
 
-    public UsuarioDTO createUser(String nombreUsuario, String nombre, String email, String password, List<String> roleNames, Long areaId, String descripcion, Long experiencia, Integer idDepartamento, Integer idCiudad) {
+    public UsuarioDTO createUser(String nombreUsuario, String nombre, String email, String password, List<String> roleNames, Long areaId, String descripcion, Long experiencia, Integer idDepartamento, Integer idCiudad, List<CertificadoDTO> certificados) {
         Usuario usuario = new Usuario();
         usuario.setNombreUsuario(nombreUsuario);
         usuario.setNombreCompleto(nombre);
@@ -229,6 +234,12 @@ public class UsuarioService {
             }
             trabajador.setEstado("activo");
             trabajadorRepository.save(trabajador);
+
+            if (certificados != null && !certificados.isEmpty()) {
+                for (CertificadoDTO cert : certificados) {
+                    certificadoService.agregarCertificado(cert, trabajador.getIdTrabajador());
+                }
+            }
 
             TrabajadorDTO trabajadorDTO = new TrabajadorDTO();
             trabajadorDTO.setAreaId(areaId);
