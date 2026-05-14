@@ -4,7 +4,7 @@ import { Observable, catchError, retry, throwError, tap } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 
-const API_BASE = 'https://three-terms-knock.loca.lt/LinkedApi';
+const API_BASE = 'https://regulations-wanted-smtp-intake.trycloudflare.com/LinkedApi';
 
 export interface ApiUser {
   idUsuario?: number;
