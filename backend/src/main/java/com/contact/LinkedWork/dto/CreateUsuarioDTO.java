@@ -13,6 +13,7 @@ public class CreateUsuarioDTO {
     private Integer idDepartamento;
     private Integer idCiudad;
     private String nombreUsuario;
+    private List<CertificadoDTO> certificados;
 
     // Getters and setters
     public String getNombreUsuario() {
@@ -92,5 +93,13 @@ public class CreateUsuarioDTO {
 
     public void setIdCiudad(Integer idCiudad) {
         this.idCiudad = idCiudad;
+    }
+
+    public List<CertificadoDTO> getCertificados() {
+        return certificados;
+    }
+
+    public void setCertificados(List<CertificadoDTO> certificados) {
+        this.certificados = certificados;
     }
 }

@@ -162,8 +162,15 @@ public class CalificacionService {
         dto.setFechaCreacion(s.getFechaCreacion());
         dto.setIdUsuario(s.getUsuario().getIdUsuario());
         dto.setNombreUsuario(s.getUsuario().getNombreCompleto());
-        dto.setIdArea(s.getArea().getIdArea());
-        dto.setNombreArea(s.getArea().getNombre());
+        if (s.getArea() != null) {
+            dto.setIdArea(s.getArea().getIdArea());
+            dto.setNombreArea(s.getArea().getNombre());
+        }
+        dto.setPrecio(s.getPrecio());
+        dto.setFechaServicio(s.getFechaServicio());
+        dto.setDireccion(s.getDireccion());
+        dto.setHoraEncuentro(s.getHoraEncuentro());
+        dto.setNotas(s.getNotas());
         
         // Agregar info del trabajador si está aceptada
         s.getOfertas().stream()
@@ -172,6 +179,7 @@ public class CalificacionService {
             .ifPresent(o -> {
                 dto.setIdTrabajador(o.getTrabajador().getIdTrabajador());
                 dto.setNombreTrabajador(o.getTrabajador().getUsuario().getNombreCompleto());
+                dto.setIdUsuarioTrabajador(o.getTrabajador().getUsuario().getIdUsuario());
             });
             
         return dto;

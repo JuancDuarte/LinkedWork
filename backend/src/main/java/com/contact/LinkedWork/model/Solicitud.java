@@ -44,6 +44,15 @@ public class Solicitud {
     @Column(name = "FechaServicio")
     private java.time.LocalDate fechaServicio;
 
+    @Column(name = "Direccion", length = 255)
+    private String direccion;
+
+    @Column(name = "HoraEncuentro", length = 50)
+    private String horaEncuentro;
+
+    @Column(name = "Notas", columnDefinition = "TEXT")
+    private String notas;
+
     @OneToMany(mappedBy = "solicitud", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<SolicitudHistorial> historiales = new HashSet<>();
 
@@ -159,5 +168,29 @@ public class Solicitud {
 
     public void setCalificaciones(Set<Calificacion> calificaciones) {
         this.calificaciones = calificaciones;
+    }
+
+    public String getDireccion() {
+        return direccion;
+    }
+
+    public void setDireccion(String direccion) {
+        this.direccion = direccion;
+    }
+
+    public String getHoraEncuentro() {
+        return horaEncuentro;
+    }
+
+    public void setHoraEncuentro(String horaEncuentro) {
+        this.horaEncuentro = horaEncuentro;
+    }
+
+    public String getNotas() {
+        return notas;
+    }
+
+    public void setNotas(String notas) {
+        this.notas = notas;
     }
 }

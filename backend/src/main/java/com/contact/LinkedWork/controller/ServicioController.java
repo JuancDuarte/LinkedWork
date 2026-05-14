@@ -22,6 +22,7 @@ import com.contact.LinkedWork.dto.EditarSolicitudDTO;
 import com.contact.LinkedWork.dto.RespuestaAceptarDTO;
 import com.contact.LinkedWork.dto.SolicitudDTO;
 import com.contact.LinkedWork.dto.SolicitudHistorialDTO;
+import com.contact.LinkedWork.dto.UpdateEncounterDTO;
 import com.contact.LinkedWork.dto.AreaDTO;
 import com.contact.LinkedWork.model.Area;
 import com.contact.LinkedWork.service.SolicitudService;
@@ -123,7 +124,17 @@ public class ServicioController {
                 .map(area -> new AreaDTO(area.getIdArea(), area.getNombre()))
                 .toList();
     }
-} 
+    @PostMapping(path = "/updateEncounter/{idSolicitud}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<SolicitudDTO> updateEncounter(@PathVariable Long idSolicitud, @RequestBody UpdateEncounterDTO payload) {
+        try {
+            SolicitudDTO updated = solicitudService.updateEncounterDetails(idSolicitud, payload.getDireccion(), payload.getHoraEncuentro(), payload.getNotas());
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+}
+
 
 
 

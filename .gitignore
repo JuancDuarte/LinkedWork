@@ -45,3 +45,8 @@ Thumbs.db
 
 # Maven
 target/
+
+# Local configuration
+.env
+scratch/
+backend_logs.txt
