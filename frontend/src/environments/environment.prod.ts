@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://regulations-wanted-smtp-intake.trycloudflare.com/LinkedApi'
+  apiBaseUrl: 'https://shrill-bargraph-sector.ngrok-free.dev'
 };
