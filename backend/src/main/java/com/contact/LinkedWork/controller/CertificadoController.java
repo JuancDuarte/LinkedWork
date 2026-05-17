@@ -24,7 +24,8 @@ import com.contact.LinkedWork.service.CertificadoService;
 
 @RestController
 @RequestMapping("/")
-@CrossOrigin(origins="*")
+@CrossOrigin(origins = "*")
+
 public class CertificadoController {
 
     @Autowired
