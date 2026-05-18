@@ -4,7 +4,6 @@ import { Observable, catchError, retry, throwError, tap } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 
-const API_BASE = environment.apiBaseUrl;
 
 export interface ApiUser {
   idUsuario?: number;

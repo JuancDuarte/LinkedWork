@@ -12,7 +12,7 @@ export type UserRole = 'ROLE_USUARIO' | 'ROLE_TRABAJADOR' | 'guest';
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = environment.apiBaseUrl;
+
   private readonly USER_STORAGE_KEY = 'linkedwork_user_id';
   private readonly ROLES_STORAGE_KEY = 'linkedwork_roles';
   private readonly CURRENT_ROLE_KEY = 'linkedwork_current_role';
