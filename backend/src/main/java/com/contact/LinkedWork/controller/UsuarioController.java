@@ -35,6 +35,7 @@ import com.contact.LinkedWork.service.UsuarioService;
 @RestController
 @RequestMapping("/")
 @CrossOrigin(origins = "*")
+
 public class UsuarioController {
     @Autowired
     @Qualifier("UsuarioService")

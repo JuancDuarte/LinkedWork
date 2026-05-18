@@ -26,7 +26,8 @@ import com.contact.LinkedWork.service.OfertaService;
 
 @RestController
 @RequestMapping("/")
-@CrossOrigin(origins="*")
+@CrossOrigin(origins = "*")
+
 public class OfertaController {
 
     @Autowired
