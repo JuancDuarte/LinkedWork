@@ -30,6 +30,7 @@ import com.contact.LinkedWork.repository.AreaRepository;
 
 @RestController
 @RequestMapping("/")
+@CrossOrigin(origins= "*")
 public class ServicioController {
 
     @Autowired
