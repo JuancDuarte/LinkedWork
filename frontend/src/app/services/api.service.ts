@@ -4,7 +4,7 @@ import { Observable, catchError, retry, throwError, tap } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 
-const API_BASE = "https://linkedwork.onrender.com"
+const API_BASE = "https://linkedwork.onrender.com/LinkedApi";
 
 export interface ApiUser {
   idUsuario?: number;
