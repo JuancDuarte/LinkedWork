@@ -61,7 +61,7 @@ export interface SolicitudDTO {
   providedIn: 'root'
 })
 export class ApiService {
-  constructor(private readonly http: HttpClient) {}
+  constructor(private http: HttpClient) {}
 
   private handleError(operation: string) {
     return (error: any) => {
@@ -325,7 +325,7 @@ export class ApiService {
         catchError(this.handleError('addCertificate'))
       );
     }
-  // Chat methods
+  }
   getChatMessages(idSolicitud: number): Observable<any[]> {
     return this.http.get<any[]>(`${API_BASE}/chat/solicitud/${encodeURIComponent(idSolicitud)}`).pipe(
       catchError(this.handleError('getChatMessages'))
@@ -338,9 +338,4 @@ export class ApiService {
     );
   }
 
-  updateEncounterDetails(solicitudId: number, payload: { direccion: string; horaEncuentro: string; notas: string }): Observable<any> {
-    return this.http.put(`${API_BASE}/encounter/${encodeURIComponent(solicitudId)}`, payload).pipe(
-      catchError(this.handleError('updateEncounterDetails'))
-    );
-  }
 }
