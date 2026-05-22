@@ -1,5 +1,5 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { NgIf, NgForOf } from '@angular/common';
+import { Component, inject, OnInit, OnDestroy, signal, ViewChild, ElementRef } from '@angular/core';
+import { NgIf, NgForOf, NgClass, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -10,7 +10,7 @@ import { AuthService } from '../services/auth.service';
 @Component({
   selector: 'app-active-jobs',
   standalone: true,
-  imports: [NgIf, NgForOf, FormsModule, RouterLink],
+  imports: [NgIf, NgForOf, NgClass, DatePipe, FormsModule, RouterLink],
   template: `
     <div class="active-jobs-layout">
       <!-- Premium Header -->
@@ -79,6 +79,55 @@ import { AuthService } from '../services/auth.service';
       </div>
     </div>
 
+    <!-- Encounter Details & Chat Modal -->
+    <div class="modal-overlay-premium" *ngIf="selectedJob()">
+       <div class="modal-card-encounter modal-large">
+          <div class="modal-header-premium">
+             <h2>Logística y Chat del Servicio</h2>
+             <button class="close-btn" (click)="closeDetailsModal()">×</button>
+          </div>
+          <div class="modal-body-split">
+             <!-- Left: Logistics -->
+             <div class="logistics-pane">
+                 <p class="modal-hint">Coordina los detalles de encuentro.</p>
+                 <form (ngSubmit)="saveEncounterDetails()">
+                    <div class="form-group-premium">
+                       <label>Dirección o Punto de Encuentro</label>
+                       <input type="text" [(ngModel)]="encounterForm.direccion" name="dir" class="input-premium" placeholder="Ej: Calle 123 #45-67" />
+                    </div>
+                    <div class="form-group-premium">
+                       <label>Hora Sugerida</label>
+                       <input type="text" [(ngModel)]="encounterForm.horaEncuentro" name="hora" class="input-premium" placeholder="Ej: 2:30 PM" />
+                    </div>
+                    <button type="submit" class="btn-lw-primary w-100 mt-3" [disabled]="loading()">
+                       {{ loading() ? 'Guardando...' : 'Guardar Detalles' }}
+                    </button>
+                 </form>
+             </div>
+
+             <!-- Right: Chat -->
+             <div class="chat-pane">
+                 <div class="chat-messages" #chatScrollContainer>
+                     <div class="empty-chat" *ngIf="chatMessages().length === 0">
+                         <p>No hay mensajes aún. ¡Inicia la conversación!</p>
+                     </div>
+                     <div class="chat-bubble-row" *ngFor="let msg of chatMessages()"
+                          [ngClass]="{'mine': msg.idEmisor === auth.userId(), 'theirs': msg.idEmisor !== auth.userId()}">
+                         <div class="chat-bubble">
+                             <span class="chat-sender" *ngIf="msg.idEmisor !== auth.userId()">{{ msg.nombreEmisor }}</span>
+                             <p class="chat-text">{{ msg.mensaje }}</p>
+                             <span class="chat-time">{{ msg.fechaEnvio | date:'shortTime' }}</span>
+                         </div>
+                     </div>
+                 </div>
+                 <div class="chat-input-area">
+                     <textarea [(ngModel)]="newMessage" placeholder="Escribe un mensaje..." (keyup.enter)="sendChatMessage()"></textarea>
+                     <button class="btn-send-chat" (click)="sendChatMessage()" [disabled]="!newMessage().trim()">Enviar</button>
+                 </div>
+             </div>
+          </div>
+       </div>
+    </div>
     <!-- Modals -->
     <div class="modal-overlay-premium" *ngIf="showConfirmModal()">
        <div class="modal-card-finish">
@@ -177,10 +226,45 @@ import { AuthService } from '../services/auth.service';
 
     /* Modal Overlay */
     .modal-overlay-premium { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-    .modal-card-finish, .modal-card-rating { background: white; width: 90%; max-width: 450px; border-radius: 1.5rem; padding: 2.5rem; text-align: center; animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .modal-card-encounter, .modal-card-finish, .modal-card-rating { background: white; width: 90%; max-width: 500px; border-radius: 1.5rem; padding: 2.5rem; animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; max-height: 90vh; overflow-y: auto; }
+    .modal-large { max-width: 800px; padding: 2rem; }
     @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-    .modal-icon-big { font-size: 4rem; margin-bottom: 1.5rem; }
+    .modal-header-premium { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; }
+    .modal-header-premium h2 { margin: 0; font-size: 1.5rem; color: #1e293b; }
+    .close-btn { background: none; border: none; font-size: 2rem; color: #94a3b8; cursor: pointer; }
+    .modal-hint { font-size: 0.9rem; color: #64748b; margin-bottom: 1rem; }
+
+    .modal-body-split { display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; }
+    .logistics-pane { border-right: 1px solid #e2e8f0; padding-right: 2rem; }
+    .chat-pane { display: flex; flex-direction: column; height: 400px; background: #f8fafc; border-radius: 1rem; overflow: hidden; border: 1px solid #e2e8f0; }
+
+    .chat-messages { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; }
+    .empty-chat { text-align: center; color: #94a3b8; font-size: 0.9rem; margin-top: 2rem; }
+    .chat-bubble-row { display: flex; width: 100%; }
+    .chat-bubble-row.mine { justify-content: flex-end; }
+    .chat-bubble-row.theirs { justify-content: flex-start; }
+    .chat-bubble { max-width: 80%; padding: 0.75rem 1rem; border-radius: 1rem; position: relative; }
+    .mine .chat-bubble { background: #0a66c2; color: white; border-bottom-right-radius: 0.25rem; }
+    .theirs .chat-bubble { background: white; color: #1e293b; border: 1px solid #e2e8f0; border-bottom-left-radius: 0.25rem; }
+    .chat-sender { display: block; font-size: 0.7rem; font-weight: 700; color: #0a66c2; margin-bottom: 0.25rem; }
+    .chat-text { margin: 0; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap; }
+    .chat-time { display: block; font-size: 0.65rem; text-align: right; margin-top: 0.25rem; opacity: 0.8; }
+    .mine .chat-time { color: #e2e8f0; }
+    .theirs .chat-time { color: #94a3b8; }
+
+    .chat-input-area { display: flex; padding: 0.75rem; background: white; border-top: 1px solid #e2e8f0; gap: 0.5rem; }
+    .chat-input-area textarea { flex: 1; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.5rem; resize: none; height: 40px; font-family: inherit; font-size: 0.9rem; }
+    .chat-input-area textarea:focus { outline: none; border-color: #0a66c2; }
+    .btn-send-chat { background: #0a66c2; color: white; border: none; padding: 0 1rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
+    .btn-send-chat:hover:not(:disabled) { background: #004182; }
+    .btn-send-chat:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .input-premium { width: 100%; padding: 0.75rem; border: 1.5px solid #e2e8f0; border-radius: 0.75rem; margin-top: 4px; box-sizing: border-box; }
+    .w-100 { width: 100%; }
+
+    .modal-footer-premium { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
+    .modal-icon-big { font-size: 4rem; text-align: center; margin-bottom: 1.5rem; }
     .modal-footer-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem; }
     .btn-ghost-cancel { background: #f1f5f9; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 700; color: #475569; cursor: pointer; }
     .btn-confirm-finish { background: #10b981; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 700; color: white; cursor: pointer; }
@@ -198,13 +282,18 @@ import { AuthService } from '../services/auth.service';
     .btn-submit-premium { width: 100%; background: #0a66c2; color: white; border: none; padding: 1rem; border-radius: 0.75rem; font-weight: 800; font-size: 1rem; cursor: pointer; }
     .btn-skip-premium { background: transparent; border: none; color: #94a3b8; font-weight: 600; margin-top: 1rem; cursor: pointer; }
     
+    @media (max-width: 800px) {
+      .modal-body-split { grid-template-columns: 1fr; }
+      .logistics-pane { border-right: none; padding-right: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; }
+      .chat-pane { height: 300px; }
+    }
     @media (max-width: 600px) {
       .jobs-grid-premium { grid-template-columns: 1fr; }
       .modal-footer-btns { grid-template-columns: 1fr; }
     }
   `]
 })
-export class ActiveJobsComponent implements OnInit {
+export class ActiveJobsComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
   auth = inject(AuthService);
   private router = inject(Router);
@@ -213,6 +302,18 @@ export class ActiveJobsComponent implements OnInit {
   loading = signal(false);
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
+
+  chatMessages = signal<any[]>([]);
+  newMessage = signal('');
+  private chatPollingInterval: any;
+  @ViewChild('chatScrollContainer') private chatScrollContainer!: ElementRef;
+
+  selectedJob = signal<any | null>(null);
+  encounterForm = {
+    direccion: '',
+    horaEncuentro: '',
+    notas: ''
+  };
 
   ratingSolicitudId = signal<number | null>(null);
   showConfirmModal = signal(false);
@@ -224,6 +325,10 @@ export class ActiveJobsComponent implements OnInit {
 
   ngOnInit() {
     this.loadActiveJobs();
+  }
+
+  ngOnDestroy() {
+    this.stopChatPolling();
   }
 
   async loadActiveJobs() {
@@ -247,6 +352,112 @@ export class ActiveJobsComponent implements OnInit {
     }
   }
 
+  openDetailsModal(job: any) {
+    this.selectedJob.set(job);
+    this.encounterForm = {
+      direccion: job.direccion || '',
+      horaEncuentro: job.horaEncuentro || '',
+      notas: job.notas || ''
+    };
+    this.loadChatMessages();
+    this.startChatPolling();
+  }
+
+  closeDetailsModal() {
+    this.selectedJob.set(null);
+    this.stopChatPolling();
+    this.chatMessages.set([]);
+  }
+
+  async loadChatMessages() {
+    const job = this.selectedJob();
+    if (!job) return;
+
+    try {
+      const messages = await firstValueFrom(this.api.getChatMessages(job.idSolicitud));
+      this.chatMessages.set(messages || []);
+      setTimeout(() => this.scrollToBottom(), 100);
+    } catch (error) {
+      console.error('Error al cargar mensajes del chat', error);
+    }
+  }
+
+  async sendChatMessage() {
+    const text = this.newMessage().trim();
+    if (!text) return;
+
+    const job = this.selectedJob();
+    const userId = this.auth.userId();
+    if (!job || !userId) return;
+
+    // Optimistic UI update
+    const tempMsg = {
+        idMensaje: Date.now(),
+        idSolicitud: job.idSolicitud,
+        idEmisor: userId,
+        nombreEmisor: 'Yo',
+        mensaje: text,
+        fechaEnvio: new Date().toISOString()
+    };
+    this.chatMessages.update(msgs => [...msgs, tempMsg]);
+    this.newMessage.set('');
+    setTimeout(() => this.scrollToBottom(), 50);
+
+    try {
+      await firstValueFrom(this.api.sendChatMessage(job.idSolicitud, {
+          idEmisor: userId,
+          mensaje: text
+      }));
+      // Optional: Wait for next poll to refresh, or just reload now
+      this.loadChatMessages();
+    } catch (error) {
+      console.error('Error al enviar el mensaje', error);
+      this.errorMessage.set('No se pudo enviar el mensaje.');
+      setTimeout(() => this.errorMessage.set(null), 3000);
+      this.loadChatMessages(); // Revert optimistic update on failure
+    }
+  }
+
+  private startChatPolling() {
+      this.stopChatPolling();
+      this.chatPollingInterval = setInterval(() => {
+          this.loadChatMessages();
+      }, 3000);
+  }
+
+  private stopChatPolling() {
+      if (this.chatPollingInterval) {
+          clearInterval(this.chatPollingInterval);
+          this.chatPollingInterval = null;
+      }
+  }
+
+  private scrollToBottom() {
+      try {
+          if (this.chatScrollContainer) {
+              const el = this.chatScrollContainer.nativeElement;
+              el.scrollTop = el.scrollHeight;
+          }
+      } catch(err) {}
+  }
+
+  async saveEncounterDetails() {
+    const job = this.selectedJob();
+    if (!job) return;
+
+    this.loading.set(true);
+    try {
+      await firstValueFrom(this.api.updateEncounterDetails(job.idSolicitud, this.encounterForm));
+      this.successMessage.set('Detalles de encuentro actualizados correctamente.');
+      // Keep modal open, just refresh jobs
+      await this.loadActiveJobs();
+      setTimeout(() => this.successMessage.set(null), 3000);
+    } catch (error) {
+      this.errorMessage.set('Error al actualizar los detalles.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
   async finishJob(id: number) {
     this.pendingFinishId.set(id);
     this.showConfirmModal.set(true);

@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
+import { AuthInterceptor } from './core/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -12,6 +13,11 @@ export const appConfig: ApplicationConfig = {
     {
       provide: HTTP_INTERCEPTORS,
       useClass: LoggingInterceptor,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
       multi: true
     },
     provideRouter(routes)

@@ -15,6 +15,7 @@ export class AuthService {
   private readonly CURRENT_ROLE_KEY = 'linkedwork_current_role';
   private readonly USER_NAME_KEY = 'linkedwork_user_name';
   private readonly USER_EMAIL_KEY = 'linkedwork_user_email';
+  private readonly JWT_TOKEN_KEY = 'linkedwork_jwt_token';
 
   private roleSubject = new BehaviorSubject<UserRole>('guest');
   readonly role$ = this.roleSubject.asObservable();
@@ -56,11 +57,16 @@ export class AuthService {
     if (storedEmail) this.userEmail.set(storedEmail);
   }
 
-  login(userId: number, roles: UserRole[], currentRole?: UserRole, userName?: string, userEmail?: string) {
+  login(userId: number, roles: UserRole[], currentRole?: UserRole, userName?: string, userEmail?: string, token?: string) {
     this.userId.set(userId);
     this.availableRoles.set(roles);
     this.availableRolesSubject.next(roles);
     
+    // Guardar token JWT si viene
+    if (token) {
+      localStorage.setItem(this.JWT_TOKEN_KEY, token);
+    }
+
     // Prioridad: 1. El rol guardado, 2. ROLE_USUARIO si existe, 3. El primer rol disponible
     let roleToSet: UserRole = currentRole || 'guest';
     if (roleToSet === 'guest') {
@@ -131,6 +137,7 @@ export class AuthService {
     localStorage.removeItem(this.CURRENT_ROLE_KEY);
     localStorage.removeItem(this.USER_NAME_KEY);
     localStorage.removeItem(this.USER_EMAIL_KEY);
+    localStorage.removeItem(this.JWT_TOKEN_KEY);
   }
 
   setRole(role: UserRole) {
