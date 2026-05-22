@@ -227,5 +227,13 @@
 @media (max-width: 850px) {
   .navbar-search { width: 150px; }
   .nav-label { display: none; }
-  .nav-item { min-width: 50px; }
+  .nav-item { min-width: 50px; padding: 0 0.5rem; }
+}
+
+@media (max-width: 520px) {
+  .navbar-search { display: none; }
+  .navbar-container { padding: 0 0.5rem; }
+  .nav-item { min-width: 45px; padding: 0 0.25rem; }
+  .navbar-right { gap: 0.5rem; }
+  .user-dropdown { right: -10px; width: 240px; }
 }

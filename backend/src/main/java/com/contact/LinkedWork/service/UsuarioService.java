@@ -10,6 +10,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import java.util.Collections;
+
 import com.contact.LinkedWork.dto.ListarTrabajadorDTO;
 import com.contact.LinkedWork.dto.LoginDTO;
 import com.contact.LinkedWork.dto.TrabajadorDTO;
@@ -335,6 +341,72 @@ public class UsuarioService {
                 usuarioDTO.setTrabajador(trabajadorDTO);
             });
         return usuarioDTO;
+    }
+
+    public UsuarioDTO loginOrRegisterGoogle(String idTokenString) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                .setAudience(Collections.singletonList("648560152467-llla49ipnmr34bj6q63ii2q56oaine36.apps.googleusercontent.com"))
+                .setAcceptableTimeSkewSeconds(315360000L) // 10 years para evitar problemas de reloj en dev
+                .build();
+
+            GoogleIdToken idToken = verifier.verify(idTokenString);
+            if (idToken != null) {
+                GoogleIdToken.Payload payload = idToken.getPayload();
+                String email = payload.getEmail();
+                String name = (String) payload.get("name");
+
+                Optional<Usuario> usuarioEncontrado = usuarioRepository.findByEmail(email);
+                Usuario usuario;
+
+                if (usuarioEncontrado.isPresent()) {
+                    usuario = usuarioEncontrado.get();
+                    if (Boolean.TRUE.equals(usuario.getBloqueado())) {
+                        throw new RuntimeException("Usuario bloqueado, contacta al administrador");
+                    }
+                    usuario.setUltimoAcceso(LocalDateTime.now());
+                } else {
+                    // Create new user if not exists
+                    usuario = new Usuario();
+                    usuario.setEmail(email);
+                    usuario.setNombreCompleto(name);
+                    usuario.setNombreUsuario(email); // Use email as username for google
+                    usuario.setClaveHash(""); // No password for Google users
+                    usuario.setEstado("Activo");
+                    usuario.setBloqueado(false);
+                    usuario.setIntentosFallidos(0);
+                    usuario.setFechaCreacion(LocalDateTime.now());
+                    usuario.setUltimoAcceso(LocalDateTime.now());
+                    
+                    Rol rolUsuario = rolRepository.findByNombre("Usuario").orElseGet(() -> {
+                        Rol r = new Rol();
+                        r.setNombre("Usuario");
+                        return rolRepository.save(r);
+                    });
+                    List<Rol> roles = new ArrayList<>();
+                    roles.add(rolUsuario);
+                    usuario.setRoles(roles);
+                }
+                
+                usuarioRepository.save(usuario);
+
+                UsuarioDTO usuarioDTO = new UsuarioDTO();
+                usuarioDTO.setIdUsuario(usuario.getIdUsuario());
+                usuarioDTO.setNombreCompleto(usuario.getNombreCompleto());
+                usuarioDTO.setEmail(usuario.getEmail());
+                usuarioDTO.setNombreUsuario(usuario.getNombreUsuario());
+                usuarioDTO.setEstado(usuario.getEstado());
+                List<String> rolesStr = usuario.getRoles().stream().map(rol -> mapToFrontendRole(rol.getNombre())).toList();
+                usuarioDTO.setRoles(rolesStr);
+                
+                return usuarioDTO;
+            } else {
+                throw new RuntimeException("Token de Google inválido (firma o expiración)");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error al validar token de Google: " + e.getMessage());
+        }
     }
 
     public UsuarioDTO changeRole(Long idUsuario, List<String> newRoles) {

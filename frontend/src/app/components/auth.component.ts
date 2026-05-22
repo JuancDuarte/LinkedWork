@@ -1,5 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { NgForOf, NgIf } from '@angular/common';
+import { CommonModule, NgForOf, NgIf, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -7,10 +7,12 @@ import { firstValueFrom } from 'rxjs';
 import { ApiService, ApiCertificado } from '../services/api.service';
 import { AuthService, UserRole } from '../services/auth.service';
 
+declare var google: any;
+
 @Component({
   selector: 'app-auth',
   standalone: true,
-  imports: [FormsModule, NgIf, NgForOf],
+  imports: [CommonModule, FormsModule, NgIf, NgForOf, NgClass],
   template: `
     <section class="auth">
       <div class="auth-split">
@@ -70,6 +72,14 @@ import { AuthService, UserRole } from '../services/auth.service';
               <button type="submit" class="btn btn-primary" [disabled]="loading()">
                 {{ loading() ? 'Ingresando…' : 'Ingresar' }}
               </button>
+
+              <div class="divider">
+                <span>O</span>
+              </div>
+
+              <div class="google-login-container">
+                <div id="google-btn"></div>
+              </div>
 
               <p class="form-note">
                 ¿No tienes cuenta?
@@ -206,7 +216,7 @@ import { AuthService, UserRole } from '../services/auth.service';
                     </div>
                     <div class="form-group compact-field">
                       <label for="draftCertEntity">Entidad</label>
-                      <input id="draftCertEntity" [(ngModel)]="certificateDraftForm.entidad" name="draftCertEntity" class="form-input" placeholder="Institución emisora" />
+                      <input id="draftCertEntity" [(ngModel)]="certificateDraftForm.entidad" name="draftCertEntity" class="form-entidad" placeholder="Institución emisora" />
                     </div>
                     <div class="form-group compact-field">
                       <label for="draftCertDescription">Descripción</label>
@@ -385,28 +395,10 @@ import { AuthService, UserRole } from '../services/auth.service';
         display: block;
       }
 
-      .brand-title {
-        margin: 0;
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: #0f172a;
-        letter-spacing: -0.015em;
-      }
-
-
       .brand-message {
         margin-top: 2.5rem;
         max-width: 280px;
         text-align: center;
-      }
-
-      .brand-headline {
-        margin: 0 0 1rem;
-        font-size: 2.2rem;
-        font-weight: 800;
-        line-height: 1.15;
-        color: #0f172a;
-        letter-spacing: -0.02em;
       }
 
       .brand-description {
@@ -420,35 +412,6 @@ import { AuthService, UserRole } from '../services/auth.service';
       .highlight {
         color: #8a1c61;
         font-weight: 700;
-      }
-
-      .brand-footer {
-        margin-top: 3.5rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      .benefit-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        font-size: 0.9rem;
-        color: rgba(15, 23, 42, 0.7);
-        font-weight: 500;
-      }
-
-      .benefit-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        background: rgba(138, 28, 97, 0.15);
-        border-radius: 50%;
-        color: #8a1c61;
-        font-weight: 700;
-        font-size: 0.85rem;
       }
 
       .auth-right {
@@ -573,6 +536,37 @@ import { AuthService, UserRole } from '../services/auth.service';
         font-size: 0.9rem;
         color: rgba(15, 23, 42, 0.6);
       }
+      
+      .form-note button {
+        font-weight: 600;
+      }
+
+      .divider {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        margin: 1.5rem 0;
+        color: #64748b;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .divider::before,
+      .divider::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .divider span {
+        padding: 0 10px;
+      }
+
+      .google-login-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+      }
 
       .link {
         background: none;
@@ -613,13 +607,6 @@ import { AuthService, UserRole } from '../services/auth.service';
       .certificate-panel-header {
         display: grid;
         gap: 0.3rem;
-      }
-
-      .certificate-title-row {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        flex-wrap: wrap;
       }
 
       .certificate-panel-inline h2 {
@@ -1043,6 +1030,10 @@ export class AuthComponent implements OnInit {
         })
       );
 
+      // El nuevo backend devuelve { token: '...', user: { ... } }
+      const userObj = (response as any)?.user || response;
+      const token = (response as any)?.token;
+
       // Extract roles from backend response (flexible to handle different formats)
       let roles: UserRole[] = [];
       const normalizeRole = (raw: string): UserRole | null => {
@@ -1053,15 +1044,15 @@ export class AuthComponent implements OnInit {
         return null;
       };
 
-      if ((response as any)?.roles && Array.isArray((response as any).roles)) {
-        roles = (response as any).roles
+      if (userObj?.roles && Array.isArray(userObj.roles)) {
+        roles = userObj.roles
           .map((r: string) => normalizeRole(r))
           .filter((r: UserRole | null): r is UserRole => r !== null);
-      } else if ((response as any)?.rol_Id) {
-        const rolId = (response as any).rol_Id;
+      } else if (userObj?.rol_Id) {
+        const rolId = userObj.rol_Id;
         roles = [rolId === 2 ? 'ROLE_TRABAJADOR' : 'ROLE_USUARIO'];
-      } else if ((response as any)?.rol) {
-        const mapped = normalizeRole((response as any).rol);
+      } else if (userObj?.rol) {
+        const mapped = normalizeRole(userObj.rol);
         if (mapped) roles = [mapped];
       }
 
@@ -1069,13 +1060,13 @@ export class AuthComponent implements OnInit {
         roles = ['ROLE_USUARIO'];
       }
 
-      const userName = (response as any)?.nombreCompleto || (response as any)?.nombre || '';
-      const userEmail = (response as any)?.email || '';
+      const userName = userObj?.nombreCompleto || userObj?.nombre || '';
+      const userEmail = userObj?.email || '';
 
-      const returnedId = (response as any)?.idUsuario ?? (response as any)?.IdUsuario ?? null;
+      const returnedId = userObj?.idUsuario ?? userObj?.IdUsuario ?? null;
       const numericId = returnedId ? Number(returnedId) : null;
       const finalUserId = numericId && !Number.isNaN(numericId) ? numericId : null;
-      this.auth.login(finalUserId ?? 0, roles, roles[0], userName, userEmail);
+      this.auth.login(finalUserId ?? 0, roles, roles[0], userName, userEmail, token);
       this.successMessage.set('✅ ¡Bienvenido! Sesión iniciada correctamente.');
       this.router.navigate(['/']);
     } catch (error: any) {
@@ -1109,6 +1100,62 @@ export class AuthComponent implements OnInit {
     // Load areas and departments for registration
     this.loadAreas();
     this.loadDepartamentos();
+
+    // Initialize Google Login securely by waiting for the script
+    const checkGoogle = setInterval(() => {
+      if (typeof google !== 'undefined' && google.accounts) {
+        clearInterval(checkGoogle);
+        google.accounts.id.initialize({
+          client_id: '648560152467-llla49ipnmr34bj6q63ii2q56oaine36.apps.googleusercontent.com',
+          callback: this.handleGoogleLogin.bind(this)
+        });
+        const btnElement = document.getElementById('google-btn');
+        if (btnElement) {
+          google.accounts.id.renderButton(
+            btnElement,
+            { theme: 'outline', size: 'large', width: '100%' }
+          );
+        }
+      }
+    }, 100);
+    
+    // Stop checking after 5 seconds to prevent infinite loops
+    setTimeout(() => clearInterval(checkGoogle), 5000);
+  }
+
+  private async handleGoogleLogin(response: any) {
+    this.loading.set(true);
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    try {
+      const apiResponse = await firstValueFrom(
+        this.api.loginGoogle(response.credential)
+      );
+
+      // Handle the API response like regular login
+      const userObj = (apiResponse as any)?.user || apiResponse;
+      const token = (apiResponse as any)?.token;
+
+      let roles: UserRole[] = ['ROLE_USUARIO'];
+      // simplified role extraction for Google login
+      if (userObj?.roles && Array.isArray(userObj.roles)) {
+        roles = userObj.roles;
+      }
+      
+      const userName = userObj?.nombreCompleto || userObj?.nombre || '';
+      const userEmail = userObj?.email || '';
+      const returnedId = userObj?.idUsuario ?? userObj?.IdUsuario ?? 0;
+
+      this.auth.login(returnedId, roles, roles[0], userName, userEmail, token);
+      this.successMessage.set('✅ ¡Bienvenido con Google!');
+      this.router.navigate(['/']);
+    } catch (error: any) {
+      console.error('Google login error', error);
+      this.errorMessage.set('⚠️ Error al iniciar sesión con Google.');
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   private async loadDepartamentos() {
