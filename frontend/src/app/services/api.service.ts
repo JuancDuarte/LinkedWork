@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, retry, throwError, tap } from 'rxjs';
-import { environment } from '../../environments/environment';
 
-const API_BASE = environment.apiBaseUrl;
+const API_BASE = 'http://localhost:8082/LinkedApi';
 
 export interface ApiUser {
   idUsuario?: number;
@@ -320,6 +319,12 @@ export class ApiService {
   sendChatMessage(idSolicitud: number, payload: { idEmisor: number; mensaje: string }): Observable<any> {
     return this.http.post(`${API_BASE}/chat/solicitud/${encodeURIComponent(idSolicitud)}`, payload).pipe(
       catchError(this.handleError('sendChatMessage'))
+    );
+  }
+
+  updateEncounterDetails(solicitudId: number, payload: { direccion: string; horaEncuentro: string; notas: string }): Observable<any> {
+    return this.http.put(`${API_BASE}/encounter/${encodeURIComponent(solicitudId)}`, payload).pipe(
+      catchError(this.handleError('updateEncounterDetails'))
     );
   }
 }

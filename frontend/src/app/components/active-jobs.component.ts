@@ -308,6 +308,13 @@ export class ActiveJobsComponent implements OnInit, OnDestroy {
   private chatPollingInterval: any;
   @ViewChild('chatScrollContainer') private chatScrollContainer!: ElementRef;
 
+  selectedJob = signal<any | null>(null);
+  encounterForm = {
+    direccion: '',
+    horaEncuentro: '',
+    notas: ''
+  };
+
   ratingSolicitudId = signal<number | null>(null);
   showConfirmModal = signal(false);
   pendingFinishId = signal<number | null>(null);
