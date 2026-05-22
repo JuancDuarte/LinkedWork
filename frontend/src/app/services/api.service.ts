@@ -2,9 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, retry, throwError, tap } from 'rxjs';
 
-import { environment } from '../../environments/environment';
-
-const API_BASE = environment.apiBaseUrl;
+const API_BASE = "https://linkedwork.onrender.com/LinkedApi";
 
 export interface ApiUser {
   idUsuario?: number;
