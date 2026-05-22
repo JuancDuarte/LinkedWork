@@ -45,3 +45,27 @@ Thumbs.db
 
 # Maven
 target/
+
+# Dependencias
+node_modules/
+
+# Angular
+.angular/
+dist/
+
+# VSCode
+.vscode/
+
+# Logs
+*.log
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Java / Maven
+target/
+*.class
+
+# IDEs
+.idea/
