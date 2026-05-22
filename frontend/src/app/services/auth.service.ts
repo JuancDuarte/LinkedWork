@@ -16,6 +16,7 @@ export class AuthService {
   private readonly USER_NAME_KEY = 'linkedwork_user_name';
   private readonly USER_EMAIL_KEY = 'linkedwork_user_email';
   private readonly JWT_TOKEN_KEY = 'linkedwork_jwt_token';
+  private readonly USER_FOTO_KEY = 'linkedwork_user_foto_perfil';
 
   private roleSubject = new BehaviorSubject<UserRole>('guest');
   readonly role$ = this.roleSubject.asObservable();
@@ -28,6 +29,7 @@ export class AuthService {
   userEmail = signal<string>('');
   role = signal<UserRole>('guest');
   availableRoles = signal<UserRole[]>([]);
+  userFotoPerfil = signal<string>('');
   isLoggedIn = computed(() => this.userId() !== null && this.role() !== 'guest');
   hasMultipleRoles = computed(() => this.availableRoles().length > 1);
 
@@ -37,6 +39,7 @@ export class AuthService {
     const storedCurrentRole = localStorage.getItem(this.CURRENT_ROLE_KEY);
     const storedName = localStorage.getItem(this.USER_NAME_KEY) || '';
     const storedEmail = localStorage.getItem(this.USER_EMAIL_KEY) || '';
+    const storedFoto = localStorage.getItem(this.USER_FOTO_KEY) || '';
 
     if (storedId) {
       this.userId.set(Number(storedId));
@@ -55,9 +58,10 @@ export class AuthService {
 
     if (storedName) this.userName.set(storedName);
     if (storedEmail) this.userEmail.set(storedEmail);
+    if (storedFoto) this.userFotoPerfil.set(storedFoto);
   }
 
-  login(userId: number, roles: UserRole[], currentRole?: UserRole, userName?: string, userEmail?: string, token?: string) {
+  login(userId: number, roles: UserRole[], currentRole?: UserRole, userName?: string, userEmail?: string, token?: string, fotoPerfil?: string) {
     this.userId.set(userId);
     this.availableRoles.set(roles);
     this.availableRolesSubject.next(roles);
@@ -81,6 +85,13 @@ export class AuthService {
     this.roleSubject.next(roleToSet);
     if (userName) this.userName.set(userName);
     if (userEmail) this.userEmail.set(userEmail);
+    if (fotoPerfil) {
+      this.userFotoPerfil.set(fotoPerfil);
+      localStorage.setItem(this.USER_FOTO_KEY, fotoPerfil);
+    } else {
+      this.userFotoPerfil.set('');
+      localStorage.removeItem(this.USER_FOTO_KEY);
+    }
 
     localStorage.setItem(this.USER_STORAGE_KEY, String(userId));
     localStorage.setItem(this.ROLES_STORAGE_KEY, JSON.stringify(roles));
@@ -132,12 +143,14 @@ export class AuthService {
     this.availableRolesSubject.next([]);
     this.userName.set('');
     this.userEmail.set('');
+    this.userFotoPerfil.set('');
     localStorage.removeItem(this.USER_STORAGE_KEY);
     localStorage.removeItem(this.ROLES_STORAGE_KEY);
     localStorage.removeItem(this.CURRENT_ROLE_KEY);
     localStorage.removeItem(this.USER_NAME_KEY);
     localStorage.removeItem(this.USER_EMAIL_KEY);
     localStorage.removeItem(this.JWT_TOKEN_KEY);
+    localStorage.removeItem(this.USER_FOTO_KEY);
   }
 
   setRole(role: UserRole) {

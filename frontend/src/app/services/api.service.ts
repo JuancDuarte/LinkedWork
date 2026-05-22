@@ -14,6 +14,7 @@ export interface ApiUser {
   estado?: string;
   create_at?: string;
   roles?: string[];
+  fotoPerfil?: string;
   trabajador?: {
     idTrabajador?: number;
     areaId?: number;
@@ -95,6 +96,15 @@ export class ApiService {
     return this.http.post(`${API_BASE}/changeRole/${encodeURIComponent(userId)}`, { roles }).pipe(
       tap(() => console.log('[ApiService] changeRole userId:', userId, 'roles:', roles)),
       catchError(this.handleError('changeRole'))
+    );
+  }
+
+  uploadProfilePicture(userId: number, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${API_BASE}/uploadFotoPerfil/${encodeURIComponent(userId)}`, formData).pipe(
+      tap(() => console.log('[ApiService] uploadProfilePicture userId:', userId)),
+      catchError(this.handleError('uploadProfilePicture'))
     );
   }
 
@@ -322,9 +332,43 @@ export class ApiService {
     );
   }
 
-  updateEncounterDetails(solicitudId: number, payload: { direccion: string; horaEncuentro: string; notas: string }): Observable<any> {
+  updateEncounterDetails(solicitudId: number, payload: { direccion: string; horaEncuentro: string; notas: string; latitud?: number | null; longitud?: number | null }): Observable<any> {
     return this.http.put(`${API_BASE}/encounter/${encodeURIComponent(solicitudId)}`, payload).pipe(
       catchError(this.handleError('updateEncounterDetails'))
     );
   }
+
+  initiatePayment(solicitudId: number, ofertaId: number): Observable<PayUPayload> {
+    return this.http.post<PayUPayload>(`${API_BASE}/payment/initiate`, { idSolicitud: solicitudId, idOferta: ofertaId }).pipe(
+      tap((res) => console.log('[ApiService] initiatePayment res:', res)),
+      catchError(this.handleError('initiatePayment'))
+    );
+  }
+
+  simulatePaymentSuccess(referenceCode: string): Observable<any> {
+    return this.http.post(`${API_BASE}/payment/simulate-success`, { referenceCode }).pipe(
+      tap((res) => console.log('[ApiService] simulatePaymentSuccess res:', res)),
+      catchError(this.handleError('simulatePaymentSuccess'))
+    );
+  }
+}
+
+export interface PayUPayload {
+  merchantId: string;
+  accountId: string;
+  description: string;
+  referenceCode: string;
+  amount: number;
+  tax: number;
+  taxReturnBase: number;
+  currency: string;
+  signature: string;
+  test: number;
+  buyerEmail: string;
+  responseUrl: string;
+  confirmationUrl: string;
+  checkoutUrl: string;
+  comision: number;
+  montoNeto: number;
+  precioOferta: number;
 }

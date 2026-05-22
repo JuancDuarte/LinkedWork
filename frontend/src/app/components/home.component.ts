@@ -18,7 +18,7 @@ import { ApiService, ApiUser } from '../services/api.service';
           <div class="profile-banner"></div>
           <div class="profile-content-mini">
             <div class="avatar-container-mini">
-              <img [src]="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + profile()?.nombreCompleto" alt="Avatar" />
+              <img [src]="profile()?.fotoPerfil || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + profile()?.nombreCompleto)" alt="Avatar" />
               <div class="online-indicator"></div>
             </div>
             <h3 class="name">{{ profile()?.nombreCompleto }}</h3>
@@ -92,7 +92,7 @@ import { ApiService, ApiUser } from '../services/api.service';
         <div class="post-bar card mt-3">
           <div class="post-input-row">
             <div class="mini-avatar">
-              <img [src]="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + profile()?.nombreCompleto" alt="Me" />
+              <img [src]="profile()?.fotoPerfil || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + profile()?.nombreCompleto)" alt="Me" />
             </div>
             <button class="post-trigger-btn" routerLink="/requests">Escribir publicación o anuncio...</button>
           </div>

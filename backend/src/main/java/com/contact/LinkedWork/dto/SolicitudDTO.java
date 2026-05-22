@@ -17,6 +17,11 @@ public class SolicitudDTO {
     private String nombreTrabajador;
     private java.math.BigDecimal precio;
     private java.time.LocalDate fechaServicio;
+    private String direccion;
+    private String horaEncuentro;
+    private String notas;
+    private Double latitud;
+    private Double longitud;
 
     public Long getIdTrabajador() {
         return idTrabajador;
@@ -125,5 +130,45 @@ public class SolicitudDTO {
 
     public void setFechaServicio(java.time.LocalDate fechaServicio) {
         this.fechaServicio = fechaServicio;
+    }
+
+    public String getDireccion() {
+        return direccion;
+    }
+
+    public void setDireccion(String direccion) {
+        this.direccion = direccion;
+    }
+
+    public String getHoraEncuentro() {
+        return horaEncuentro;
+    }
+
+    public void setHoraEncuentro(String horaEncuentro) {
+        this.horaEncuentro = horaEncuentro;
+    }
+
+    public String getNotas() {
+        return notas;
+    }
+
+    public void setNotas(String notas) {
+        this.notas = notas;
+    }
+
+    public Double getLatitud() {
+        return latitud;
+    }
+
+    public void setLatitud(Double latitud) {
+        this.latitud = latitud;
+    }
+
+    public Double getLongitud() {
+        return longitud;
+    }
+
+    public void setLongitud(Double longitud) {
+        this.longitud = longitud;
     }
 }

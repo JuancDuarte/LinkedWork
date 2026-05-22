@@ -110,7 +110,7 @@ import { AuthService } from '../services/auth.service';
             <div *ngFor="let item of filteredFarmings()" class="user-network-row card">
               <div class="user-avatar-column">
                 <div class="user-avatar-wrapper">
-                  <img [src]="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + item.nombreUsuario" alt="Avatar" />
+                  <img [src]="item.fotoPerfil || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + item.nombreUsuario)" alt="Avatar" />
                 </div>
               </div>
               

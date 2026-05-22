@@ -19,8 +19,12 @@ import { AuthService, UserRole } from '../services/auth.service';
           <div class="banner-pattern"></div>
         </div>
         <div class="header-main-content">
-          <div class="profile-avatar-wrapper">
-            <img [src]="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + profile()?.nombreUsuario" alt="Avatar" class="profile-avatar-img" />
+          <div class="profile-avatar-wrapper" [class.editable]="isOwnProfile()" (click)="isOwnProfile() && avatarInput.click()" style="position: relative;">
+            <img [src]="profile()?.fotoPerfil || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + profile()?.nombreUsuario)" alt="Avatar" class="profile-avatar-img" />
+            <div class="avatar-edit-overlay" *ngIf="isOwnProfile()">
+              <span class="edit-icon">📷</span>
+            </div>
+            <input type="file" #avatarInput (change)="onAvatarFileSelected($event)" accept="image/*" style="display:none" />
           </div>
           
           <div class="header-details-container">
@@ -380,8 +384,27 @@ import { AuthService, UserRole } from '../services/auth.service';
       .banner-pattern { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1; background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px; }
       
       .header-main-content { padding: 0 2rem 1rem; display: flex; align-items: center; gap: 2rem; position: relative; z-index: 2; }
-      .profile-avatar-wrapper { margin-top: -76px; }
-      .profile-avatar-img { width: 152px; height: 152px; border-radius: 50%; border: 4px solid white; background: #f8fafc; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+      .profile-avatar-wrapper { margin-top: -76px; position: relative; }
+      .profile-avatar-wrapper.editable { cursor: pointer; }
+      .profile-avatar-img { width: 152px; height: 152px; border-radius: 50%; border: 4px solid white; background: #f8fafc; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: block; object-fit: cover; }
+      .avatar-edit-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        border: 4px solid transparent;
+        box-sizing: border-box;
+      }
+      .profile-avatar-wrapper:hover .avatar-edit-overlay { opacity: 1; }
+      .edit-icon { color: white; font-size: 1.5rem; }
       
       .header-details-container { flex: 1; display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; }
       .header-info-group { display: flex; flex-direction: column; gap: 0.15rem; }
@@ -794,7 +817,11 @@ export class ProfileComponent implements OnInit {
 
     this.loading.set(true);
     try {
-      await firstValueFrom(this.api.createDirectRequest(userId, workerUserId, this.requestForm));
+      const payload = {
+        ...this.requestForm,
+        idArea: this.profile()?.trabajador?.areaId || 0
+      };
+      await firstValueFrom(this.api.createDirectRequest(userId, workerUserId, payload));
       this.successMessage.set('Solicitud enviada.');
       this.showRequestModal.set(false);
     } catch { this.errorMessage.set('Error al enviar.'); } finally { this.loading.set(false); }
@@ -817,6 +844,26 @@ export class ProfileComponent implements OnInit {
   onFileSelected(event: any) {
     const file = event.target.files?.[0];
     if (file) this.selectedFile.set(file);
+  }
+
+  onAvatarFileSelected(event: any) {
+    const file = event.target.files?.[0];
+    const userId = this.auth.userId();
+    if (file && userId) {
+      this.loading.set(true);
+      this.errorMessage.set(null);
+      this.successMessage.set(null);
+      firstValueFrom(this.api.uploadProfilePicture(userId, file)).then(updatedUser => {
+        this.profile.set(updatedUser);
+        if (updatedUser.fotoPerfil) {
+          this.auth.userFotoPerfil.set(updatedUser.fotoPerfil);
+          localStorage.setItem('linkedwork_user_foto_perfil', updatedUser.fotoPerfil);
+        }
+        this.successMessage.set('Foto de perfil actualizada exitosamente.');
+      }).catch(err => {
+        this.errorMessage.set('Error al subir la foto de perfil.');
+      }).finally(() => this.loading.set(false));
+    }
   }
 
   hasWorkerRole() { return this.auth.availableRoles().includes('ROLE_TRABAJADOR'); }

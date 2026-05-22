@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+declare const google: any;
 
 @Component({
   selector: 'app-active-jobs',
@@ -58,12 +59,22 @@ import { AuthService } from '../services/auth.service';
                        <span class="meta-label">{{ auth.role() === 'ROLE_TRABAJADOR' ? 'Cliente' : 'Profesional' }}</span>
                        <span class="meta-value highlight">{{ auth.role() === 'ROLE_TRABAJADOR' ? job.nombreUsuario : job.nombreTrabajador }}</span>
                     </div>
+                    <div class="meta-box map-preview-box" *ngIf="job.latitud && job.longitud">
+                       <span class="meta-label">Ubicación GPS</span>
+                       <a [href]="'https://www.google.com/maps/search/?api=1&query=' + job.latitud + ',' + job.longitud" 
+                          target="_blank" class="map-link-btn" style="color: #059669; font-weight: 700; font-size: 0.9rem; text-decoration: none; display: flex; align-items: center; gap: 0.25rem;">
+                          📍 Abrir Mapa ↗
+                       </a>
+                    </div>
                  </div>
               </div>
 
-              <div class="card-actions-premium" *ngIf="auth.role() === 'ROLE_USUARIO'">
-                 <button class="btn-premium-action" (click)="finishJob(job.idSolicitud)">
-                    Finalizar y Calificar
+              <div class="card-actions-premium" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.5rem;">
+                 <button class="btn-premium-action secondary" (click)="openDetailsModal(job)">
+                    💬 Logística y Chat
+                 </button>
+                 <button class="btn-premium-action" *ngIf="auth.role() === 'ROLE_USUARIO'" (click)="finishJob(job.idSolicitud)">
+                    🏁 Finalizar y Calificar
                  </button>
               </div>
            </div>
@@ -99,7 +110,22 @@ import { AuthService } from '../services/auth.service';
                        <label>Hora Sugerida</label>
                        <input type="text" [(ngModel)]="encounterForm.horaEncuentro" name="hora" class="input-premium" placeholder="Ej: 2:30 PM" />
                     </div>
-                    <button type="submit" class="btn-lw-primary w-100 mt-3" [disabled]="loading()">
+                    
+                    <!-- Map Container -->
+                    <div class="map-wrapper-premium mt-3" *ngIf="mapsLoaded()">
+                      <div class="mini-map-element" id="mini-map" style="height: 200px; border-radius: 12px; border: 1.5px solid #cbd5e1; margin-bottom: 0.5rem;"></div>
+                      <p class="map-hint-text" style="font-size: 0.75rem; color: #64748b; font-weight: 600; margin: 0 0 1rem 0;">📍 Arrastra el marcador en el mapa para ubicar la posición exacta.</p>
+                    </div>
+
+                    <!-- Link to Google Maps -->
+                    <div class="google-maps-link-box" *ngIf="encounterForm.latitud && encounterForm.longitud" style="margin-bottom: 1rem;">
+                      <a [href]="'https://www.google.com/maps/search/?api=1&query=' + encounterForm.latitud + ',' + encounterForm.longitud" 
+                         target="_blank" class="maps-premium-link" style="color: #0a66c2; font-weight: 700; font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; gap: 0.25rem;">
+                         🗺️ Ver dirección exacta en Google Maps ↗
+                      </a>
+                    </div>
+
+                    <button type="submit" class="btn-lw-primary w-100" [disabled]="loading()">
                        {{ loading() ? 'Guardando...' : 'Guardar Detalles' }}
                     </button>
                  </form>
@@ -207,8 +233,8 @@ import { AuthService } from '../services/auth.service';
     .job-title-premium { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0 0 0.75rem; }
     .job-desc-premium { font-size: 0.95rem; color: #64748b; line-height: 1.5; margin-bottom: 1.5rem; flex: 1; }
     
-    .job-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; }
-    .meta-box { display: flex; flex-direction: column; }
+    .job-meta-grid { display: flex; flex-wrap: wrap; gap: 1rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; }
+    .meta-box { flex: 1; min-width: 100px; display: flex; flex-direction: column; }
     .meta-label { font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
     .meta-value { font-size: 0.9rem; font-weight: 600; color: #334155; }
     .meta-value.highlight { color: #0a66c2; }
@@ -216,6 +242,8 @@ import { AuthService } from '../services/auth.service';
     .card-actions-premium { margin-top: 1.5rem; }
     .btn-premium-action { width: 100%; background: #0a66c2; color: white; border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
     .btn-premium-action:hover { background: #004182; }
+    .btn-premium-action.secondary { background: #f1f5f9; color: #475569; border: 1.5px solid #cbd5e1; }
+    .btn-premium-action.secondary:hover { background: #e2e8f0; color: #1e293b; border-color: #94a3b8; }
 
     .empty-state-premium { background: white; border: 2px dashed #e2e8f0; border-radius: 1.5rem; padding: 4rem 2rem; text-align: center; }
     .empty-icon-box { font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; }
@@ -309,10 +337,14 @@ export class ActiveJobsComponent implements OnInit, OnDestroy {
   @ViewChild('chatScrollContainer') private chatScrollContainer!: ElementRef;
 
   selectedJob = signal<any | null>(null);
+  mapsLoaded = signal(false);
+
   encounterForm = {
     direccion: '',
     horaEncuentro: '',
-    notas: ''
+    notas: '',
+    latitud: null as number | null,
+    longitud: null as number | null
   };
 
   ratingSolicitudId = signal<number | null>(null);
@@ -357,16 +389,130 @@ export class ActiveJobsComponent implements OnInit, OnDestroy {
     this.encounterForm = {
       direccion: job.direccion || '',
       horaEncuentro: job.horaEncuentro || '',
-      notas: job.notas || ''
+      notas: job.notas || '',
+      latitud: job.latitud || null,
+      longitud: job.longitud || null
     };
     this.loadChatMessages();
     this.startChatPolling();
+    this.initMapWithAutocomplete();
   }
 
   closeDetailsModal() {
     this.selectedJob.set(null);
     this.stopChatPolling();
     this.chatMessages.set([]);
+  }
+
+  private map: any;
+  private marker: any;
+
+  loadGoogleMapsAPI(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (typeof window !== 'undefined' && (window as any).google && (window as any).google.maps) {
+        this.mapsLoaded.set(true);
+        resolve();
+        return;
+      }
+      
+      const script = document.createElement('script');
+      // Fault-tolerant loading: callback will fire once Google SDK initializes.
+      script.src = `https://maps.googleapis.com/maps/api/js?key=&libraries=places&callback=__googleMapsCallback`;
+      script.async = true;
+      script.defer = true;
+      
+      (window as any).__googleMapsCallback = () => {
+        this.mapsLoaded.set(true);
+        resolve();
+      };
+      
+      script.onerror = (err) => {
+        console.warn('Google Maps SDK could not be loaded. Falling back to manual text input.', err);
+        reject(err);
+      };
+      
+      document.head.appendChild(script);
+    });
+  }
+
+  async initMapWithAutocomplete() {
+    try {
+      await this.loadGoogleMapsAPI();
+      
+      setTimeout(() => {
+        const inputEl = document.querySelector('input[name="dir"]') as HTMLInputElement;
+        const mapEl = document.getElementById('mini-map');
+
+        if (!inputEl) {
+          console.warn('Input address element not found.');
+          return;
+        }
+
+        // 1. Initialize Autocomplete
+        const autocomplete = new google.maps.places.Autocomplete(inputEl, {
+          types: ['geocode', 'establishment']
+        });
+
+        // 2. Default Coords (Bogota, Colombia if not set)
+        let lat = this.encounterForm.latitud || 4.7110;
+        let lng = this.encounterForm.longitud || -74.0721;
+        const initialLatLng = { lat, lng };
+
+        // 3. Initialize Map if element is present
+        if (mapEl) {
+          this.map = new google.maps.Map(mapEl, {
+            center: initialLatLng,
+            zoom: 15,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false
+          });
+
+          // 4. Initialize Draggable Marker
+          this.marker = new google.maps.Marker({
+            position: initialLatLng,
+            map: this.map,
+            draggable: true,
+            title: 'Arrastra para precisar la dirección'
+          });
+
+          // 5. Update coords on dragend
+          this.marker.addListener('dragend', () => {
+            const pos = this.marker.getPosition();
+            if (pos) {
+              this.encounterForm.latitud = pos.lat();
+              this.encounterForm.longitud = pos.lng();
+              console.log('Coordenadas arrastradas:', this.encounterForm.latitud, this.encounterForm.longitud);
+            }
+          });
+        }
+
+        // 6. Handle autocomplete place selection
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          if (!place.geometry || !place.geometry.location) {
+            console.warn('Place geometry not found.');
+            return;
+          }
+
+          // Update form
+          this.encounterForm.direccion = inputEl.value || place.formatted_address || '';
+          this.encounterForm.latitud = place.geometry.location.lat();
+          this.encounterForm.longitud = place.geometry.location.lng();
+
+          // Pan map and place marker
+          if (this.map && this.marker) {
+            const loc = place.geometry.location;
+            this.map.setCenter(loc);
+            this.map.setZoom(16);
+            this.marker.setPosition(loc);
+          }
+        });
+      }, 300);
+
+    } catch (e) {
+      console.warn('Fallback: Google Maps initialized in text-only mode due to loading failure.', e);
+    }
   }
 
   async loadChatMessages() {

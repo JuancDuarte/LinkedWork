@@ -1,17 +1,41 @@
 package com.contact.LinkedWork.dto;
 
 import java.util.List;
+import jakarta.validation.constraints.*;
 
 public class CreateUsuarioDTO {
+    @NotBlank(message = "El nombre completo es obligatorio")
+    @Size(min = 3, max = 100, message = "El nombre debe tener entre 3 y 100 caracteres")
     private String nombre;
+
+    @NotBlank(message = "El correo electrónico es obligatorio")
+    @Email(message = "El correo electrónico debe ser válido")
     private String email;
+
+    @NotBlank(message = "La contraseña es obligatoria")
+    @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
     private String password;
+
     private List<String> roles;
+
+    @Positive(message = "El ID del área debe ser válido")
     private Long areaId;
+
+    @Size(max = 500, message = "La descripción no puede exceder 500 caracteres")
     private String descripcion;
+
+    @PositiveOrZero(message = "La experiencia debe ser un número positivo")
     private Long experiencia;
+
+    @Positive(message = "El ID del departamento debe ser válido")
     private Integer idDepartamento;
+
+    @Positive(message = "El ID de la ciudad debe ser válido")
     private Integer idCiudad;
+
+    @NotBlank(message = "El nombre de usuario es obligatorio")
+    @Size(min = 3, max = 50, message = "El nombre de usuario debe tener entre 3 y 50 caracteres")
+    @Pattern(regexp = "^[a-zA-Z0-9_.-]*$", message = "El nombre de usuario solo puede contener letras, números, guiones y puntos")
     private String nombreUsuario;
 
     // Getters and setters

@@ -8,6 +8,7 @@ import { FarmingsComponent } from './components/farmings.component';
 import { ActiveJobsComponent } from './components/active-jobs.component';
 import { CertificationComponent } from './components/certification.component';
 import { PostulationsComponent } from './components/postulations.component';
+import { SettingsComponent } from './components/settings.component';
 import { NotFoundComponent } from './components/not-found.component';
 import { authGuard } from './guards/auth.guard';
 
@@ -60,6 +61,12 @@ export const routes: Routes = [
     component: PostulationsComponent,
     canActivate: [authGuard],
     data: { roles: ['ROLE_TRABAJADOR'] }
+  },
+  {
+    path: 'settings',
+    component: SettingsComponent,
+    canActivate: [authGuard],
+    data: { roles: ['ROLE_USUARIO', 'ROLE_TRABAJADOR'] }
   },
   { path: '**', component: NotFoundComponent }
 ];

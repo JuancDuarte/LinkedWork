@@ -20,6 +20,9 @@ public class UsuarioDTO {
     @Schema(example = "[\"ROLE_TRABAJADOR\"]")
     private List<String> roles;
     private TrabajadorDTO trabajador;
+    
+    @Schema(example = "http://localhost:8082/LinkedApi/uploads/avatar.jpg")
+    private String fotoPerfil;
 
     
     public UsuarioDTO() {
@@ -84,4 +87,11 @@ public class UsuarioDTO {
         this.trabajador = trabajador;
     }
     
+    public String getFotoPerfil() {
+        return fotoPerfil;
+    }
+    
+    public void setFotoPerfil(String fotoPerfil) {
+        this.fotoPerfil = fotoPerfil;
+    }
 }

@@ -36,6 +36,9 @@ public class OfertaService {
     private OfertaRepository ofertaRepository;
 
     @Autowired
+    private EmailService emailService;
+
+    @Autowired
     @Qualifier("CrudSolicitudRepository")
     private SolicitudRepository solicitudRepository;
 
@@ -97,6 +100,23 @@ public class OfertaService {
         historial.setPrecioAnterior(null);      
         ofertaRepository.save(oferta);
         ofertaHistorialRepository.save(historial);
+
+        // Notificar al cliente sobre la nueva oferta recibida de forma asíncrona
+        try {
+            if (solicitud.getUsuario() != null && solicitud.getUsuario().getEmail() != null) {
+                String clientEmail = solicitud.getUsuario().getEmail();
+                String clientName = solicitud.getUsuario().getNombreCompleto() != null
+                        ? solicitud.getUsuario().getNombreCompleto()
+                        : solicitud.getUsuario().getNombreUsuario();
+                String jobTitle = solicitud.getTitulo();
+                String workerName = trabajador.getUsuario().getNombreCompleto() != null
+                        ? trabajador.getUsuario().getNombreCompleto()
+                        : trabajador.getUsuario().getNombreUsuario();
+                emailService.sendOfferNotification(clientEmail, clientName, jobTitle, workerName, oferta.getPrecio());
+            }
+        } catch (Exception e) {
+            System.err.println("Error al intentar notificar al cliente sobre la nueva oferta: " + e.getMessage());
+        }
         OfertaDTO ofertaDTO = new OfertaDTO();
         ofertaDTO.setIdOferta(oferta.getIdOferta());
         ofertaDTO.setIdSolicitud(solicitud.getIdSolicitud());

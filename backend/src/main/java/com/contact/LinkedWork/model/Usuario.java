@@ -48,6 +48,9 @@ public class Usuario {
     @Column(name = "FechaCreacion", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime fechaCreacion = LocalDateTime.now();
 
+    @Column(name = "FotoPerfil", length = 255)
+    private String fotoPerfil;
+
     public Usuario() {
     }
 
@@ -143,5 +146,13 @@ public class Usuario {
 
     public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
+    }
+
+    public String getFotoPerfil() {
+        return fotoPerfil;
+    }
+
+    public void setFotoPerfil(String fotoPerfil) {
+        this.fotoPerfil = fotoPerfil;
     }
 }

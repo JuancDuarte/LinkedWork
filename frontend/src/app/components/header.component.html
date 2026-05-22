@@ -38,14 +38,14 @@
 
     <div class="navbar-right">
       <div class="user-menu-trigger" (click)="toggleMenu()">
-        <img [src]="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + auth.userName()" alt="Me" class="nav-avatar" />
+        <img [src]="auth.userFotoPerfil() || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + auth.userName())" alt="Me" class="nav-avatar" />
         <span class="nav-label-me">Yo ▼</span>
       </div>
 
       <div class="user-dropdown" *ngIf="menuOpen()">
         <div class="dropdown-header">
            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-             <img [src]="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + auth.userName()" alt="Me" class="dropdown-avatar" />
+             <img [src]="auth.userFotoPerfil() || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + auth.userName())" alt="Me" class="dropdown-avatar" />
              <button (click)="closeMenu()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8; line-height: 1;">×</button>
            </div>
            <div class="dropdown-user-info" style="margin-top: 0.5rem;">
@@ -57,8 +57,8 @@
         
         <div class="dropdown-section">
            <h5>Cuenta</h5>
-           <a href="javascript:void(0)" (click)="switchRole()">{{ toggleRoleLabel() }}</a>
-           <a href="javascript:void(0)">Configuración y Privacidad</a>
+           <a href="javascript:void(0)" (click)="switchRole()" *ngIf="auth.hasMultipleRoles()">{{ toggleRoleLabel() }}</a>
+           <a routerLink="/settings" (click)="closeMenu()">Configuración y Privacidad</a>
         </div>
 
         <div class="dropdown-footer">

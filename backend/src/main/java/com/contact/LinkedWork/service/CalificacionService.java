@@ -29,6 +29,9 @@ import com.contact.LinkedWork.repository.UsuarioRepository;
 public class CalificacionService {
 
     @Autowired
+    private EmailService emailService;
+
+    @Autowired
     @Qualifier("CrudCalificacionRepository")
     private CalificacionRepository calificacionRepository;
 
@@ -70,6 +73,30 @@ public class CalificacionService {
         historial.setEstadoNuevo("Finalizada");
         historial.setFecha(LocalDateTime.now());
         solicitudHistorialRepository.save(historial);
+
+        // Buscar al trabajador que aceptó la oferta para enviar las notificaciones de finalización
+        Oferta ofertaAceptada = solicitud.getOfertas().stream()
+                .filter(o -> "Aceptada".equalsIgnoreCase(o.getEstado()))
+                .findFirst()
+                .orElse(null);
+
+        if (ofertaAceptada != null) {
+            try {
+                String clientEmail = solicitud.getUsuario().getEmail();
+                String clientName = solicitud.getUsuario().getNombreCompleto();
+                String workerEmail = ofertaAceptada.getTrabajador().getUsuario().getEmail();
+                String workerName = ofertaAceptada.getTrabajador().getUsuario().getNombreCompleto();
+                String jobTitle = solicitud.getTitulo();
+
+                // Notificar al cliente
+                emailService.sendJobFinishedNotification(clientEmail, clientName, workerEmail, workerName, jobTitle, true);
+                // Notificar al trabajador
+                emailService.sendJobFinishedNotification(clientEmail, clientName, workerEmail, workerName, jobTitle, false);
+            } catch (Exception e) {
+                System.err.println("Error al enviar notificaciones de finalización de trabajo: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
     }
 
     public void calificarTrabajador(Long idUsuario, Long idSolicitud, Long puntuacion, String comentario) {
@@ -164,6 +191,13 @@ public class CalificacionService {
         dto.setNombreUsuario(s.getUsuario().getNombreCompleto());
         dto.setIdArea(s.getArea().getIdArea());
         dto.setNombreArea(s.getArea().getNombre());
+        dto.setPrecio(s.getPrecio());
+        dto.setFechaServicio(s.getFechaServicio());
+        dto.setDireccion(s.getDireccion());
+        dto.setHoraEncuentro(s.getHoraEncuentro());
+        dto.setNotas(s.getNotas());
+        dto.setLatitud(s.getLatitud());
+        dto.setLongitud(s.getLongitud());
         
         // Agregar info del trabajador si está aceptada
         s.getOfertas().stream()

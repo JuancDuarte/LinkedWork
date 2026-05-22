@@ -30,9 +30,6 @@ export class HeaderComponent {
 
   switchRole() {
     const nextRole = this.toggleRole();
-    if (!this.auth.availableRoles().includes(nextRole)) {
-      this.auth.setAvailableRoles(['ROLE_USUARIO', 'ROLE_TRABAJADOR']);
-    }
     this.auth.switchRole(nextRole).subscribe();
     this.closeMenu();
   }

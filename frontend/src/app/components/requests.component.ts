@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import { ApiService } from '../services/api.service';
+import { ApiService, PayUPayload } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
 
 @Component({
@@ -16,6 +16,18 @@ import { AuthService } from '../services/auth.service';
       <!-- Centro: Listado y Creación -->
       <main class="jobs-main-centered">
         
+        <!-- Alertas de Retroalimentación -->
+        <div class="alert-banner error" *ngIf="errorMessage()">
+          <span class="icon">❌</span>
+          <p>{{ errorMessage() }}</p>
+          <button class="close-alert-btn" (click)="errorMessage.set(null)">✕</button>
+        </div>
+        <div class="alert-banner success" *ngIf="successMessage()">
+          <span class="icon">✨</span>
+          <p>{{ successMessage() }}</p>
+          <button class="close-alert-btn" (click)="successMessage.set(null)">✕</button>
+        </div>
+
         <!-- BARRA DE FILTROS Y BÚSQUEDA -->
         <div class="filter-bar card">
           <div class="search-box">
@@ -37,9 +49,9 @@ import { AuthService } from '../services/auth.service';
         <div class="post-job-bar card mt-3" *ngIf="auth.role() === 'ROLE_USUARIO'">
            <div class="bar-header">
              <div class="mini-avatar">
-               <img [src]="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + auth.userName()" alt="User" />
+               <img [src]="auth.userFotoPerfil() || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + auth.userName())" alt="User" />
              </div>
-             <button class="trigger-btn" (click)="showCreateForm.set(!showCreateForm())">
+             <button class="trigger-btn" (click)="onShowCreateForm()">
                {{ showCreateForm() ? 'Cerrar formulario' : '¿Necesitas un servicio? Publica aquí tu requerimiento...' }}
              </button>
            </div>
@@ -54,6 +66,19 @@ import { AuthService } from '../services/auth.service';
                  </select>
                </div>
                <textarea [(ngModel)]="createForm.descripcion" name="descripcion" placeholder="Describe lo que necesitas con detalle..." required></textarea>
+               <!-- Dirección con Google Places -->
+               <div class="address-field-wrapper" style="position:relative;">
+                 <span class="address-icon" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:1rem;pointer-events:none;">📍</span>
+                 <input
+                   id="addressAutocomplete"
+                   type="text"
+                   [(ngModel)]="createForm.direccion"
+                   name="direccion"
+                   placeholder="Dirección del servicio (ej: Calle 80 #45-12, Bogotá)"
+                   style="width:100%;padding:0.75rem 1rem 0.75rem 2.5rem;border:1.5px solid var(--border-color);border-radius:12px;background:var(--input-bg);color:var(--text-primary);font-size:0.95rem;outline:none;transition:border-color 0.2s;"
+                   autocomplete="off"
+                 />
+               </div>
                <div class="form-row footer">
                  <input type="number" [(ngModel)]="createForm.precio" name="precio" placeholder="Presupuesto (COP)" />
                  <input type="date" [(ngModel)]="createForm.fechaServicio" name="fechaServicio" title="Fecha de Servicio" required />
@@ -181,11 +206,101 @@ import { AuthService } from '../services/auth.service';
               <p class="applicant-desc">{{ applicant.descripcion }}</p>
               <p class="offer-price">Oferta: {{ applicant.precio | currency:'COP':'symbol':'1.0-0' }}</p>
             </div>
-            <button class="btn-success-sm" (click)="acceptApplicant(applicant)">Aceptar</button>
+            <button class="btn-success-sm" (click)="initiatePaymentFlow(applicant)">Aceptar</button>
           </div>
         </div>
         <div *ngIf="selectedApplicants().length === 0" class="empty-modal-state">
           No hay postulantes aún.
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Breakdown & Checkout Modal -->
+    <div class="modal-overlay" *ngIf="showPaymentModal() && paymentPayload() !== null">
+      <div class="modal-card-premium wide payment-breakdown-card">
+        <div class="modal-header-row">
+          <div class="modal-title-with-subtitle">
+            <span class="premium-badge">Módulo de Pago Seguro</span>
+            <h3>Confirmación y Desglose de Pago</h3>
+          </div>
+          <button class="close-btn-circle" (click)="closePaymentModal()">✕</button>
+        </div>
+
+        <div class="payment-details-wrapper">
+          <!-- Detalles del Profesional y el Trabajo -->
+          <div class="info-card-section">
+            <div class="mini-profile-row">
+              <div class="profile-avatar">⭐</div>
+              <div class="profile-details">
+                <span class="label">Profesional Asignado</span>
+                <h4>{{ selectedApplicantForPayment()?.nombreTrabajador }}</h4>
+              </div>
+            </div>
+            <div class="job-summary-box">
+              <span class="label">Servicio Requerido</span>
+              <p>{{ applyItem()?.titulo || 'Servicio de Reparación/Instalación' }}</p>
+            </div>
+          </div>
+
+          <!-- Desglose de Precios Transparente (Garantía de Satisfacción) -->
+          <div class="price-breakdown-section">
+            <div class="breakdown-row">
+              <span>Valor del Servicio Técnico</span>
+              <span class="amount-val">{{ paymentPayload()?.precioOferta | currency:'COP':'symbol':'1.0-0' }}</span>
+            </div>
+            <div class="breakdown-row highlight-fee">
+              <div class="fee-label-group">
+                <span>Comisión Operativa LinkedWork</span>
+                <span class="fee-percentage">5.0%</span>
+              </div>
+              <span class="amount-val">+ {{ paymentPayload()?.comision | currency:'COP':'symbol':'1.0-0' }}</span>
+            </div>
+            <div class="breakdown-divider"></div>
+            <div class="breakdown-row total-row">
+              <span>Total a Pagar (COP)</span>
+              <span class="amount-val total-price">{{ paymentPayload()?.amount | currency:'COP':'symbol':'1.0-0' }}</span>
+            </div>
+          </div>
+
+          <!-- Mensaje Informativo Seguro -->
+          <div class="secure-badge-box">
+            <span class="lock-icon">🔒</span>
+            <p>Tus pagos están protegidos. El dinero se retiene de forma segura y solo se libera al finalizar el trabajo conforme a tu satisfacción.</p>
+          </div>
+
+          <!-- Formulario de PayU Oculto para Redirección -->
+          <form #payuForm [action]="paymentPayload()?.checkoutUrl" method="POST" style="display: none;">
+            <input name="merchantId" [value]="paymentPayload()?.merchantId" type="hidden"/>
+            <input name="accountId" [value]="paymentPayload()?.accountId" type="hidden"/>
+            <input name="description" [value]="paymentPayload()?.description" type="hidden"/>
+            <input name="referenceCode" [value]="paymentPayload()?.referenceCode" type="hidden"/>
+            <input name="amount" [value]="paymentPayload()?.amount" type="hidden"/>
+            <input name="tax" [value]="paymentPayload()?.tax" type="hidden"/>
+            <input name="taxReturnBase" [value]="paymentPayload()?.taxReturnBase" type="hidden"/>
+            <input name="currency" [value]="paymentPayload()?.currency" type="hidden"/>
+            <input name="signature" [value]="paymentPayload()?.signature" type="hidden"/>
+            <input name="test" [value]="paymentPayload()?.test" type="hidden"/>
+            <input name="buyerEmail" [value]="paymentPayload()?.buyerEmail" type="hidden"/>
+            <input name="responseUrl" [value]="paymentPayload()?.responseUrl" type="hidden"/>
+            <input name="confirmationUrl" [value]="paymentPayload()?.confirmationUrl" type="hidden"/>
+          </form>
+
+          <!-- Acciones de Pago -->
+          <div class="payment-action-buttons">
+            <button class="btn-payu-checkout" (click)="submitPayU(payuForm)">
+              <span class="btn-text">Proceder al Pago Seguro</span>
+              <span class="provider-tag">PayU Latam</span>
+            </button>
+
+            <div class="simulation-separator">
+              <span>O en ambiente de pruebas local</span>
+            </div>
+
+            <button class="btn-simulate-local" (click)="simulateSuccessPayment()">
+              <span class="btn-text">⚡ Simular Pago Exitoso (Local)</span>
+              <span class="sub-text">Activa el trabajo e inicia notificaciones de inmediato</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -335,6 +450,259 @@ import { AuthService } from '../services/auth.service';
       .btn-link { background: none; border: none; color: #0a66c2; font-weight: 700; text-decoration: underline; cursor: pointer; margin-top: 1rem; }
 
       .mt-3 { margin-top: 1rem; }
+
+      /* Dynamic Alert Banners */
+      .alert-banner {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        animation: slideDown 0.3s ease;
+      }
+      .alert-banner.error {
+        background: #fee2e2;
+        border: 1px solid #fca5a5;
+        color: #991b1b;
+      }
+      .alert-banner.success {
+        background: #d1fae5;
+        border: 1px solid #6ee7b7;
+        color: #065f46;
+      }
+      .alert-banner p {
+        margin: 0;
+        flex: 1;
+        font-weight: 700;
+        font-size: 0.95rem;
+        text-align: left;
+      }
+      .close-alert-btn {
+        background: none;
+        border: none;
+        font-size: 1.1rem;
+        color: currentColor;
+        cursor: pointer;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+      }
+      .close-alert-btn:hover { opacity: 1; }
+      @keyframes slideDown {
+        from { transform: translateY(-10px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+
+      /* Premium Payment Modal styles */
+      .payment-breakdown-card {
+        max-width: 500px !important;
+        background: linear-gradient(135deg, #ffffff 0%, #fcfdfe 100%) !important;
+      }
+      .modal-title-with-subtitle {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+      }
+      .premium-badge {
+        background: rgba(10, 102, 194, 0.1);
+        color: #0a66c2;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+      .payment-details-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: left;
+      }
+      .info-card-section {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .mini-profile-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .profile-avatar {
+        background: #e0f2fe;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+      }
+      .profile-details .label, .job-summary-box .label {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .profile-details h4 {
+        margin: 0;
+        font-size: 1rem;
+        color: #1e293b;
+        font-weight: 700;
+      }
+      .job-summary-box p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #475569;
+        font-weight: 600;
+      }
+      .price-breakdown-section {
+        background: #ffffff;
+        border: 1.5px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .breakdown-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+        color: #475569;
+      }
+      .fee-label-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .fee-percentage {
+        background: #fef3c7;
+        color: #d97706;
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      .highlight-fee {
+        color: #1e293b;
+        font-weight: 600;
+      }
+      .amount-val {
+        font-weight: 700;
+        color: #1e293b;
+      }
+      .breakdown-divider {
+        height: 1px;
+        background: #e2e8f0;
+        margin: 0.25rem 0;
+      }
+      .total-row {
+        font-size: 1rem;
+        color: #1e293b;
+        font-weight: 800;
+      }
+      .total-price {
+        font-size: 1.25rem;
+        color: #10b981;
+      }
+      .secure-badge-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        background: rgba(16, 185, 129, 0.05);
+        border: 1px solid rgba(16, 185, 129, 0.15);
+        border-radius: 8px;
+        padding: 0.75rem;
+      }
+      .secure-badge-box .lock-icon {
+        font-size: 1.2rem;
+      }
+      .secure-badge-box p {
+        margin: 0;
+        font-size: 0.8rem;
+        color: #065f46;
+        line-height: 1.4;
+        font-weight: 600;
+      }
+      .payment-action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .btn-payu-checkout {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        padding: 0.9rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+        transition: all 0.2s;
+      }
+      .btn-payu-checkout:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+      }
+      .btn-payu-checkout .provider-tag {
+        font-size: 0.7rem;
+        opacity: 0.8;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .simulation-separator {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+      .simulation-separator::before, .simulation-separator::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .simulation-separator:not(:empty)::before { margin-right: .5em; }
+      .simulation-separator:not(:empty)::after { margin-left: .5em; }
+      .btn-simulate-local {
+        background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+        color: white;
+        border: none;
+        padding: 0.9rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+        transition: all 0.2s;
+      }
+      .btn-simulate-local:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+      }
+      .btn-simulate-local .sub-text {
+        font-size: 0.7rem;
+        opacity: 0.85;
+        font-weight: 600;
+      }
+
       @media (max-width: 600px) {
         .jobs-premium-layout { padding: 0 0.5rem; }
         .form-row { grid-template-columns: 1fr; }
@@ -363,13 +731,27 @@ export class RequestsComponent implements OnInit, OnDestroy {
   searchTerm = signal('');
   selectedAreaId = signal<number | null>(null);
 
-  createForm = {
+  // Payment UI states
+  showPaymentModal = signal(false);
+  paymentPayload = signal<PayUPayload | null>(null);
+  selectedApplicantForPayment = signal<any>(null);
+
+  createForm: {
+    area_id: number;
+    titulo: string;
+    descripcion: string;
+    precio: number | null;
+    fechaServicio: string;
+    direccion: string;
+  } = {
     area_id: 0,
     titulo: '',
     descripcion: '',
     precio: null,
-    fechaServicio: ''
+    fechaServicio: '',
+    direccion: ''
   };
+  private placesAutocomplete: any = null;
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
   confirmDeleteId = signal<number | null>(null);
@@ -422,6 +804,24 @@ export class RequestsComponent implements OnInit, OnDestroy {
         }
       }, 15000);
     }
+  }
+
+  private initAddressAutocomplete() {
+    const g = (window as any)['google'];
+    if (!g || !g.maps || !g.maps.places) return;
+    const input = document.getElementById('addressAutocomplete') as HTMLInputElement;
+    if (!input || this.placesAutocomplete) return;
+    this.placesAutocomplete = new g.maps.places.Autocomplete(input, {
+      types: ['address'],
+      componentRestrictions: { country: 'co' },
+      fields: ['formatted_address']
+    });
+    this.placesAutocomplete.addListener('place_changed', () => {
+      const place = this.placesAutocomplete.getPlace();
+      if (place && place.formatted_address) {
+        this.createForm.direccion = place.formatted_address;
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -487,6 +887,13 @@ export class RequestsComponent implements OnInit, OnDestroy {
     }
   }
 
+  onShowCreateForm() {
+    this.showCreateForm.set(!this.showCreateForm());
+    if (this.showCreateForm()) {
+      setTimeout(() => this.initAddressAutocomplete(), 400);
+    }
+  }
+
   async create() {
     const userId = this.auth.userId();
     if (!userId) return;
@@ -499,9 +906,14 @@ export class RequestsComponent implements OnInit, OnDestroy {
 
     this.loading.set(true);
     try {
-      const payload = { ...this.createForm };
+      const payload = {
+        ...this.createForm,
+        idArea: this.createForm.area_id,
+        direccion: this.createForm.direccion || null
+      };
       await firstValueFrom(this.api.createRequest(userId, this.createForm.area_id, payload));
-      this.createForm = { area_id: 0, titulo: '', descripcion: '', precio: null, fechaServicio: '' };
+      this.createForm = { area_id: 0, titulo: '', descripcion: '', precio: null, fechaServicio: '', direccion: '' };
+      this.placesAutocomplete = null;
       this.showCreateForm.set(false);
       await this.reload();
       this.loading.set(false);
@@ -592,6 +1004,7 @@ export class RequestsComponent implements OnInit, OnDestroy {
   }
 
   async acceptApplicant(applicant: any) {
+    // Left for backward compatibility, but we now use the payment flow.
     const requestId = this.activeRequestId();
     const userId = this.auth.userId();
     if(!requestId || !userId) return;
@@ -602,6 +1015,68 @@ export class RequestsComponent implements OnInit, OnDestroy {
       await this.reload();
     } catch(e) {
       console.error('Error accepting applicant', e);
+      this.loading.set(false);
+    }
+  }
+
+  async initiatePaymentFlow(applicant: any) {
+    const requestId = this.activeRequestId();
+    const userId = this.auth.userId();
+    if(!requestId || !userId) return;
+    
+    this.loading.set(true);
+    this.closeApplicantsModal();
+    this.selectedApplicantForPayment.set(applicant);
+    
+    // Set applyItem to let the dialog show the correct service title
+    const currentItem = this.requests().find(r => r.idSolicitud === requestId);
+    if (currentItem) {
+      this.applyItem.set(currentItem);
+    }
+
+    try {
+      const payload = await firstValueFrom(this.api.initiatePayment(requestId, applicant.idOferta));
+      this.paymentPayload.set(payload);
+      this.showPaymentModal.set(true);
+    } catch(e: any) {
+      console.error('Error al iniciar el pago', e);
+      this.errorMessage.set(e.error?.mensaje || 'No se pudo iniciar el proceso de pago. Intente de nuevo.');
+      setTimeout(() => this.errorMessage.set(null), 5000);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  closePaymentModal() {
+    this.showPaymentModal.set(false);
+    this.paymentPayload.set(null);
+    this.selectedApplicantForPayment.set(null);
+  }
+
+  submitPayU(form: HTMLFormElement) {
+    console.log('Redirigiendo a PayU Sandbox...', this.paymentPayload());
+    form.submit();
+  }
+
+  async simulateSuccessPayment() {
+    const payload = this.paymentPayload();
+    if (!payload) return;
+    
+    this.loading.set(true);
+    const refCode = payload.referenceCode;
+    this.closePaymentModal();
+    
+    try {
+      const res = await firstValueFrom(this.api.simulatePaymentSuccess(refCode));
+      console.log('Simulación de pago exitosa:', res);
+      this.successMessage.set('¡Pago simulado correctamente! El trabajo ha sido activado.');
+      setTimeout(() => this.successMessage.set(null), 6000);
+      await this.reload();
+    } catch(e: any) {
+      console.error('Error en simulación de pago', e);
+      this.errorMessage.set(e.error?.mensaje || 'No se pudo simular el pago exitoso.');
+      setTimeout(() => this.errorMessage.set(null), 5000);
+    } finally {
       this.loading.set(false);
     }
   }
