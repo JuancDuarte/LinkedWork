@@ -92,3 +92,33 @@ target/
 scratch/
 backend_logs.txt
 >>>>>>> feature/vercel-deploy
+
+# Local configuration
+.env
+scratch/
+backend_logs.txt
+>>>>>>> feature/vercel-deploy
+
+# Dependencias
+node_modules/
+
+# Angular
+.angular/
+dist/
+
+# VSCode
+.vscode/
+
+# Logs
+*.log
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Java / Maven
+target/
+*.class
+
+# IDEs
+.idea/

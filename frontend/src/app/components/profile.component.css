@@ -238,3 +238,39 @@
     justify-content: center;
   }
 }
+
+@media (max-width: 600px) {
+  .profile-page {
+    padding: 1rem 0.5rem 2rem;
+  }
+  
+  .profile-header {
+    padding: 1.5rem 1rem;
+  }
+  
+  .summary-card, .form-card {
+    padding: 1.25rem 1rem;
+  }
+
+  .data-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .data-row dt {
+    font-size: 0.85rem;
+  }
+
+  .data-row dd {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .form-row {
+    gap: 0.25rem;
+  }
+}

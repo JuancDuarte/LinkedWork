@@ -55,6 +55,9 @@ public class UsuarioController {
         return usuarioService.listarTrabajadores();
     }
 
+    @Autowired
+    private com.contact.LinkedWork.security.JwtUtil jwtUtil;
+
     @Operation(summary = "Iniciar sesión", description = "Autentica un usuario usando idUsuario, nombreUsuario o email junto con la clave.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Login exitoso",
@@ -66,8 +69,35 @@ public class UsuarioController {
     @PostMapping(path = "/Login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
         try {
-            return ResponseEntity.ok(usuarioService.login(loginDTO));
+            UsuarioDTO usuario = usuarioService.login(loginDTO);
+            String token = jwtUtil.generateToken(usuario.getIdUsuario(), usuario.getEmail());
+            Map<String, Object> response = new java.util.HashMap<>();
+            response.put("token", token);
+            response.put("user", usuario);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+        }
+    }
+
+    @PostMapping(path = "/login/google", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> loginGoogle(@RequestBody Map<String, String> payload) {
+        try {
+            String idTokenString = payload.get("idToken");
+            
+            if (idTokenString == null || idTokenString.isEmpty()) {
+                throw new RuntimeException("Token de Google inválido");
+            }
+            
+            UsuarioDTO usuario = usuarioService.loginOrRegisterGoogle(idTokenString);
+            String token = jwtUtil.generateToken(usuario.getIdUsuario(), usuario.getEmail());
+            
+            Map<String, Object> response = new java.util.HashMap<>();
+            response.put("token", token);
+            response.put("user", usuario);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
         }
     }

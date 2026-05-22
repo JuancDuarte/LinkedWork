@@ -82,6 +82,12 @@ Construir una base sólida para una plataforma de servicios donde los usuarios p
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.2.
 
+## Avance del proyecto
+
+- Integración de chat dinámico en solicitudes.
+- Integración de responsividad para celular.
+- Integración de inicio de sesión con Google y tokens.
+
 ## Development server
 
 To start a local development server, run:
