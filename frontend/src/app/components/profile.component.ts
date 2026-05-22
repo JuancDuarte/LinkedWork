@@ -286,13 +286,13 @@ import { AuthService, UserRole } from '../services/auth.service';
               <div class="form-group-premium">
                 <label>Departamento</label>
                 <select [(ngModel)]="upgradeForm.idDepartamento" name="upD" (change)="onDepartamentoChange()" class="select-premium">
-                  <option *ngFor="let dep of departamentos()" [value]="dep.id">{{ dep.nombre }}</option>
+                  <option *ngFor="let dep of departamentos()" [value]="dep.idDepartamento">{{ dep.nombre }}</option>
                 </select>
               </div>
               <div class="form-group-premium">
                 <label>Ciudad</label>
                 <select [(ngModel)]="upgradeForm.idCiudad" name="upC" class="select-premium">
-                  <option *ngFor="let city of ciudades()" [value]="city.id">{{ city.nombre }}</option>
+                  <option *ngFor="let city of ciudades()" [value]="city.idCiudad">{{ city.nombre }}</option>
                 </select>
               </div>
             </div>
@@ -360,6 +360,7 @@ import { AuthService, UserRole } from '../services/auth.service';
               </div>
             </div>
             <button type="submit" class="btn-upgrade-action" [disabled]="loading()">Enviar Solicitud Directa</button>
+            <p *ngIf="errorMessage()" style="color: #ef4444; font-size: 0.85rem; font-weight: 600; margin-top: 0.75rem; text-align: center;">{{ errorMessage() }}</p>
           </form>
         </div>
       </div>
@@ -495,7 +496,7 @@ import { AuthService, UserRole } from '../services/auth.service';
 
       /* Modal Style */
       .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-      .modal-card-premium { background: white; width: 90%; max-width: 600px; border-radius: 1rem; overflow: hidden; animation: slideUp 0.3s ease; }
+      .modal-card-premium { background: white; width: 90%; max-width: 600px; border-radius: 1rem; overflow-y: auto; max-height: 90vh; animation: slideUp 0.3s ease; }
       @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
       
       .modal-header-premium { padding: 1.5rem 2rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
@@ -582,6 +583,22 @@ import { AuthService, UserRole } from '../services/auth.service';
       @media (max-width: 900px) {
         .profile-container-premium { grid-template-columns: 1fr; }
         .header-actions-group { flex-direction: row; flex-wrap: wrap; }
+      }
+
+      @media (max-width: 600px) {
+        .profile-layout { padding: 1rem 0.5rem; }
+        .profile-banner-premium { height: 120px; }
+        .header-main-content { padding: 0 1rem 1rem; flex-direction: column; text-align: center; gap: 1rem; }
+        .profile-avatar-wrapper { margin-top: -60px; display: flex; justify-content: center; }
+        .profile-avatar-img { width: 100px; height: 100px; border-width: 3px; }
+        .header-details-container { flex-direction: column; text-align: center; gap: 1rem; }
+        .name-badge-row { justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+        .profile-display-name { font-size: 1.5rem; }
+        .profile-meta-data { justify-content: center; flex-wrap: wrap; }
+        .profile-quick-stats { justify-content: center; }
+        .header-actions-group { width: 100%; flex-direction: column; align-items: stretch; }
+        .btn-lw-primary, .btn-lw-outline, .btn-lw-premium, .btn-lw-ghost { width: 100%; box-sizing: border-box; }
+        .section-profile, .side-premium-card, .section-header-premium { padding: 1.25rem 1rem; }
       }
     `
   ]
@@ -749,9 +766,18 @@ export class ProfileComponent implements OnInit {
     this.loading.set(true);
     try {
       await firstValueFrom(this.api.upgradeToWorker(id, this.upgradeForm));
+      
+      if (!this.auth.availableRoles().includes('ROLE_TRABAJADOR')) {
+        this.auth.addAvailableRole('ROLE_TRABAJADOR');
+      }
       await this.auth.switchRole('ROLE_TRABAJADOR').toPromise();
+      
       this.showUpgradeModal.set(false);
       await this.reloadProfile();
+
+      if (this.upgradeForm.esFarming) {
+        this.router.navigate(['/certification']);
+      }
     } catch { this.errorMessage.set('Error al subir de nivel.'); } finally { this.loading.set(false); }
   }
 
@@ -759,6 +785,13 @@ export class ProfileComponent implements OnInit {
     const userId = this.auth.userId();
     const workerUserId = this.profile()?.idUsuario;
     if (!userId || !workerUserId) return;
+    
+    this.errorMessage.set(null);
+    if (!this.requestForm.titulo?.trim() || !this.requestForm.descripcion?.trim() || !this.requestForm.fechaServicio) {
+      this.errorMessage.set('Por favor, llena los campos obligatorios (Título, Descripción y Fecha).');
+      return;
+    }
+
     this.loading.set(true);
     try {
       await firstValueFrom(this.api.createDirectRequest(userId, workerUserId, this.requestForm));

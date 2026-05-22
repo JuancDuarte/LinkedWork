@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, retry, throwError, tap } from 'rxjs';
+import { environment } from '../../environments/environment';
 
-const API_BASE = 'http://localhost:8082/LinkedApi';
+const API_BASE = environment.apiBaseUrl;
 
 export interface ApiUser {
   idUsuario?: number;
@@ -58,15 +59,22 @@ export class ApiService {
   }
 
   loginUser(payload: { usuario: number | string; password: string }): Observable<any> {
-    const loginPayload: any = { clave: payload.password };
-    if (typeof payload.usuario === 'number' && !Number.isNaN(payload.usuario)) {
-      loginPayload.idUsuario = payload.usuario;
-    } else if (typeof payload.usuario === 'string') {
-      loginPayload.nombreUsuario = payload.usuario;
-    }
+    const loginPayload = {
+      idUsuario: typeof payload.usuario === 'number' ? payload.usuario : null,
+      nombreUsuario: typeof payload.usuario === 'string' && !payload.usuario.includes('@') ? payload.usuario : null,
+      email: typeof payload.usuario === 'string' && payload.usuario.includes('@') ? payload.usuario : null,
+      clave: payload.password
+    };
     console.log('[ApiService] loginUser payload:', loginPayload);
     return this.http.post(`${API_BASE}/Login`, loginPayload).pipe(
       catchError(this.handleError('loginUser'))
+    );
+  }
+
+  loginGoogle(idToken: string): Observable<any> {
+    console.log('[ApiService] loginGoogle');
+    return this.http.post(`${API_BASE}/login/google`, { idToken }).pipe(
+      catchError(this.handleError('loginGoogle'))
     );
   }
 
@@ -299,6 +307,19 @@ export class ApiService {
     return this.http.get<any[]>(`${API_BASE}/listWorkerOffers/${encodeURIComponent(userId)}`).pipe(
       tap((res) => console.log('[ApiService] listWorkerOffers response:', res)),
       catchError(this.handleError('listWorkerOffers'))
+    );
+  }
+
+  // Chat methods
+  getChatMessages(idSolicitud: number): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/chat/solicitud/${encodeURIComponent(idSolicitud)}`).pipe(
+      catchError(this.handleError('getChatMessages'))
+    );
+  }
+
+  sendChatMessage(idSolicitud: number, payload: { idEmisor: number; mensaje: string }): Observable<any> {
+    return this.http.post(`${API_BASE}/chat/solicitud/${encodeURIComponent(idSolicitud)}`, payload).pipe(
+      catchError(this.handleError('sendChatMessage'))
     );
   }
 }

@@ -13,7 +13,7 @@ public class Sancion {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_usuario")
+    @JoinColumn(name = "id_usuario", columnDefinition = "INT")
     private Usuario usuario;
 
     @Column(columnDefinition = "TEXT")

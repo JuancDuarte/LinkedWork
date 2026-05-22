@@ -179,6 +179,19 @@ CREATE TABLE Certificado (
 );
 
 -- ========================================
+-- TABLA: ChatMensaje
+-- ========================================
+CREATE TABLE ChatMensaje (
+    IdMensaje INT AUTO_INCREMENT PRIMARY KEY,
+    IdSolicitud INT NOT NULL,
+    IdEmisor INT NOT NULL,
+    Mensaje TEXT NOT NULL,
+    FechaEnvio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (IdSolicitud) REFERENCES Solicitud(IdSolicitud) ON DELETE CASCADE,
+    FOREIGN KEY (IdEmisor) REFERENCES Usuario(IdUsuario) ON DELETE CASCADE
+);
+
+-- ========================================
 -- DATOS INICIALES
 -- ========================================
 

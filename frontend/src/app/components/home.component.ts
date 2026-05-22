@@ -267,6 +267,16 @@ import { ApiService, ApiUser } from '../services/api.service';
         .home-layout { grid-template-columns: 1fr; }
         .sidebar-left { display: none; }
       }
+
+      @media (max-width: 600px) {
+        .home-layout { padding: 1rem 0.5rem; }
+        .stepper-content { flex-direction: column; text-align: center; }
+        .step-visual img { width: 100px; }
+        .post-input-row { flex-direction: column; align-items: stretch; }
+        .mini-avatar { display: none; }
+        .post-actions-row { flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+        .post-action-item { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+      }
     `
   ]
 })

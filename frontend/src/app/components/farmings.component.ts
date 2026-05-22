@@ -316,8 +316,25 @@ import { AuthService } from '../services/auth.service';
       .empty-state-card { padding: 3rem; text-align: center; color: #64748b; font-style: italic; }
 
       @media (max-width: 900px) {
-        .network-layout { grid-template-columns: 1fr; }
-        .sidebar-network { display: none; }
+        .network-layout { grid-template-columns: 1fr; padding: 1rem; }
+        .sidebar-filters { position: static; margin-bottom: 1rem; }
+      }
+
+      @media (max-width: 600px) {
+        .network-layout { padding: 1rem 0.5rem; }
+        .user-network-row { 
+          grid-template-columns: 1fr; 
+          text-align: center; 
+          gap: 1rem; 
+          padding: 1.5rem 1rem; 
+        }
+        .user-avatar-column { display: flex; justify-content: center; }
+        .user-name-row, .user-role-row, .user-stats-row { justify-content: center; flex-wrap: wrap; }
+        .user-stats-row { gap: 0.5rem; margin-top: 1rem; }
+        .user-actions-column { display: flex; justify-content: center; margin-top: 0.5rem; }
+        .connect-btn { width: 100%; }
+        .invite-card { padding: 1.5rem 1rem; }
+        .invite-content h2 { font-size: 1.5rem; }
       }
     `
   ]

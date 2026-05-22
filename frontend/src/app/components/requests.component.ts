@@ -59,6 +59,7 @@ import { AuthService } from '../services/auth.service';
                  <input type="date" [(ngModel)]="createForm.fechaServicio" name="fechaServicio" title="Fecha de Servicio" required />
                  <button type="submit" class="btn-submit-job" [disabled]="loading()">Publicar</button>
                </div>
+               <p *ngIf="errorMessage()" style="color: #ef4444; font-size: 0.85rem; font-weight: 600; margin: 0.5rem 0 0 0; text-align: right;">{{ errorMessage() }}</p>
              </form>
            </div>
         </div>
@@ -335,8 +336,15 @@ import { AuthService } from '../services/auth.service';
 
       .mt-3 { margin-top: 1rem; }
       @media (max-width: 600px) {
+        .jobs-premium-layout { padding: 0 0.5rem; }
+        .form-row { grid-template-columns: 1fr; }
+        .form-row.footer { flex-direction: column; align-items: stretch; }
         .job-details-row { flex-direction: column; gap: 0.5rem; }
-        .job-main-info { flex-direction: column; align-items: center; text-align: center; }
+        .job-main-info { flex-direction: column; align-items: flex-start; text-align: left; }
+        .job-actions-premium { flex-wrap: wrap; }
+        .modal-card-premium { padding: 1.5rem; }
+        .modal-actions { flex-direction: column; }
+        .applicant-item-modern { flex-direction: column; align-items: stretch; gap: 1rem; }
       }
     `
   ]
@@ -483,8 +491,11 @@ export class RequestsComponent implements OnInit, OnDestroy {
     const userId = this.auth.userId();
     if (!userId) return;
 
-    if (!this.createForm.area_id || this.createForm.area_id <= 0) return;
-    if (!this.createForm.titulo.trim() || !this.createForm.descripcion.trim()) return;
+    this.errorMessage.set(null);
+    if (!this.createForm.area_id || this.createForm.area_id <= 0 || !this.createForm.titulo.trim() || !this.createForm.descripcion.trim() || !this.createForm.fechaServicio) {
+      this.errorMessage.set('Por favor, completa todos los campos obligatorios para publicar la solicitud.');
+      return;
+    }
 
     this.loading.set(true);
     try {
@@ -493,8 +504,10 @@ export class RequestsComponent implements OnInit, OnDestroy {
       this.createForm = { area_id: 0, titulo: '', descripcion: '', precio: null, fechaServicio: '' };
       this.showCreateForm.set(false);
       await this.reload();
+      this.loading.set(false);
     } catch (error: any) {
       console.error('Error creating request', error);
+      this.errorMessage.set('No se pudo publicar la solicitud. Intenta de nuevo.');
       this.loading.set(false);
     }
   }

@@ -119,3 +119,26 @@
     justify-content: center;
   }
 }
+
+@media (max-width: 600px) {
+  .dashboard-page {
+    padding: 1rem 0.5rem 2rem;
+  }
+
+  .dashboard-header {
+    padding: 1.5rem 1rem;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .dashboard-actions .btn-switch {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
