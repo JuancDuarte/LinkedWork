@@ -345,13 +345,6 @@ export class ActiveJobsComponent implements OnInit, OnDestroy {
   showConfirmModal = signal(false);
   pendingFinishId = signal<number | null>(null);
   
-  selectedJob = signal<any | null>(null);
-  encounterForm = {
-    direccion: '',
-    horaEncuentro: '',
-    notas: ''
-  };
-
   ratingForm = {
     puntuacion: 5,
     comentario: ''
