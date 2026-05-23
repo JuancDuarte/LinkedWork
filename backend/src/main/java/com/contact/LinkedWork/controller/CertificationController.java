@@ -2,6 +2,7 @@ package com.contact.LinkedWork.controller;
 
 import com.contact.LinkedWork.model.*;
 import com.contact.LinkedWork.repository.*;
+import com.contact.LinkedWork.service.NotificacionService;
 import com.contact.LinkedWork.service.PuntuacionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,6 +34,9 @@ public class CertificationController {
     @Autowired
     private CertificadoRepository certificadoRepository;
 
+    @Autowired
+    @Qualifier("NotificacionService")
+    private NotificacionService notificacionService;
     @GetMapping("/content/{area}")
     public ResponseEntity<?> getCertificationContent(@PathVariable String area) {
         Map<String, Object> response = new HashMap<>();
@@ -125,7 +129,11 @@ public class CertificationController {
 
         // Sumar puntos reales al trabajador
         puntuacionService.addPuntosToTrabajador(trabajador.getIdTrabajador(), 50);
-
+        notificacionService.crearNotificacion(
+        trabajador.getUsuario().getIdUsuario(),
+        "Certificación aprobada",
+        "Tu certificación fue aprobada correctamente ganaste 50 puntos y ahora eres un trabajador FARMING certificado.",
+        "CERTIFICADO");
         return ResponseEntity.ok(Map.of("success", true, "message", "¡Felicidades! Ahora eres un trabajador FARMING certificado. Has ganado 50 puntos."));
     }
 

@@ -6,6 +6,8 @@ import com.contact.LinkedWork.model.Usuario;
 import com.contact.LinkedWork.repository.ChatMensajeRepository;
 import com.contact.LinkedWork.repository.SolicitudRepository;
 import com.contact.LinkedWork.repository.UsuarioRepository;
+import com.contact.LinkedWork.service.NotificacionService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -33,6 +35,10 @@ public class ChatController {
     @Qualifier("CrudUsuarioRepository")
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    @Qualifier("NotificacionService")
+    private NotificacionService notificacionService;
+
     @GetMapping("/chat/solicitud/{idSolicitud}")
     public ResponseEntity<?> getMessages(@PathVariable Long idSolicitud) {
         try {
@@ -47,7 +53,7 @@ public class ChatController {
     @PostMapping("/chat/solicitud/{idSolicitud}")
     public ResponseEntity<?> sendMessage(@PathVariable Long idSolicitud, @RequestBody Map<String, Object> payload) {
         try {
-            if (!payload.containsKey("idEmisor") || !payload.containsKey("mensaje")) {
+            if (!payload.containsKey("idEmisor"  ) || !payload.containsKey("mensaje")) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Faltan datos requeridos (idEmisor o mensaje)"));
             }
 
@@ -67,6 +73,13 @@ public class ChatController {
             if (usuarioOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Usuario emisor no encontrado"));
             }
+            Long idUsuarioReceptor;
+            idUsuarioReceptor = usuarioOpt.get().getIdUsuario();
+            notificacionService.crearNotificacion(
+            idUsuarioReceptor,
+            "Nuevo mensaje",
+            "El trabajador te envió un mensaje",
+            "MENSAJE");
 
             ChatMensaje chatMensaje = new ChatMensaje(solicitudOpt.get(), usuarioOpt.get(), mensajeTexto);
             ChatMensaje guardado = chatMensajeRepository.save(chatMensaje);

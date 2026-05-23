@@ -23,6 +23,10 @@ public class PuntuacionService {
     @Qualifier("NivelService")
     private NivelService nivelService;
 
+    @Autowired
+    @Qualifier("NotificacionService")
+    private NotificacionService notificacionService;
+
     public Trabajador addPuntosToTrabajador(Long idTrabajador, Integer puntos) {
         Trabajador trabajador = trabajadorRepository.findById(idTrabajador)
                 .orElseThrow(() -> new RuntimeException("Trabajador no encontrado con ID: " + idTrabajador));
@@ -30,8 +34,33 @@ public class PuntuacionService {
         int nuevo = current + (puntos == null ? 0 : puntos);
         trabajador.setPuntuacion(nuevo);
         trabajador = trabajadorRepository.save(trabajador);
+            notificacionService.crearNotificacion(
+            trabajador.getUsuario().getIdUsuario(),
+            "Ganaste puntos",
+            "Has ganado " + puntos + " puntos",
+            "PUNTOS"
+    );
         Optional<Nivel> nivel = nivelService.findNivelByPuntos(trabajador.getPuntuacion());
         // no se persiste relación; se puede usar nivel para notificaciones
+           Optional<Nivel> nuevoNivel = nivelService.findNivelByPuntos(
+            trabajador.getPuntuacion()
+    );
+
+    // VALIDAR SI CAMBIO DE NIVEL
+    if (
+            nivel.isPresent()
+            && nuevoNivel.isPresent()
+            && !nivel.get().getIdNivel()
+                    .equals(nuevoNivel.get().getIdNivel())
+    ) {
+
+        notificacionService.crearNotificacion(
+                trabajador.getUsuario().getIdUsuario(),
+                "Subiste de nivel",
+                "Ahora eres nivel " + nuevoNivel.get().getNombre(),
+                "NIVEL"
+        );
+    }
         return trabajador;
     }
 

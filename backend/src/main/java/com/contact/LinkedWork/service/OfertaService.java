@@ -51,6 +51,10 @@ public class OfertaService {
     @Qualifier("CrudOfertaHistorialRepository")
     private OfertaHistorialRepository ofertaHistorialRepository;
 
+    @Autowired
+    @Qualifier("NotificacionService")
+    private NotificacionService notificacionService;
+
     public OfertaDTO crearOferta(CrearOfertaDTO crearofertaDTO, Long idTrabajador, Long idSolicitud) {
         Usuario usuario = usuarioRepository.findByidUsuario(idTrabajador)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idTrabajador));
@@ -103,6 +107,11 @@ public class OfertaService {
         ofertaDTO.setIdTrabajador(trabajador.getIdTrabajador());
         ofertaDTO.setPrecio(oferta.getPrecio());
         ofertaDTO.setDescripcion(oferta.getDescripcion());
+
+        Long idUsuarioSolicitud = solicitud.getUsuario().getIdUsuario();
+        notificacionService.crearNotificacion(  idUsuarioSolicitud, "Nueva oferta recibida",
+        "Un trabajador envió una oferta a tu solicitud: " + solicitud.getTitulo(),
+        "OFERTA");
 
         return ofertaDTO;
     }
@@ -225,6 +234,14 @@ public class OfertaService {
                         }
                 });
                 ofertaRepository.save(oferta);
+
+                Long idUsuarioSolicitud = oferta.getTrabajador().getUsuario().getIdUsuario();
+
+                notificacionService.crearNotificacion(
+                idUsuarioSolicitud,
+        "Oferta aceptada",
+                "El usuario " + oferta.getTrabajador().getUsuario().getNombreUsuario() + " aceptó tu oferta para la solicitud: " + oferta.getSolicitud().getTitulo(),
+                "OFERTA");
                 String nombreSolicitante = solicitud.getUsuario().getNombreCompleto() != null
                                 ? solicitud.getUsuario().getNombreCompleto()
                                 : solicitud.getUsuario().getNombreUsuario();

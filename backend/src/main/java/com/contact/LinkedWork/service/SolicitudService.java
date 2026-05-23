@@ -64,6 +64,10 @@ public class SolicitudService {
     @Qualifier("CrudOfertaHistorialRepository")
     private OfertaHistorialRepository ofertaHistorialRepository;
 
+    @Autowired
+    @Qualifier("NotificacionService")   
+    private NotificacionService notificacionService;
+
     public SolicitudDTO AgregarSolicitud(CrearSolicituDto crearSolicitudDto, Long idUsuario, Long idArea) {
         if (crearSolicitudDto == null || crearSolicitudDto.getTitulo() == null || crearSolicitudDto.getTitulo().isBlank()) {
             throw new RuntimeException("El título de la solicitud es obligatorio.");
@@ -107,6 +111,15 @@ public class SolicitudService {
         solicitudDTO.setNombreArea(area.getNombre());
         solicitudDTO.setPrecio(solicitud.getPrecio());
         solicitudDTO.setFechaServicio(solicitud.getFechaServicio());
+        List<Trabajador> trabajadores = trabajadorRepository.findByArea_IdArea(idArea);
+        for (Trabajador t : trabajadores) {
+        notificacionService.crearNotificacion(
+        t.getUsuario().getIdUsuario(),
+        "Nueva solicitud disponible",
+        "Hay una nueva solicitud en tu área profesional",
+        "SOLICITUD_AREA"
+    );
+}
         return solicitudDTO;
     }
 
@@ -177,7 +190,13 @@ public class SolicitudService {
         ofertaHistorial.setDescripcionNueva(oferta.getDescripcion());
         ofertaHistorial.setFecha(LocalDateTime.now());
         ofertaHistorialRepository.save(ofertaHistorial);
-
+        notificacionService.crearNotificacion(
+        trabajador.getUsuario().getIdUsuario() ,
+        "Te enviaron una solicitud directa",
+        "El usuario "+ solicitud.getUsuario().getNombreCompleto() + "te envio una solicitud",
+        "SOLICITUD"
+    );
+        
         return convertToDTO(solicitud);
     }
 
