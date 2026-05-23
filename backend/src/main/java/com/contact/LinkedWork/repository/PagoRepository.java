@@ -11,4 +11,6 @@ public interface PagoRepository extends CrudRepository<Pago, Long> {
     Optional<Pago> findByReferenciaPago(String referenciaPago);
     List<Pago> findByUsuario_IdUsuario(Long idUsuario);
     List<Pago> findBySolicitud_IdSolicitud(Long idSolicitud);
+    Optional<Pago> findFirstBySolicitud_IdSolicitudAndOferta_IdOfertaAndEstadoPago(
+            Long idSolicitud, Long idOferta, String estadoPago);
 }

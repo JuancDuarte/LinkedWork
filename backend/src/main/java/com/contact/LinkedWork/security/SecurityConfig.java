@@ -26,13 +26,21 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable) // Desactivar CSRF para APIs REST
+            .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Rutas públicas
-                .requestMatchers("/api/auth/**", "/login", "/registro", "/login/google", "/error", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                // Todas las demás requieren token
-                .anyRequest().permitAll() // POR AHORA lo dejaremos como permitAll para no romper las otras pruebas, pero luego será authenticated()
+                .requestMatchers(
+                    "/Login",
+                    "/CreateUser",
+                    "/login/google",
+                    "/verify-email",
+                    "/resend-verification",
+                    "/uploads/**",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/error"
+                ).permitAll()
+                .anyRequest().authenticated()
             );
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -43,7 +51,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*")); 
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

@@ -11,6 +11,7 @@ public class CalificacionDTO {
     private Integer puntuacion;
     private String comentario;
     private String nombreUsuario;
+    private String fotoUsuarioUrl;
     private LocalDateTime fechaCreacion;
     
     public CalificacionDTO() {
@@ -84,5 +85,13 @@ public class CalificacionDTO {
 
     public void setNombreUsuario(String nombreUsuario) {
         this.nombreUsuario = nombreUsuario;
+    }
+
+    public String getFotoUsuarioUrl() {
+        return fotoUsuarioUrl;
+    }
+
+    public void setFotoUsuarioUrl(String fotoUsuarioUrl) {
+        this.fotoUsuarioUrl = fotoUsuarioUrl;
     }
 }

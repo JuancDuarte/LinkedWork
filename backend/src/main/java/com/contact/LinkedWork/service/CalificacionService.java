@@ -36,6 +36,9 @@ public class CalificacionService {
     private CalificacionRepository calificacionRepository;
 
     @Autowired
+    private MediaUrlService mediaUrlService;
+
+    @Autowired
     @Qualifier("CrudSolicitudRepository")
     private SolicitudRepository solicitudRepository;
 
@@ -173,7 +176,10 @@ public class CalificacionService {
                     dto.setIdSolicitud(c.getSolicitud().getIdSolicitud().intValue());
                     dto.setPuntuacion(c.getPuntuacion().intValue());
                     dto.setComentario(c.getComentario());
-                    dto.setNombreUsuario(c.getUsuario().getNombreCompleto());
+                    dto.setNombreUsuario(c.getUsuario().getNombreCompleto() != null
+                            ? c.getUsuario().getNombreCompleto()
+                            : c.getUsuario().getNombreUsuario());
+                    dto.setFotoUsuarioUrl(mediaUrlService.toPublicUrl(c.getUsuario().getFotoPerfil()));
                     dto.setFechaCreacion(c.getFechaCreacion());
                     return dto;
                 })
@@ -188,7 +194,10 @@ public class CalificacionService {
         dto.setEstado(s.getEstado());
         dto.setFechaCreacion(s.getFechaCreacion());
         dto.setIdUsuario(s.getUsuario().getIdUsuario());
-        dto.setNombreUsuario(s.getUsuario().getNombreCompleto());
+        dto.setNombreUsuario(s.getUsuario().getNombreCompleto() != null
+                ? s.getUsuario().getNombreCompleto()
+                : s.getUsuario().getNombreUsuario());
+        dto.setFotoUsuarioUrl(mediaUrlService.toPublicUrl(s.getUsuario().getFotoPerfil()));
         dto.setIdArea(s.getArea().getIdArea());
         dto.setNombreArea(s.getArea().getNombre());
         dto.setPrecio(s.getPrecio());
@@ -205,9 +214,15 @@ public class CalificacionService {
             .findFirst()
             .ifPresent(o -> {
                 dto.setIdTrabajador(o.getTrabajador().getIdTrabajador());
-                dto.setNombreTrabajador(o.getTrabajador().getUsuario().getNombreCompleto());
+                if (o.getTrabajador().getUsuario() != null) {
+                    var tu = o.getTrabajador().getUsuario();
+                    dto.setNombreTrabajador(tu.getNombreCompleto() != null
+                            ? tu.getNombreCompleto()
+                            : tu.getNombreUsuario());
+                    dto.setFotoTrabajadorUrl(mediaUrlService.toPublicUrl(tu.getFotoPerfil()));
+                }
             });
-            
+
         return dto;
     }
 }

@@ -12,6 +12,7 @@ public class OfertaVistaDTO {
     private BigDecimal precio;
     private Double calificacionPromedio;
     private Long idUsuario;
+    private String fotoTrabajadorUrl;
     private String estado;
     private Long idSolicitud;
     private String tituloSolicitud;
@@ -77,6 +78,15 @@ public class OfertaVistaDTO {
     public void setIdUsuario(Long idUsuario) {
         this.idUsuario = idUsuario;
     }
+
+    public String getFotoTrabajadorUrl() {
+        return fotoTrabajadorUrl;
+    }
+
+    public void setFotoTrabajadorUrl(String fotoTrabajadorUrl) {
+        this.fotoTrabajadorUrl = fotoTrabajadorUrl;
+    }
+
     public String getEstado() {
         return estado;
     }

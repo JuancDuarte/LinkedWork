@@ -21,11 +21,15 @@ export class LoggingInterceptor {
         },
         error: (error) => {
           const elapsed = Date.now() - started;
-          const urlShort = req.url.split('/').pop() || req.url;
+          const path = req.url.replace(/^https?:\/\/[^/]+/, '').replace(/\/LinkedApi/, '') || req.url;
+          const body = error?.error;
+          const detail = body?.errors?.map((e: { message?: string }) => e.message).filter(Boolean).join(' · ')
+            || body?.message
+            || body?.mensaje;
           console.error(`[HttpInterceptor] Error: ${req.method} ${req.urlWithParams}`, error, `in ${elapsed} ms`);
           this.notification.error(
-            'Ups, algo salió mal', 
-            `Error en ${req.method} /${urlShort}. Intenta nuevamente.`
+            'Ups, algo salió mal',
+            detail || `Error en ${req.method} ${path}. Intenta nuevamente.`
           );
         }
       })

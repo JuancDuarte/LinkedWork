@@ -54,6 +54,9 @@ public class OfertaService {
     @Qualifier("CrudOfertaHistorialRepository")
     private OfertaHistorialRepository ofertaHistorialRepository;
 
+    @Autowired
+    private MediaUrlService mediaUrlService;
+
     public OfertaDTO crearOferta(CrearOfertaDTO crearofertaDTO, Long idTrabajador, Long idSolicitud) {
         Usuario usuario = usuarioRepository.findByidUsuario(idTrabajador)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idTrabajador));
@@ -201,7 +204,13 @@ public class OfertaService {
                                 OfertaVistaDTO ofertaVistaDTO = new OfertaVistaDTO();
                                 ofertaVistaDTO.setIdOferta(oferta.getIdOferta());
                                 ofertaVistaDTO.setIdUsuario(oferta.getTrabajador().getUsuario().getIdUsuario());
-                                ofertaVistaDTO.setNombreTrabajador(oferta.getTrabajador().getUsuario().getNombreUsuario());
+                                if (oferta.getTrabajador().getUsuario() != null) {
+                                    var tu = oferta.getTrabajador().getUsuario();
+                                    ofertaVistaDTO.setNombreTrabajador(tu.getNombreCompleto() != null
+                                            ? tu.getNombreCompleto()
+                                            : tu.getNombreUsuario());
+                                    ofertaVistaDTO.setFotoTrabajadorUrl(mediaUrlService.toPublicUrl(tu.getFotoPerfil()));
+                                }
                                 ofertaVistaDTO.setNombreArea(oferta.getTrabajador().getArea().getNombre());
                                 ofertaVistaDTO.setDescripcion(oferta.getDescripcion());
                                 ofertaVistaDTO.setPrecio(oferta.getPrecio());

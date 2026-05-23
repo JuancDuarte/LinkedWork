@@ -4,9 +4,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,6 +62,15 @@ public class UsuarioService {
     @Qualifier("CrudCiudadRepository")
     private CiudadRepository ciudadRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private MediaUrlService mediaUrlService;
+
     private String mapToDbRole(String roleName) {
         return switch (roleName) {
             case "ROLE_USUARIO" -> "Usuario";
@@ -88,7 +99,7 @@ public class UsuarioService {
                     usuarioDTO.setEmail(usuario.getEmail());
                     usuarioDTO.setNombreUsuario(usuario.getNombreUsuario());
                     usuarioDTO.setEstado(usuario.getEstado());
-                    usuarioDTO.setFotoPerfil(usuario.getFotoPerfil() != null ? "http://localhost:8082/LinkedApi/uploads/" + usuario.getFotoPerfil() : null);
+                    usuarioDTO.setFotoPerfil(mediaUrlService.toPublicUrl(usuario.getFotoPerfil()));
                     List<String> roles = usuario.getRoles()
                             .stream()
                             .map(rol -> mapToFrontendRole(rol.getNombre()))
@@ -111,7 +122,7 @@ public class UsuarioService {
         usuarioDTO.setEmail(usuario.getEmail());
         usuarioDTO.setNombreUsuario(usuario.getNombreUsuario());
         usuarioDTO.setEstado(usuario.getEstado());
-        usuarioDTO.setFotoPerfil(usuario.getFotoPerfil() != null ? "http://localhost:8082/LinkedApi/uploads/" + usuario.getFotoPerfil() : null);
+        usuarioDTO.setFotoPerfil(mediaUrlService.toPublicUrl(usuario.getFotoPerfil()));
         List<String> roles = usuario.getRoles()
                 .stream()
                 .map(rol -> mapToFrontendRole(rol.getNombre()))
@@ -136,6 +147,7 @@ public class UsuarioService {
                         trabajadorDTO.setCiudad(trabajador.getCiudad().getNombre());
                     }
                     trabajadorDTO.setEsFarming(trabajador.getEsFarming() != null && trabajador.getEsFarming());
+                    trabajadorDTO.setNequiNumero(trabajador.getNequiNumero());
                 });
         if (trabajadorDTO.getIdTrabajador() != null) {
             usuarioDTO.setTrabajador(trabajadorDTO);
@@ -172,7 +184,7 @@ public class UsuarioService {
                     }
                     trabajadorDTO.setEsFarming(trabajador.getEsFarming() != null && trabajador.getEsFarming());
                     String fotoUrl = trabajador.getUsuario().getFotoPerfil();
-                    trabajadorDTO.setFotoPerfil(fotoUrl != null ? "http://localhost:8082/LinkedApi/uploads/" + fotoUrl : null);
+                    trabajadorDTO.setFotoPerfil(mediaUrlService.toPublicUrl(fotoUrl));
                     return trabajadorDTO;
                 })
                 .toList();
@@ -188,22 +200,37 @@ public class UsuarioService {
     }
 
     public UsuarioDTO createUser(String nombreUsuario, String nombre, String email, String password, List<String> roleNames, Long areaId, String descripcion, Long experiencia, Integer idDepartamento, Integer idCiudad) {
+        if (usuarioRepository.findByEmail(email).isPresent()) {
+            throw new RuntimeException("Ya existe una cuenta con este correo electrónico");
+        }
+        if (nombreUsuario != null && !nombreUsuario.isBlank() && usuarioRepository.findByNombreUsuario(nombreUsuario).isPresent()) {
+            throw new RuntimeException("El nombre de usuario ya está en uso");
+        }
+
         Usuario usuario = new Usuario();
-        usuario.setNombreUsuario(nombreUsuario);
+        usuario.setNombreUsuario(nombreUsuario != null && !nombreUsuario.isBlank() ? nombreUsuario : email);
         usuario.setNombreCompleto(nombre);
         usuario.setEmail(email);
-        usuario.setClaveHash(password); // Note: should hash, but for now plain
-        usuario.setEstado("activo");
+        usuario.setClaveHash(passwordEncoder.encode(password));
+        usuario.setEstado("pendiente");
+        usuario.setEmailVerificado(false);
         usuario.setFechaCreacion(LocalDateTime.now());
+        String verificationToken = UUID.randomUUID().toString();
+        usuario.setTokenVerificacion(verificationToken);
+        usuario.setTokenVerificacionExpira(LocalDateTime.now().plusHours(24));
         
         List<Rol> roles = new ArrayList<>();
-        if (roleNames != null && !roleNames.isEmpty()) {
-            for (String roleName : roleNames) {
-                Optional<Rol> rolOpt = rolRepository.findByNombre(mapToDbRole(roleName));
-                if (rolOpt.isPresent()) {
-                    roles.add(rolOpt.get());
-                }
+        List<String> effectiveRoles = (roleNames != null && !roleNames.isEmpty())
+                ? roleNames
+                : List.of("ROLE_USUARIO");
+        for (String roleName : effectiveRoles) {
+            Optional<Rol> rolOpt = rolRepository.findByNombre(mapToDbRole(roleName));
+            if (rolOpt.isPresent()) {
+                roles.add(rolOpt.get());
             }
+        }
+        if (roles.isEmpty()) {
+            rolRepository.findByNombre("Usuario").ifPresent(roles::add);
         }
         usuario.setRoles(roles);
         
@@ -215,10 +242,10 @@ public class UsuarioService {
         usuarioDTO.setEmail(usuario.getEmail());
         usuarioDTO.setNombreUsuario(usuario.getNombreUsuario());
         usuarioDTO.setEstado(usuario.getEstado());
-        usuarioDTO.setFotoPerfil(usuario.getFotoPerfil() != null ? "http://localhost:8082/LinkedApi/uploads/" + usuario.getFotoPerfil() : null);
-        usuarioDTO.setRoles(roleNames != null ? roleNames : new ArrayList<>());
+        usuarioDTO.setFotoPerfil(mediaUrlService.toPublicUrl(usuario.getFotoPerfil()));
+        usuarioDTO.setRoles(effectiveRoles);
 
-        boolean esTrabajador = roleNames != null && roleNames.contains("ROLE_TRABAJADOR");
+        boolean esTrabajador = effectiveRoles.contains("ROLE_TRABAJADOR");
         if (esTrabajador) {
             Trabajador trabajador = new Trabajador(usuario);
             if (areaId != null) {
@@ -259,7 +286,38 @@ public class UsuarioService {
             usuarioDTO.setTrabajador(trabajadorDTO);
         }
 
+        emailService.sendEmailVerification(email, nombre, verificationToken);
         return usuarioDTO;
+    }
+
+    public UsuarioDTO verifyEmail(String token) {
+        if (token == null || token.isBlank()) {
+            throw new RuntimeException("Token de verificación inválido");
+        }
+        Usuario usuario = usuarioRepository.findByTokenVerificacion(token)
+                .orElseThrow(() -> new RuntimeException("Enlace de verificación inválido o ya utilizado"));
+        if (usuario.getTokenVerificacionExpira() != null && usuario.getTokenVerificacionExpira().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("El enlace de verificación ha expirado. Solicita uno nuevo.");
+        }
+        usuario.setEmailVerificado(true);
+        usuario.setEstado("activo");
+        usuario.setTokenVerificacion(null);
+        usuario.setTokenVerificacionExpira(null);
+        usuarioRepository.save(usuario);
+        return toUsuarioDTO(usuario);
+    }
+
+    public void resendVerificationEmail(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("No hay cuenta registrada con ese correo"));
+        if (Boolean.TRUE.equals(usuario.getEmailVerificado())) {
+            throw new RuntimeException("Este correo ya está verificado");
+        }
+        String verificationToken = UUID.randomUUID().toString();
+        usuario.setTokenVerificacion(verificationToken);
+        usuario.setTokenVerificacionExpira(LocalDateTime.now().plusHours(24));
+        usuarioRepository.save(usuario);
+        emailService.sendEmailVerification(usuario.getEmail(), usuario.getNombreCompleto(), verificationToken);
     }
 
     public UsuarioDTO login(LoginDTO loginDTO) {
@@ -293,7 +351,7 @@ public class UsuarioService {
             throw new RuntimeException("Usuario bloqueado, contacta al administrador");
         }
 
-        if (!loginDTO.getClave().equals(usuario.getClaveHash())) {
+        if (!matchesPassword(loginDTO.getClave(), usuario.getClaveHash(), usuario)) {
             int intentos = usuario.getIntentosFallidos() == null ? 1 : usuario.getIntentosFallidos() + 1;
             usuario.setIntentosFallidos(intentos);
             if (intentos >= 3) {
@@ -303,32 +361,55 @@ public class UsuarioService {
             throw new RuntimeException("Credenciales inválidas");
         }
 
+        if (Boolean.FALSE.equals(usuario.getEmailVerificado())) {
+            throw new RuntimeException("Debes verificar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.");
+        }
+
         usuario.setIntentosFallidos(0);
         usuario.setBloqueado(false);
         usuario.setUltimoAcceso(LocalDateTime.now());
         usuarioRepository.save(usuario);
 
+        emailService.sendLoginNotification(usuario.getEmail(), usuario.getNombreCompleto());
+        return toUsuarioDTO(usuario);
+    }
+
+    private boolean matchesPassword(String raw, String stored, Usuario usuario) {
+        if (stored == null || raw == null) {
+            return false;
+        }
+        if (stored.startsWith("$2a$") || stored.startsWith("$2b$")) {
+            return passwordEncoder.matches(raw, stored);
+        }
+        boolean matches = raw.equals(stored);
+        if (matches) {
+            usuario.setClaveHash(passwordEncoder.encode(raw));
+            usuarioRepository.save(usuario);
+        }
+        return matches;
+    }
+
+    private UsuarioDTO toUsuarioDTO(Usuario usuario) {
         UsuarioDTO usuarioDTO = new UsuarioDTO();
         usuarioDTO.setIdUsuario(usuario.getIdUsuario());
         usuarioDTO.setNombreCompleto(usuario.getNombreCompleto());
         usuarioDTO.setEmail(usuario.getEmail());
         usuarioDTO.setNombreUsuario(usuario.getNombreUsuario());
         usuarioDTO.setEstado(usuario.getEstado());
-        usuarioDTO.setFotoPerfil(usuario.getFotoPerfil() != null ? "http://localhost:8082/LinkedApi/uploads/" + usuario.getFotoPerfil() : null);
+        usuarioDTO.setFotoPerfil(mediaUrlService.toPublicUrl(usuario.getFotoPerfil()));
         List<String> roles = usuario.getRoles()
             .stream()
             .map(rol -> mapToFrontendRole(rol.getNombre()))
             .toList();
         usuarioDTO.setRoles(roles);
 
-        // Añadir datos de Trabajador si existe, para que el cliente tenga el idTrabajador y puntuacion
         trabajadorRepository.findByUsuario_IdUsuario(usuario.getIdUsuario())
             .ifPresent(trabajador -> {
                 TrabajadorDTO trabajadorDTO = new TrabajadorDTO();
                 trabajadorDTO.setIdTrabajador(trabajador.getIdTrabajador());
                 if (trabajador.getArea() != null) {
-                trabajadorDTO.setAreaId(trabajador.getArea().getIdArea());
-                trabajadorDTO.setAreaNombre(trabajador.getArea().getNombre());
+                    trabajadorDTO.setAreaId(trabajador.getArea().getIdArea());
+                    trabajadorDTO.setAreaNombre(trabajador.getArea().getNombre());
                 }
                 trabajadorDTO.setExperiencia(trabajador.getExperiencia());
                 trabajadorDTO.setPuntuacion(trabajador.getPuntuacion());
@@ -342,44 +423,16 @@ public class UsuarioService {
         try {
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
                 .setAudience(Collections.singletonList("648560152467-llla49ipnmr34bj6q63ii2q56oaine36.apps.googleusercontent.com"))
-                .setAcceptableTimeSkewSeconds(315360000L) // 10 years para evitar problemas de reloj en dev
                 .build();
 
-            GoogleIdToken idToken = null;
-            try {
-                idToken = verifier.verify(idTokenString);
-            } catch (Exception ex) {
-                System.out.println("[UsuarioService] Google token verification failed, trying manual decode fallback: " + ex.getMessage());
+            GoogleIdToken idToken = verifier.verify(idTokenString);
+            if (idToken == null) {
+                throw new RuntimeException("Token de Google inválido o expirado");
             }
 
-            String email = null;
-            String name = null;
-
-            if (idToken != null) {
-                GoogleIdToken.Payload payload = idToken.getPayload();
-                email = payload.getEmail();
-                name = (String) payload.get("name");
-            } else {
-                // Fallback for development/testing if verification fails or returns null
-                try {
-                    String[] parts = idTokenString.split("\\.");
-                    if (parts.length >= 2) {
-                        String payloadJson = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
-                        
-                        java.util.regex.Matcher emailMatcher = java.util.regex.Pattern.compile("\"email\"\\s*:\\s*\"([^\"]+)\"").matcher(payloadJson);
-                        if (emailMatcher.find()) {
-                            email = emailMatcher.group(1);
-                        }
-                        java.util.regex.Matcher nameMatcher = java.util.regex.Pattern.compile("\"name\"\\s*:\\s*\"([^\"]+)\"").matcher(payloadJson);
-                        if (nameMatcher.find()) {
-                            name = nameMatcher.group(1);
-                        }
-                        System.out.println("[UsuarioService] Decoded mock/unverified Google token. Email: " + email + ", Name: " + name);
-                    }
-                } catch (Exception decodeEx) {
-                    System.out.println("[UsuarioService] Failed to manually decode token: " + decodeEx.getMessage());
-                }
-            }
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
 
             if (email != null && !email.isEmpty()) {
                 Optional<Usuario> usuarioEncontrado = usuarioRepository.findByEmail(email);
@@ -398,7 +451,8 @@ public class UsuarioService {
                     usuario.setNombreCompleto(name != null ? name : email.split("@")[0]);
                     usuario.setNombreUsuario(email); // Use email as username for google
                     usuario.setClaveHash(""); // No password for Google users
-                    usuario.setEstado("Activo");
+                    usuario.setEstado("activo");
+                    usuario.setEmailVerificado(true);
                     usuario.setBloqueado(false);
                     usuario.setIntentosFallidos(0);
                     usuario.setFechaCreacion(LocalDateTime.now());
@@ -415,20 +469,10 @@ public class UsuarioService {
                 }
                 
                 usuarioRepository.save(usuario);
-
-                UsuarioDTO usuarioDTO = new UsuarioDTO();
-                usuarioDTO.setIdUsuario(usuario.getIdUsuario());
-                usuarioDTO.setNombreCompleto(usuario.getNombreCompleto());
-                usuarioDTO.setEmail(usuario.getEmail());
-                usuarioDTO.setNombreUsuario(usuario.getNombreUsuario());
-                usuarioDTO.setEstado(usuario.getEstado());
-                usuarioDTO.setFotoPerfil(usuario.getFotoPerfil() != null ? "http://localhost:8082/LinkedApi/uploads/" + usuario.getFotoPerfil() : null);
-                List<String> rolesStr = usuario.getRoles().stream().map(rol -> mapToFrontendRole(rol.getNombre())).toList();
-                usuarioDTO.setRoles(rolesStr);
-                
-                return usuarioDTO;
+                emailService.sendLoginNotification(usuario.getEmail(), usuario.getNombreCompleto());
+                return toUsuarioDTO(usuario);
             } else {
-                throw new RuntimeException("Token de Google inválido (firma o expiración y fallback falló)");
+                throw new RuntimeException("Token de Google inválido");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -439,42 +483,33 @@ public class UsuarioService {
     public UsuarioDTO changeRole(Long idUsuario, List<String> newRoles) {
         Usuario usuario = usuarioRepository.findByidUsuario(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idUsuario));
-        
-        List<Rol> roles = new ArrayList<>();
-        if (newRoles != null && !newRoles.isEmpty()) {
+
+        List<Rol> mergedRoles = new ArrayList<>(usuario.getRoles());
+        if (newRoles != null) {
             for (String roleName : newRoles) {
                 String dbName = mapToDbRole(roleName);
-                Optional<Rol> rolOpt = rolRepository.findByNombre(dbName);
-                if (rolOpt.isPresent()) {
-                    roles.add(rolOpt.get());
-                } else {
-                    // Si no existe el rol en BD, lo creamos para asegurar la asignación
-                    Rol nuevoRol = new Rol();
-                    nuevoRol.setNombre(dbName);
-                    rolRepository.save(nuevoRol);
-                    roles.add(nuevoRol);
+                boolean exists = mergedRoles.stream().anyMatch(r -> dbName.equalsIgnoreCase(r.getNombre()));
+                if (!exists) {
+                    Rol rol = rolRepository.findByNombre(dbName).orElseGet(() -> {
+                        Rol nuevoRol = new Rol();
+                        nuevoRol.setNombre(dbName);
+                        return rolRepository.save(nuevoRol);
+                    });
+                    mergedRoles.add(rol);
                 }
             }
         }
-        usuario.setRoles(roles);
+        usuario.setRoles(mergedRoles);
         usuarioRepository.save(usuario);
 
-        boolean esTrabajador = newRoles != null && newRoles.contains("ROLE_TRABAJADOR");
+        boolean esTrabajador = mergedRoles.stream().anyMatch(r -> "Trabajador".equalsIgnoreCase(r.getNombre()));
         if (esTrabajador && trabajadorRepository.findByUsuario_IdUsuario(usuario.getIdUsuario()).isEmpty()) {
             Trabajador trabajador = new Trabajador(usuario);
             trabajador.setEstado("activo");
             trabajadorRepository.save(trabajador);
         }
 
-        UsuarioDTO usuarioDTO = new UsuarioDTO();
-        usuarioDTO.setIdUsuario(usuario.getIdUsuario());
-        usuarioDTO.setNombreCompleto(usuario.getNombreCompleto());
-        usuarioDTO.setEmail(usuario.getEmail());
-        usuarioDTO.setNombreUsuario(usuario.getNombreUsuario());
-        usuarioDTO.setEstado(usuario.getEstado());
-        usuarioDTO.setFotoPerfil(usuario.getFotoPerfil() != null ? "http://localhost:8082/LinkedApi/uploads/" + usuario.getFotoPerfil() : null);
-        usuarioDTO.setRoles(newRoles != null ? newRoles : new ArrayList<>());
-        return usuarioDTO;
+        return toUsuarioDTO(usuario);
     }
 
     public UsuarioDTO upgradeToWorker(Long idUsuario, Long areaId, String descripcion, Long experiencia, Integer idDepartamento, Integer idCiudad) {
@@ -493,8 +528,19 @@ public class UsuarioService {
                 return rolRepository.save(r);
             });
             usuario.getRoles().add(rolTrabajador);
-            usuarioRepository.save(usuario);
         }
+
+        boolean tieneRolUsuario = usuario.getRoles().stream()
+                .anyMatch(r -> "Usuario".equalsIgnoreCase(r.getNombre()));
+        if (!tieneRolUsuario) {
+            Rol rolUsuario = rolRepository.findByNombre("Usuario").orElseGet(() -> {
+                Rol r = new Rol();
+                r.setNombre("Usuario");
+                return rolRepository.save(r);
+            });
+            usuario.getRoles().add(rolUsuario);
+        }
+        usuarioRepository.save(usuario);
 
         // Crear o actualizar el registro de Trabajador
         Trabajador trabajador = trabajadorRepository.findByUsuario_IdUsuario(usuario.getIdUsuario())
@@ -561,10 +607,14 @@ public class UsuarioService {
                 if (usuarioDTO.getTrabajador().getExperiencia() != null) {
                     trabajador.setExperiencia(usuarioDTO.getTrabajador().getExperiencia());
                 }
+                if (usuarioDTO.getTrabajador().getNequiNumero() != null) {
+                    trabajador.setNequiNumero(usuarioDTO.getTrabajador().getNequiNumero().trim());
+                }
                 trabajador.setEstado("activo");
                 trabajadorRepository.save(trabajador);
             }
-        usuarioDTO.setFotoPerfil(usuario.getFotoPerfil() != null ? "http://localhost:8082/LinkedApi/uploads/" + usuario.getFotoPerfil() : null);
+        }
+        usuarioDTO.setFotoPerfil(mediaUrlService.toPublicUrl(usuario.getFotoPerfil()));
         return usuarioDTO;
     }
 

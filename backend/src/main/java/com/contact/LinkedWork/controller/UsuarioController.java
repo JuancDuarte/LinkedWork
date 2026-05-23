@@ -112,7 +112,7 @@ public class UsuarioController {
     }
 
     @PostMapping(path = "/CreateUser", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UsuarioDTO> createUser(@Valid @RequestBody CreateUsuarioDTO payload) {
+    public ResponseEntity<?> createUser(@Valid @RequestBody CreateUsuarioDTO payload) {
         System.out.println("CreateUser called with: " + payload);
         try {
             String nombre = payload.getNombre();
@@ -137,10 +137,39 @@ public class UsuarioController {
             }
 
             UsuarioDTO created = usuarioService.createUser(nombreUsuario, nombre, email, password, roles, areaId, descripcion, experiencia, idDepartamento, idCiudad);
-            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+            Map<String, Object> response = new java.util.HashMap<>();
+            response.put("user", created);
+            response.put("requiresVerification", true);
+            response.put("message", "Cuenta creada. Revisa tu correo para verificar tu cuenta antes de iniciar sesión.");
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+        }
+    }
+
+    @GetMapping(path = "/verify-email", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> verifyEmail(@org.springframework.web.bind.annotation.RequestParam String token) {
+        try {
+            UsuarioDTO usuario = usuarioService.verifyEmail(token);
+            String jwt = jwtUtil.generateToken(usuario.getIdUsuario(), usuario.getEmail());
+            Map<String, Object> response = new java.util.HashMap<>();
+            response.put("token", jwt);
+            response.put("user", usuario);
+            response.put("message", "Correo verificado correctamente. Ya puedes usar LinkedWork.");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+        }
+    }
+
+    @PostMapping(path = "/resend-verification", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> resendVerification(@RequestBody Map<String, String> payload) {
+        try {
+            String email = payload.get("email");
+            usuarioService.resendVerificationEmail(email);
+            return ResponseEntity.ok(Map.of("message", "Correo de verificación reenviado"));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
         }
     }
 

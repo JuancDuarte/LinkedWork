@@ -80,6 +80,7 @@ type FontSize = 'sm' | 'md' | 'lg' | 'xl';
               <p>Controla quién puede ver tu información</p>
             </div>
           </div>
+          <!-- Perfil público -->
           <div class="settings-item">
             <div class="item-info">
               <span class="item-icon">👁️</span>
@@ -88,7 +89,11 @@ type FontSize = 'sm' | 'md' | 'lg' | 'xl';
                 <span class="item-desc">Permite que otros usuarios vean tu perfil profesional</span>
               </div>
             </div>
-            <button class="toggle-switch active" disabled aria-label="Perfil público activado">
+            <button
+              class="toggle-switch"
+              [class.active]="isPublicProfile()"
+              (click)="togglePublicProfile()"
+              [attr.aria-label]="isPublicProfile() ? 'Desactivar perfil público' : 'Activar perfil público'">
               <span class="toggle-thumb"></span>
             </button>
           </div>
@@ -100,7 +105,11 @@ type FontSize = 'sm' | 'md' | 'lg' | 'xl';
                 <span class="item-desc">Recibe actualizaciones sobre tus solicitudes y postulaciones</span>
               </div>
             </div>
-            <button class="toggle-switch active" disabled aria-label="Notificaciones activadas">
+            <button
+              class="toggle-switch"
+              [class.active]="emailNotifications()"
+              (click)="toggleEmailNotifications()"
+              [attr.aria-label]="emailNotifications() ? 'Desactivar notificaciones' : 'Activar notificaciones'">
               <span class="toggle-thumb"></span>
             </button>
           </div>
@@ -378,19 +387,25 @@ export class SettingsComponent implements OnInit {
   isDark = signal(false);
   fontSize = signal<FontSize>('md');
   saved = signal(false);
+  isPublicProfile = signal(true);
+  emailNotifications = signal(true);
 
   fontOptions = [
-    { label: 'Pequeña', value: 'sm' as FontSize, preview: '0.8rem' },
-    { label: 'Normal',  value: 'md' as FontSize, preview: '1rem'   },
-    { label: 'Grande',  value: 'lg' as FontSize, preview: '1.1rem' },
+    { label: 'Pequeña',    value: 'sm' as FontSize, preview: '0.8rem'  },
+    { label: 'Normal',     value: 'md' as FontSize, preview: '1rem'    },
+    { label: 'Grande',     value: 'lg' as FontSize, preview: '1.1rem'  },
     { label: 'Muy grande', value: 'xl' as FontSize, preview: '1.25rem' },
   ];
 
   ngOnInit() {
-    const savedTheme = (localStorage.getItem('lw_theme') as ThemeMode) || 'light';
-    const savedFont  = (localStorage.getItem('lw_font_size') as FontSize) || 'md';
+    const savedTheme   = (localStorage.getItem('lw_theme') as ThemeMode)   || 'light';
+    const savedFont    = (localStorage.getItem('lw_font_size') as FontSize)  || 'md';
+    const savedPublic  = localStorage.getItem('lw_public_profile');
+    const savedNotifs  = localStorage.getItem('lw_email_notifs');
     this.isDark.set(savedTheme === 'dark');
     this.fontSize.set(savedFont);
+    this.isPublicProfile.set(savedPublic === null ? true : savedPublic === 'true');
+    this.emailNotifications.set(savedNotifs === null ? true : savedNotifs === 'true');
   }
 
   toggleDark() {
@@ -405,6 +420,20 @@ export class SettingsComponent implements OnInit {
     this.fontSize.set(size);
     document.documentElement.setAttribute('data-font-size', size);
     localStorage.setItem('lw_font_size', size);
+    this.showSaved();
+  }
+
+  togglePublicProfile() {
+    const next = !this.isPublicProfile();
+    this.isPublicProfile.set(next);
+    localStorage.setItem('lw_public_profile', String(next));
+    this.showSaved();
+  }
+
+  toggleEmailNotifications() {
+    const next = !this.emailNotifications();
+    this.emailNotifications.set(next);
+    localStorage.setItem('lw_email_notifs', String(next));
     this.showSaved();
   }
 

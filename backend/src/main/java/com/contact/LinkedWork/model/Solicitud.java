@@ -59,6 +59,9 @@ public class Solicitud {
     @Column(name = "Longitud")
     private Double longitud;
 
+    @Column(name = "ImagenUrl", length = 255)
+    private String imagenUrl;
+
     @OneToMany(mappedBy = "solicitud", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<SolicitudHistorial> historiales = new HashSet<>();
 
@@ -214,5 +217,13 @@ public class Solicitud {
 
     public void setLongitud(Double longitud) {
         this.longitud = longitud;
+    }
+
+    public String getImagenUrl() {
+        return imagenUrl;
+    }
+
+    public void setImagenUrl(String imagenUrl) {
+        this.imagenUrl = imagenUrl;
     }
 }

@@ -96,15 +96,15 @@ button, input, select, textarea {
 ::-webkit-scrollbar-thumb { background: var(--border-color-strong); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-/* Google Places autocomplete dropdown dark mode fix */
+/* Google Places (widget legacy) — por si se usa en otro sitio */
 .pac-container {
+  z-index: 10050 !important;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: var(--shadow-lg);
   font-family: var(--font-primary);
   margin-top: 4px;
-  overflow: hidden;
 }
 .pac-item {
   padding: 0.6rem 1rem;
@@ -112,8 +112,9 @@ button, input, select, textarea {
   cursor: pointer;
   border-top: 1px solid var(--border-color);
   font-size: 0.9rem;
+  line-height: 1.4;
 }
 .pac-item:hover, .pac-item-selected { background: var(--hover-bg); }
 .pac-item-query { color: var(--text-primary); font-weight: 600; }
 .pac-matched { font-weight: 800; color: var(--color-brand); }
-.pac-icon { display: none; }
+.pac-icon { width: 0 !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden; }

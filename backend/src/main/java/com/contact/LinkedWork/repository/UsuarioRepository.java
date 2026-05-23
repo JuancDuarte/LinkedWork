@@ -16,4 +16,6 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
     List<Usuario> findAllByEstado(String Estado);
     
     Optional<Usuario> findByidUsuario(Long IdUsuario);
+
+    Optional<Usuario> findByTokenVerificacion(String tokenVerificacion);
 }

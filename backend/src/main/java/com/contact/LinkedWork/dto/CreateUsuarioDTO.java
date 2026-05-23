@@ -33,9 +33,8 @@ public class CreateUsuarioDTO {
     @Positive(message = "El ID de la ciudad debe ser válido")
     private Integer idCiudad;
 
-    @NotBlank(message = "El nombre de usuario es obligatorio")
     @Size(min = 3, max = 50, message = "El nombre de usuario debe tener entre 3 y 50 caracteres")
-    @Pattern(regexp = "^[a-zA-Z0-9_.-]*$", message = "El nombre de usuario solo puede contener letras, números, guiones y puntos")
+    @Pattern(regexp = "^[a-zA-Z0-9_.@-]*$", message = "El nombre de usuario solo puede contener letras, números, guiones y puntos")
     private String nombreUsuario;
 
     // Getters and setters

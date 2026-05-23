@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { ApiService, ApiCertificado } from '../services/api.service';
 import { AuthService, UserRole } from '../services/auth.service';
+import { environment } from '../../environments/environment';
 
 declare var google: any;
 
@@ -78,9 +79,6 @@ declare var google: any;
 
               <div class="google-login-container" style="flex-direction: column; align-items: center; gap: 0.5rem; display: flex; width: 100%;">
                 <div id="google-btn" style="width: 100%;"></div>
-                <button type="button" class="btn btn-secondary btn-sm" (click)="simulateGoogleLogin()" style="width: 100%; font-size: 0.85rem; padding: 0.5rem; cursor: pointer; border-radius: 8px;">
-                  🔑 Simular Google Login (Desarrollo)
-                </button>
               </div>
 
               <p class="form-note">
@@ -1102,6 +1100,11 @@ export class AuthComponent implements OnInit {
       this.activeTab.set('register');
     }
 
+    const verifyToken = this.route.snapshot.queryParamMap.get('verify');
+    if (verifyToken) {
+      this.verifyEmailToken(verifyToken);
+    }
+
     if (this.auth.isLoggedIn()) {
       this.router.navigate(['/']);
     }
@@ -1115,7 +1118,7 @@ export class AuthComponent implements OnInit {
       if (typeof google !== 'undefined' && google.accounts) {
         clearInterval(checkGoogle);
         google.accounts.id.initialize({
-          client_id: '648560152467-llla49ipnmr34bj6q63ii2q56oaine36.apps.googleusercontent.com',
+          client_id: environment.googleClientId,
           callback: this.handleGoogleLogin.bind(this)
         });
         const btnElement = document.getElementById('google-btn');
@@ -1132,16 +1135,31 @@ export class AuthComponent implements OnInit {
     setTimeout(() => clearInterval(checkGoogle), 5000);
   }
 
-  simulateGoogleLogin() {
-    const mockEmail = 'usuario.google@linkedwork.com';
-    const mockName = 'Usuario Google Simulado';
-    // construct a mock JWT: header.payload.signature
-    // payload is base64url of {"email": "usuario.google@linkedwork.com", "name": "Usuario Google Simulado"}
-    const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
-    const payload = btoa(JSON.stringify({ email: mockEmail, name: mockName })).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
-    const signature = "signature";
-    const mockToken = `${header}.${payload}.${signature}`;
-    this.handleGoogleLogin({ credential: mockToken });
+  private async verifyEmailToken(token: string) {
+    this.loading.set(true);
+    this.errorMessage.set('');
+    try {
+      const res = await firstValueFrom(this.api.verifyEmail(token));
+      const userObj = res.user;
+      const roles = (userObj?.roles || ['ROLE_USUARIO']).filter(
+        (r: string) => r === 'ROLE_USUARIO' || r === 'ROLE_TRABAJADOR'
+      ) as UserRole[];
+      this.auth.login(
+        userObj?.idUsuario ?? 0,
+        roles,
+        'ROLE_USUARIO',
+        userObj?.nombreCompleto,
+        userObj?.email,
+        res.token
+      );
+      this.successMessage.set('✅ Correo verificado. ¡Bienvenido!');
+      this.router.navigate(['/']);
+    } catch (error: any) {
+      const msg = typeof error?.error === 'string' ? error.error : 'Enlace de verificación inválido o expirado.';
+      this.errorMessage.set(`⚠️ ${msg}`);
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   private async handleGoogleLogin(response: any) {
@@ -1374,7 +1392,15 @@ export class AuthComponent implements OnInit {
         payload.idCiudad = Number(this.registerIdCiudad);
       }
 
-      const created: any = await firstValueFrom(this.api.createUser(payload));
+      const createdRes: any = await firstValueFrom(this.api.createUser(payload));
+      const created = createdRes?.user ?? createdRes;
+
+      if (createdRes?.requiresVerification) {
+        this.successMessage.set('✅ Cuenta creada. Revisa tu correo para verificar tu cuenta antes de iniciar sesión.');
+        this.clearRegisterForm();
+        setTimeout(() => this.activeTab.set('login'), 2000);
+        return;
+      }
 
       // Si se cre o trabajador y hay certificados en borrador, los guardamos
       if (selectedRoles.includes('ROLE_TRABAJADOR') && this.certificateDrafts.length > 0) {
@@ -1395,20 +1421,24 @@ export class AuthComponent implements OnInit {
       }
 
       this.successMessage.set('✅ Cuenta creada correctamente. Iniciando sesión...');
-      
-      // Intentar login automático
+
       try {
         const loginRes = await firstValueFrom(this.api.loginUser({
-          usuario: this.registerCC,
+          usuario: emailTrimmed,
           password: this.registerPassword
         }));
-
+        const userObj = (loginRes as any)?.user || loginRes;
+        const token = (loginRes as any)?.token;
+        const roles = (userObj?.roles || selectedRoles).filter(
+          (r: string) => r === 'ROLE_USUARIO' || r === 'ROLE_TRABAJADOR'
+        ) as UserRole[];
         this.auth.login(
-          loginRes.idUsuario,
-          loginRes.roles,
-          loginRes.roles.includes('ROLE_TRABAJADOR') ? 'ROLE_TRABAJADOR' : 'ROLE_USUARIO',
-          loginRes.nombreUsuario,
-          loginRes.email
+          userObj?.idUsuario ?? 0,
+          roles.length ? roles : ['ROLE_USUARIO'],
+          roles.includes('ROLE_TRABAJADOR') ? 'ROLE_TRABAJADOR' : 'ROLE_USUARIO',
+          userObj?.nombreCompleto || nameTrimmed,
+          userObj?.email || emailTrimmed,
+          token
         );
 
         if (this.wantFarmingCertification && selectedRoles.includes('ROLE_TRABAJADOR')) {
@@ -1416,8 +1446,7 @@ export class AuthComponent implements OnInit {
         } else {
           this.router.navigate(['/']);
         }
-      } catch (e) {
-        // Si falla el login automático, ir a login normal
+      } catch {
         this.clearRegisterForm();
         setTimeout(() => this.activeTab.set('login'), 1500);
       }
@@ -1432,6 +1461,8 @@ export class AuthComponent implements OnInit {
         if (messages) {
           friendlyMessage = `${messages}`;
         }
+      } else if (typeof error?.error === 'string') {
+        friendlyMessage = error.error;
       } else if (error?.error?.message) {
         friendlyMessage = `${error.error.message}`;
       } else if (statusCode === 400) {

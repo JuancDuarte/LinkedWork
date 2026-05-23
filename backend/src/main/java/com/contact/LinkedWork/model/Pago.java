@@ -49,6 +49,23 @@ public class Pago {
     @Column(name = "FechaActualizacion")
     private LocalDateTime fechaActualizacion;
 
+    /** pendiente_nequi | enviado_nequi */
+    @Column(name = "LiquidacionTrabajador", length = 50)
+    private String liquidacionTrabajador = "pendiente_nequi";
+
+    /** acreditado | pendiente */
+    @Column(name = "LiquidacionPlataforma", length = 50)
+    private String liquidacionPlataforma = "pendiente";
+
+    @Column(name = "NequiTrabajador", length = 20)
+    private String nequiTrabajador;
+
+    @Column(name = "WompiTransactionId", length = 80)
+    private String wompiTransactionId;
+
+    @Column(name = "NequiCliente", length = 20)
+    private String nequiCliente;
+
     public Pago() {
         this.fechaCreacion = LocalDateTime.now();
     }
@@ -152,5 +169,45 @@ public class Pago {
 
     public void setOferta(Oferta oferta) {
         this.oferta = oferta;
+    }
+
+    public String getLiquidacionTrabajador() {
+        return liquidacionTrabajador;
+    }
+
+    public void setLiquidacionTrabajador(String liquidacionTrabajador) {
+        this.liquidacionTrabajador = liquidacionTrabajador;
+    }
+
+    public String getLiquidacionPlataforma() {
+        return liquidacionPlataforma;
+    }
+
+    public void setLiquidacionPlataforma(String liquidacionPlataforma) {
+        this.liquidacionPlataforma = liquidacionPlataforma;
+    }
+
+    public String getNequiTrabajador() {
+        return nequiTrabajador;
+    }
+
+    public void setNequiTrabajador(String nequiTrabajador) {
+        this.nequiTrabajador = nequiTrabajador;
+    }
+
+    public String getWompiTransactionId() {
+        return wompiTransactionId;
+    }
+
+    public void setWompiTransactionId(String wompiTransactionId) {
+        this.wompiTransactionId = wompiTransactionId;
+    }
+
+    public String getNequiCliente() {
+        return nequiCliente;
+    }
+
+    public void setNequiCliente(String nequiCliente) {
+        this.nequiCliente = nequiCliente;
     }
 }

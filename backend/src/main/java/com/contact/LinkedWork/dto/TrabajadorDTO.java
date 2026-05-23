@@ -11,6 +11,7 @@ public class TrabajadorDTO {
     private String departamento;
     private String ciudad;
     private Boolean esFarming;
+    private String nequiNumero;
     
     public TrabajadorDTO() {
     }
@@ -89,6 +90,14 @@ public class TrabajadorDTO {
 
     public void setEsFarming(Boolean esFarming) {
         this.esFarming = esFarming;
+    }
+
+    public String getNequiNumero() {
+        return nequiNumero;
+    }
+
+    public void setNequiNumero(String nequiNumero) {
+        this.nequiNumero = nequiNumero;
     }
 
 }

@@ -1,8 +1,9 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService, UserRole } from '../services/auth.service';
+import { profilePhotoUrl } from '../utils/media-url';
 
 @Component({
   selector: 'app-header',
@@ -11,10 +12,16 @@ import { AuthService, UserRole } from '../services/auth.service';
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   auth = inject(AuthService);
   private router = inject(Router);
   menuOpen = signal(false);
+
+  ngOnInit() {
+    if (this.auth.isLoggedIn()) {
+      this.auth.refreshRolesFromServer();
+    }
+  }
 
   toggleRole = computed<UserRole>(() => this.auth.role() === 'ROLE_TRABAJADOR' ? 'ROLE_USUARIO' : 'ROLE_TRABAJADOR');
   toggleRoleLabel = computed(() => {
@@ -30,7 +37,11 @@ export class HeaderComponent {
 
   switchRole() {
     const nextRole = this.toggleRole();
-    this.auth.switchRole(nextRole).subscribe();
+    this.auth.switchRole(nextRole).subscribe((applied) => {
+      if (applied === nextRole) {
+        this.router.navigateByUrl(nextRole === 'ROLE_TRABAJADOR' ? '/requests' : '/');
+      }
+    });
     this.closeMenu();
   }
 
@@ -46,5 +57,9 @@ export class HeaderComponent {
     this.auth.logout();
     this.closeMenu();
     this.router.navigate(['/auth']);
+  }
+
+  photoUrl(foto?: string | null, seed?: string | null): string {
+    return profilePhotoUrl(foto, seed);
   }
 }

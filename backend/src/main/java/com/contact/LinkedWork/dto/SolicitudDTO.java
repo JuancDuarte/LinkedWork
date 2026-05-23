@@ -22,6 +22,9 @@ public class SolicitudDTO {
     private String notas;
     private Double latitud;
     private Double longitud;
+    private String imagenUrl;
+    private String fotoUsuarioUrl;
+    private String fotoTrabajadorUrl;
 
     public Long getIdTrabajador() {
         return idTrabajador;
@@ -170,5 +173,29 @@ public class SolicitudDTO {
 
     public void setLongitud(Double longitud) {
         this.longitud = longitud;
+    }
+
+    public String getImagenUrl() {
+        return imagenUrl;
+    }
+
+    public void setImagenUrl(String imagenUrl) {
+        this.imagenUrl = imagenUrl;
+    }
+
+    public String getFotoUsuarioUrl() {
+        return fotoUsuarioUrl;
+    }
+
+    public void setFotoUsuarioUrl(String fotoUsuarioUrl) {
+        this.fotoUsuarioUrl = fotoUsuarioUrl;
+    }
+
+    public String getFotoTrabajadorUrl() {
+        return fotoTrabajadorUrl;
+    }
+
+    public void setFotoTrabajadorUrl(String fotoTrabajadorUrl) {
+        this.fotoTrabajadorUrl = fotoTrabajadorUrl;
     }
 }

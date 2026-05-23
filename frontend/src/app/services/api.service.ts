@@ -2,11 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, retry, throwError, tap } from 'rxjs';
 
-const API_BASE = 'http://localhost:8082/LinkedApi';
+import { environment } from '../../environments/environment';
+
+const API_BASE = environment.apiBase;
 
 export interface ApiUser {
   idUsuario?: number;
   idTrabajador?: number;
+  nombre?: string;
   nombreCompleto?: string;
   nombreUsuario?: string;
   email: string;
@@ -25,8 +28,24 @@ export interface ApiUser {
     departamento?: string;
     ciudad?: string;
     esFarming?: boolean;
+    nequiNumero?: string;
     area?: any;
   };
+}
+
+export interface FeedSolicitud {
+  idSolicitud?: number;
+  titulo?: string;
+  descripcion?: string;
+  estado?: string;
+  fechaCreacion?: string;
+  fechaServicio?: string;
+  precio?: number;
+  nombreUsuario?: string;
+  fotoUsuarioUrl?: string;
+  imagenUrl?: string;
+  nombreArea?: string;
+  direccion?: string;
 }
 
 export interface ApiCertificado {
@@ -58,7 +77,7 @@ export class ApiService {
     );
   }
 
-  loginUser(payload: { usuario: number | string; password: string }): Observable<any> {
+  loginUser(payload: { usuario: number | string; password: string }): Observable<{ token: string; user: ApiUser }> {
     const loginPayload = {
       idUsuario: typeof payload.usuario === 'number' ? payload.usuario : null,
       nombreUsuario: typeof payload.usuario === 'string' && !payload.usuario.includes('@') ? payload.usuario : null,
@@ -66,15 +85,27 @@ export class ApiService {
       clave: payload.password
     };
     console.log('[ApiService] loginUser payload:', loginPayload);
-    return this.http.post(`${API_BASE}/Login`, loginPayload).pipe(
+    return this.http.post<{ token: string; user: ApiUser }>(`${API_BASE}/Login`, loginPayload).pipe(
       catchError(this.handleError('loginUser'))
     );
   }
 
-  loginGoogle(idToken: string): Observable<any> {
-    console.log('[ApiService] loginGoogle');
-    return this.http.post(`${API_BASE}/login/google`, { idToken }).pipe(
+  loginGoogle(idToken: string): Observable<{ token: string; user: ApiUser }> {
+    return this.http.post<{ token: string; user: ApiUser }>(`${API_BASE}/login/google`, { idToken }).pipe(
       catchError(this.handleError('loginGoogle'))
+    );
+  }
+
+  verifyEmail(token: string): Observable<{ token: string; user: ApiUser; message?: string }> {
+    return this.http.get<{ token: string; user: ApiUser; message?: string }>(
+      `${API_BASE}/verify-email`,
+      { params: { token } }
+    ).pipe(catchError(this.handleError('verifyEmail')));
+  }
+
+  resendVerification(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${API_BASE}/resend-verification`, { email }).pipe(
+      catchError(this.handleError('resendVerification'))
     );
   }
 
@@ -173,6 +204,21 @@ export class ApiService {
     return this.http.get<any[]>(`${API_BASE}/listAllRequests`).pipe(
       catchError(this.handleError('listAllRequests'))
     );
+  }
+
+  getFeed(): Observable<FeedSolicitud[]> {
+    return this.http.get<FeedSolicitud[]>(`${API_BASE}/feed`).pipe(
+      catchError(this.handleError('getFeed'))
+    );
+  }
+
+  uploadSolicitudImage(solicitudId: number, userId: number, file: File): Observable<FeedSolicitud> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<FeedSolicitud>(
+      `${API_BASE}/uploadSolicitudImagen/${encodeURIComponent(solicitudId)}/${encodeURIComponent(userId)}`,
+      formData
+    ).pipe(catchError(this.handleError('uploadSolicitudImage')));
   }
 
   acceptRequestByWorker(requestId: number, workerUserId: number, payload: any = {}): Observable<any> {
@@ -338,37 +384,9 @@ export class ApiService {
     );
   }
 
-  initiatePayment(solicitudId: number, ofertaId: number): Observable<PayUPayload> {
-    return this.http.post<PayUPayload>(`${API_BASE}/payment/initiate`, { idSolicitud: solicitudId, idOferta: ofertaId }).pipe(
-      tap((res) => console.log('[ApiService] initiatePayment res:', res)),
-      catchError(this.handleError('initiatePayment'))
-    );
+  sendTestEmail(to: string): Observable<any> {
+    return this.http.post(`${API_BASE}/notifications/test-email`, null, {
+      params: { to }
+    }).pipe(catchError(this.handleError('sendTestEmail')));
   }
-
-  simulatePaymentSuccess(referenceCode: string): Observable<any> {
-    return this.http.post(`${API_BASE}/payment/simulate-success`, { referenceCode }).pipe(
-      tap((res) => console.log('[ApiService] simulatePaymentSuccess res:', res)),
-      catchError(this.handleError('simulatePaymentSuccess'))
-    );
-  }
-}
-
-export interface PayUPayload {
-  merchantId: string;
-  accountId: string;
-  description: string;
-  referenceCode: string;
-  amount: number;
-  tax: number;
-  taxReturnBase: number;
-  currency: string;
-  signature: string;
-  test: number;
-  buyerEmail: string;
-  responseUrl: string;
-  confirmationUrl: string;
-  checkoutUrl: string;
-  comision: number;
-  montoNeto: number;
-  precioOferta: number;
 }

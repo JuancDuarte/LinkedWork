@@ -82,20 +82,20 @@ import { AuthService } from '../services/auth.service';
       }
       .container-premium { display: flex; flex-direction: column; gap: 2rem; }
 
-      .section-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #e2e8f0; padding-bottom: 1.5rem; }
-      .header-content h1 { font-size: 2rem; color: #1e293b; margin: 0; font-weight: 800; }
-      .header-content p { color: #64748b; margin: 0.5rem 0 0 0; }
+      .section-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; }
+      .header-content h1 { font-size: 2rem; color: var(--text-primary); margin: 0; font-weight: 800; }
+      .header-content p { color: var(--text-secondary); margin: 0.5rem 0 0 0; }
 
       .header-stats { display: flex; gap: 1rem; }
-      .stat-pill { background: #f1f5f9; padding: 0.5rem 1rem; border-radius: 2rem; display: flex; gap: 0.75rem; align-items: center; font-size: 0.9rem; font-weight: 700; color: #475569; }
+      .stat-pill { background: var(--bg-surface-2); padding: 0.5rem 1rem; border-radius: 2rem; display: flex; gap: 0.75rem; align-items: center; font-size: 0.9rem; font-weight: 700; color: var(--text-secondary); }
       .stat-pill.accepted { background: #dcfce7; color: #166534; }
-      .stat-pill .value { background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px; }
+      .stat-pill .value { background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 10px; }
 
       .postulations-list { display: flex; flex-direction: column; gap: 1.25rem; }
-      .card { background: white; border-radius: 1rem; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+      .card { background: var(--card-bg); border-radius: 1rem; border: 1px solid var(--border-color); overflow: hidden; box-shadow: var(--shadow-sm); transition: background 0.3s, border-color 0.3s; }
       
       .postulation-card { display: flex; }
-      .card-status-bar { width: 6px; background: #cbd5e1; flex-shrink: 0; }
+      .card-status-bar { width: 6px; background: var(--border-color-strong); flex-shrink: 0; }
       .card-status-bar[data-status="Aceptada"] { background: #22c55e; }
       .card-status-bar[data-status="Rechazada"] { background: #ef4444; }
       .card-status-bar[data-status="Pendiente"] { background: #f59e0b; }
@@ -103,37 +103,37 @@ import { AuthService } from '../services/auth.service';
       .card-main { padding: 1.5rem; flex: 1; display: grid; grid-template-columns: 1fr auto auto; gap: 2rem; align-items: center; }
       
       .request-info { display: flex; flex-direction: column; gap: 0.25rem; }
-      .request-tag { font-size: 0.65rem; font-weight: 800; color: #0a66c2; letter-spacing: 1px; }
-      .request-title { margin: 0; font-size: 1.1rem; color: #1e293b; font-weight: 700; }
-      .request-date { font-size: 0.85rem; color: #64748b; margin: 0; }
+      .request-tag { font-size: 0.65rem; font-weight: 800; color: var(--color-brand); letter-spacing: 1px; }
+      .request-title { margin: 0; font-size: 1.1rem; color: var(--text-primary); font-weight: 700; }
+      .request-date { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
 
       .offer-details { display: flex; gap: 2rem; }
       .detail-item { display: flex; flex-direction: column; }
-      .detail-label { font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+      .detail-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
       .detail-value.price { font-size: 1.1rem; font-weight: 800; color: #059669; }
 
       .status-badge { 
         padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; text-transform: capitalize; 
-        background: #f1f5f9; color: #475569;
+        background: var(--bg-surface-2); color: var(--text-secondary);
       }
       .status-badge[data-status="Aceptada"] { background: #dcfce7; color: #166534; }
       .status-badge[data-status="Rechazada"] { background: #fee2e2; color: #991b1b; }
       .status-badge[data-status="Pendiente"] { background: #fef3c7; color: #92400e; }
 
       .card-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; }
-      .btn-outline-sm { background: white; border: 1.5px solid #e2e8f0; color: #475569; padding: 0.4rem 1rem; border-radius: 0.75rem; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
-      .btn-outline-sm:hover { border-color: #0a66c2; color: #0a66c2; }
-      .post-date { font-size: 0.75rem; color: #94a3b8; }
+      .btn-outline-sm { background: var(--card-bg); border: 1.5px solid var(--border-color); color: var(--text-secondary); padding: 0.4rem 1rem; border-radius: 0.75rem; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+      .btn-outline-sm:hover { border-color: var(--color-brand); color: var(--color-brand); }
+      .post-date { font-size: 0.75rem; color: var(--text-muted); }
 
       .empty-state { padding: 4rem 2rem; text-align: center; }
       .empty-icon { font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.2; }
-      .empty-state h3 { font-size: 1.5rem; color: #1e293b; margin-bottom: 0.75rem; }
-      .empty-state p { color: #64748b; margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto; }
+      .empty-state h3 { font-size: 1.5rem; color: var(--text-primary); margin-bottom: 0.75rem; }
+      .empty-state p { color: var(--text-secondary); margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto; }
       
-      .btn-primary-premium { background: #0a66c2; color: white; border: none; padding: 0.75rem 2rem; border-radius: 2rem; font-weight: 700; cursor: pointer; }
+      .btn-primary-premium { background: var(--color-brand); color: white; border: none; padding: 0.75rem 2rem; border-radius: 2rem; font-weight: 700; cursor: pointer; }
 
-      .loading-state { text-align: center; padding: 5rem; color: #64748b; }
-      .spinner { width: 40px; height: 40px; border: 4px solid #f1f5f9; border-top-color: #0a66c2; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+      .loading-state { text-align: center; padding: 5rem; color: var(--text-secondary); }
+      .spinner { width: 40px; height: 40px; border: 4px solid var(--bg-surface-2); border-top-color: var(--color-brand); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
       @keyframes spin { to { transform: rotate(360deg); } }
 
       @media (max-width: 768px) {
