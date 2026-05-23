@@ -4,7 +4,7 @@ import { computed, Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 
 
-import { ApiService } from './api.service';
+import { ApiService, ApiUser } from './api.service';
 
 export type UserRole = 'ROLE_USUARIO' | 'ROLE_TRABAJADOR' | 'guest';
 
@@ -19,6 +19,7 @@ export class AuthService {
   private readonly USER_NAME_KEY = 'linkedwork_user_name';
   private readonly USER_EMAIL_KEY = 'linkedwork_user_email';
   private readonly JWT_TOKEN_KEY = 'linkedwork_jwt_token';
+  private readonly USER_FOTO_KEY = 'linkedwork_user_foto_perfil';
 
   private roleSubject = new BehaviorSubject<UserRole>('guest');
   readonly role$ = this.roleSubject.asObservable();
@@ -31,8 +32,13 @@ export class AuthService {
   userEmail = signal<string>('');
   role = signal<UserRole>('guest');
   availableRoles = signal<UserRole[]>([]);
+  userFotoPerfil = signal<string>('');
   isLoggedIn = computed(() => this.userId() !== null && this.role() !== 'guest');
-  hasMultipleRoles = computed(() => this.availableRoles().length > 1);
+  /** Puede alternar entre cliente y trabajador si tiene ambos roles o es trabajador */
+  hasMultipleRoles = computed(() => {
+    const roles = this.availableRoles();
+    return roles.length > 1 || roles.includes('ROLE_TRABAJADOR');
+  });
 
   constructor(private readonly api: ApiService) {
     const storedId = localStorage.getItem(this.USER_STORAGE_KEY);
@@ -40,13 +46,14 @@ export class AuthService {
     const storedCurrentRole = localStorage.getItem(this.CURRENT_ROLE_KEY);
     const storedName = localStorage.getItem(this.USER_NAME_KEY) || '';
     const storedEmail = localStorage.getItem(this.USER_EMAIL_KEY) || '';
+    const storedFoto = localStorage.getItem(this.USER_FOTO_KEY) || '';
 
     if (storedId) {
       this.userId.set(Number(storedId));
     }
 
     if (storedRoles) {
-      const roles = JSON.parse(storedRoles) as UserRole[];
+      const roles = this.normalizeRoles(JSON.parse(storedRoles) as string[]);
       this.availableRoles.set(roles);
       this.availableRolesSubject.next(roles);
     }
@@ -58,12 +65,72 @@ export class AuthService {
 
     if (storedName) this.userName.set(storedName);
     if (storedEmail) this.userEmail.set(storedEmail);
+    if (storedFoto) this.userFotoPerfil.set(storedFoto);
   }
 
-  login(userId: number, roles: UserRole[], currentRole?: UserRole, userName?: string, userEmail?: string, token?: string) {
+  private normalizeRole(raw: string): UserRole | null {
+    if (!raw) return null;
+    const n = raw.trim();
+    if (n === 'ROLE_USUARIO' || n === 'Usuario') return 'ROLE_USUARIO';
+    if (n === 'ROLE_TRABAJADOR' || n === 'Trabajador') return 'ROLE_TRABAJADOR';
+    return null;
+  }
+
+  private normalizeRoles(raw: string[] | undefined): UserRole[] {
+    const list = (raw || []).map(r => this.normalizeRole(r)).filter((r): r is UserRole => r !== null);
+    return this.ensureDualRoles(list.length > 0 ? list : ['ROLE_USUARIO']);
+  }
+
+  /** Quien es trabajador también puede usar la vista de usuario/cliente */
+  private ensureDualRoles(roles: UserRole[]): UserRole[] {
+    const set = new Set<UserRole>(roles);
+    if (set.has('ROLE_TRABAJADOR')) {
+      set.add('ROLE_USUARIO');
+    }
+    return Array.from(set);
+  }
+
+  loginFromApiUser(user: ApiUser, token?: string) {
+    const roles = this.normalizeRoles(user.roles);
+    this.login(
+      user.idUsuario!,
+      roles,
+      undefined,
+      user.nombreCompleto,
+      user.email,
+      token,
+      user.fotoPerfil
+    );
+  }
+
+  refreshRolesFromServer(): void {
+    const id = this.userId();
+    if (!id) return;
+    this.api.getProfile(id).subscribe({
+      next: (profile) => {
+        let roles = this.normalizeRoles(profile.roles);
+        if (profile.trabajador?.idTrabajador) {
+          roles = this.ensureDualRoles([...roles, 'ROLE_TRABAJADOR']);
+        }
+        this.setAvailableRoles(roles);
+        const current = this.role();
+        if (!roles.includes(current) && roles.length > 0) {
+          this.setRole(roles.includes('ROLE_USUARIO') ? 'ROLE_USUARIO' : roles[0]);
+        }
+        const foto = profile.fotoPerfil?.trim();
+        if (foto) {
+          this.userFotoPerfil.set(foto);
+          localStorage.setItem(this.USER_FOTO_KEY, foto);
+        }
+      }
+    });
+  }
+
+  login(userId: number, roles: UserRole[], currentRole?: UserRole, userName?: string, userEmail?: string, token?: string, fotoPerfil?: string) {
+    const normalizedRoles = this.ensureDualRoles(roles);
     this.userId.set(userId);
-    this.availableRoles.set(roles);
-    this.availableRolesSubject.next(roles);
+    this.availableRoles.set(normalizedRoles);
+    this.availableRolesSubject.next(normalizedRoles);
     
     // Guardar token JWT si viene
     if (token) {
@@ -73,10 +140,10 @@ export class AuthService {
     // Prioridad: 1. El rol guardado, 2. ROLE_USUARIO si existe, 3. El primer rol disponible
     let roleToSet: UserRole = currentRole || 'guest';
     if (roleToSet === 'guest') {
-      if (roles.includes('ROLE_USUARIO')) {
+      if (normalizedRoles.includes('ROLE_USUARIO')) {
         roleToSet = 'ROLE_USUARIO';
-      } else if (roles.length > 0) {
-        roleToSet = roles[0];
+      } else if (normalizedRoles.length > 0) {
+        roleToSet = normalizedRoles[0];
       }
     }
     
@@ -84,18 +151,35 @@ export class AuthService {
     this.roleSubject.next(roleToSet);
     if (userName) this.userName.set(userName);
     if (userEmail) this.userEmail.set(userEmail);
+    if (fotoPerfil) {
+      this.userFotoPerfil.set(fotoPerfil);
+      localStorage.setItem(this.USER_FOTO_KEY, fotoPerfil);
+    } else {
+      this.userFotoPerfil.set('');
+      localStorage.removeItem(this.USER_FOTO_KEY);
+    }
 
     localStorage.setItem(this.USER_STORAGE_KEY, String(userId));
-    localStorage.setItem(this.ROLES_STORAGE_KEY, JSON.stringify(roles));
+    localStorage.setItem(this.ROLES_STORAGE_KEY, JSON.stringify(normalizedRoles));
     localStorage.setItem(this.CURRENT_ROLE_KEY, roleToSet);
     if (userName) localStorage.setItem(this.USER_NAME_KEY, userName);
     if (userEmail) localStorage.setItem(this.USER_EMAIL_KEY, userEmail);
   }
 
-  switchRole(role: UserRole, persistToBackend = false): Observable<UserRole> {
+  canSwitchTo(role: UserRole): boolean {
     const available = this.availableRoles();
-    if (!available.includes(role)) {
+    if (available.includes(role)) return true;
+    if (role === 'ROLE_USUARIO' && available.includes('ROLE_TRABAJADOR')) return true;
+    return false;
+  }
+
+  switchRole(role: UserRole, persistToBackend = false): Observable<UserRole> {
+    if (!this.canSwitchTo(role)) {
       return of(this.role());
+    }
+
+    if (role === 'ROLE_USUARIO' && !this.availableRoles().includes('ROLE_USUARIO')) {
+      this.setAvailableRoles([...this.availableRoles(), 'ROLE_USUARIO']);
     }
 
     if (persistToBackend && this.userId()) {
@@ -119,12 +203,11 @@ export class AuthService {
     }
   }
 
-  setAvailableRoles(roles: UserRole[]) {
-    const valid = roles.filter(role => role === 'ROLE_USUARIO' || role === 'ROLE_TRABAJADOR');
-    const unique = Array.from(new Set(valid));
-    this.availableRoles.set(unique);
-    this.availableRolesSubject.next(unique);
-    localStorage.setItem(this.ROLES_STORAGE_KEY, JSON.stringify(unique));
+  setAvailableRoles(roles: string[] | UserRole[]) {
+    const normalized = this.normalizeRoles(roles as string[]);
+    this.availableRoles.set(normalized);
+    this.availableRolesSubject.next(normalized);
+    localStorage.setItem(this.ROLES_STORAGE_KEY, JSON.stringify(normalized));
   }
 
   logout() {
@@ -135,19 +218,22 @@ export class AuthService {
     this.availableRolesSubject.next([]);
     this.userName.set('');
     this.userEmail.set('');
+    this.userFotoPerfil.set('');
     localStorage.removeItem(this.USER_STORAGE_KEY);
     localStorage.removeItem(this.ROLES_STORAGE_KEY);
     localStorage.removeItem(this.CURRENT_ROLE_KEY);
     localStorage.removeItem(this.USER_NAME_KEY);
     localStorage.removeItem(this.USER_EMAIL_KEY);
     localStorage.removeItem(this.JWT_TOKEN_KEY);
+    localStorage.removeItem(this.USER_FOTO_KEY);
   }
 
   setRole(role: UserRole) {
     if (role === 'guest') return;
-    const available = this.availableRoles();
-    if (available.length > 0 && !available.includes(role)) return;
-    if (available.length === 0 && role !== 'ROLE_USUARIO' && role !== 'ROLE_TRABAJADOR') return;
+    if (!this.canSwitchTo(role) && this.availableRoles().length > 0) return;
+    if (role === 'ROLE_USUARIO' && !this.availableRoles().includes('ROLE_USUARIO')) {
+      this.setAvailableRoles([...this.availableRoles(), 'ROLE_USUARIO']);
+    }
     this.role.set(role);
     this.roleSubject.next(role);
     localStorage.setItem(this.CURRENT_ROLE_KEY, role);

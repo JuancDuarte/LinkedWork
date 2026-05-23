@@ -59,6 +59,9 @@ public class Trabajador {
     @Column(name = "es_farming")
     private Boolean esFarming = false;
 
+    @Column(name = "NequiNumero", length = 20)
+    private String nequiNumero;
+
     public Trabajador() {
     }
 
@@ -189,5 +192,13 @@ public class Trabajador {
 
     public void setEsFarming(Boolean esFarming) {
         this.esFarming = esFarming;
+    }
+
+    public String getNequiNumero() {
+        return nequiNumero;
+    }
+
+    public void setNequiNumero(String nequiNumero) {
+        this.nequiNumero = nequiNumero;
     }
 }

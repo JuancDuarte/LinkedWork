@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 import com.contact.LinkedWork.dto.CrearOfertaDTO;
 import com.contact.LinkedWork.dto.EditarOFertaDTO.EditarOfertaDTO;
@@ -35,11 +36,11 @@ public class OfertaController {
     private OfertaService ofertaService;
 
     @PostMapping(path="/addOferta/{idTrabajador}/{idSolicitud}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public OfertaDTO addOferta(@RequestBody CrearOfertaDTO ofertaDTO, @PathVariable Long idTrabajador, @PathVariable Long idSolicitud) {
+    public OfertaDTO addOferta(@Valid @RequestBody CrearOfertaDTO ofertaDTO, @PathVariable Long idTrabajador, @PathVariable Long idSolicitud) {
         return ofertaService.crearOferta(ofertaDTO, idTrabajador, idSolicitud);
     }
     @PutMapping(path="/editOferta/{idOferta}/{idTrabajador}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Oferta editOferta(@RequestBody EditarOfertaDTO ofertaDTO, @PathVariable Long idOferta, @PathVariable Long idTrabajador) {
+    public Oferta editOferta(@Valid @RequestBody EditarOfertaDTO ofertaDTO, @PathVariable Long idOferta, @PathVariable Long idTrabajador) {
         return ofertaService.editOferta(ofertaDTO, idOferta, idTrabajador  );
     }
     @DeleteMapping(path = "/deleteOferta/{idOferta}/{idTrabajador}")

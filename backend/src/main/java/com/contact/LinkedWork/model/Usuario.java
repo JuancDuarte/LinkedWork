@@ -48,6 +48,18 @@ public class Usuario {
     @Column(name = "FechaCreacion", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime fechaCreacion = LocalDateTime.now();
 
+    @Column(name = "FotoPerfil", length = 255)
+    private String fotoPerfil;
+
+    @Column(name = "EmailVerificado", columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private Boolean emailVerificado = true;
+
+    @Column(name = "TokenVerificacion", length = 64)
+    private String tokenVerificacion;
+
+    @Column(name = "TokenVerificacionExpira")
+    private LocalDateTime tokenVerificacionExpira;
+
     public Usuario() {
     }
 
@@ -143,5 +155,37 @@ public class Usuario {
 
     public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
+    }
+
+    public String getFotoPerfil() {
+        return fotoPerfil;
+    }
+
+    public void setFotoPerfil(String fotoPerfil) {
+        this.fotoPerfil = fotoPerfil;
+    }
+
+    public Boolean getEmailVerificado() {
+        return emailVerificado;
+    }
+
+    public void setEmailVerificado(Boolean emailVerificado) {
+        this.emailVerificado = emailVerificado;
+    }
+
+    public String getTokenVerificacion() {
+        return tokenVerificacion;
+    }
+
+    public void setTokenVerificacion(String tokenVerificacion) {
+        this.tokenVerificacion = tokenVerificacion;
+    }
+
+    public LocalDateTime getTokenVerificacionExpira() {
+        return tokenVerificacionExpira;
+    }
+
+    public void setTokenVerificacionExpira(LocalDateTime tokenVerificacionExpira) {
+        this.tokenVerificacionExpira = tokenVerificacionExpira;
     }
 }

@@ -1,14 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, retry, throwError, tap } from 'rxjs';
+
 import { environment } from '../../environments/environment';
 
-
-const API_BASE = "https://linkedwork.onrender.com/LinkedApi";
+const API_BASE = environment.apiBase;
 
 export interface ApiUser {
   idUsuario?: number;
   idTrabajador?: number;
+  nombre?: string;
   nombreCompleto?: string;
   nombreUsuario?: string;
   email: string;
@@ -16,6 +17,7 @@ export interface ApiUser {
   estado?: string;
   create_at?: string;
   roles?: string[];
+  fotoPerfil?: string;
   trabajador?: {
     idTrabajador?: number;
     areaId?: number;
@@ -26,8 +28,24 @@ export interface ApiUser {
     departamento?: string;
     ciudad?: string;
     esFarming?: boolean;
+    nequiNumero?: string;
     area?: any;
   };
+}
+
+export interface FeedSolicitud {
+  idSolicitud?: number;
+  titulo?: string;
+  descripcion?: string;
+  estado?: string;
+  fechaCreacion?: string;
+  fechaServicio?: string;
+  precio?: number;
+  nombreUsuario?: string;
+  fotoUsuarioUrl?: string;
+  imagenUrl?: string;
+  nombreArea?: string;
+  direccion?: string;
 }
 
 export interface ApiCertificado {
@@ -39,31 +57,11 @@ export interface ApiCertificado {
   fecha?: string;
 }
 
-export interface SolicitudDTO {
-  idSolicitud: number;
-  titulo: string;
-  descripcion: string;
-  estado: string;
-  fechaCreacion?: string;
-  idUsuario: number;
-  nombreUsuario: string;
-  idArea?: number;
-  nombreArea?: string;
-  idTrabajador?: number;
-  nombreTrabajador?: string;
-  idUsuarioTrabajador?: number;
-  precio?: number;
-  fechaServicio?: string;
-  direccion?: string;
-  horaEncuentro?: string;
-  notas?: string;
-}
-
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   private handleError(operation: string) {
     return (error: any) => {
@@ -79,7 +77,7 @@ export class ApiService {
     );
   }
 
-  loginUser(payload: { usuario: number | string; password: string }): Observable<any> {
+  loginUser(payload: { usuario: number | string; password: string }): Observable<{ token: string; user: ApiUser }> {
     const loginPayload = {
       idUsuario: typeof payload.usuario === 'number' ? payload.usuario : null,
       nombreUsuario: typeof payload.usuario === 'string' && !payload.usuario.includes('@') ? payload.usuario : null,
@@ -87,15 +85,27 @@ export class ApiService {
       clave: payload.password
     };
     console.log('[ApiService] loginUser payload:', loginPayload);
-    return this.http.post(`${API_BASE}/Login`, loginPayload).pipe(
+    return this.http.post<{ token: string; user: ApiUser }>(`${API_BASE}/Login`, loginPayload).pipe(
       catchError(this.handleError('loginUser'))
     );
   }
 
-  loginGoogle(idToken: string): Observable<any> {
-    console.log('[ApiService] loginGoogle');
-    return this.http.post(`${API_BASE}/login/google`, { idToken }).pipe(
+  loginGoogle(idToken: string): Observable<{ token: string; user: ApiUser }> {
+    return this.http.post<{ token: string; user: ApiUser }>(`${API_BASE}/login/google`, { idToken }).pipe(
       catchError(this.handleError('loginGoogle'))
+    );
+  }
+
+  verifyEmail(token: string): Observable<{ token: string; user: ApiUser; message?: string }> {
+    return this.http.get<{ token: string; user: ApiUser; message?: string }>(
+      `${API_BASE}/verify-email`,
+      { params: { token } }
+    ).pipe(catchError(this.handleError('verifyEmail')));
+  }
+
+  resendVerification(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${API_BASE}/resend-verification`, { email }).pipe(
+      catchError(this.handleError('resendVerification'))
     );
   }
 
@@ -120,11 +130,57 @@ export class ApiService {
     );
   }
 
+  uploadProfilePicture(userId: number, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${API_BASE}/uploadFotoPerfil/${encodeURIComponent(userId)}`, formData).pipe(
+      tap(() => console.log('[ApiService] uploadProfilePicture userId:', userId)),
+      catchError(this.handleError('uploadProfilePicture'))
+    );
+  }
+
   listFarming(): Observable<any[]> {
     return this.http.get<any[]>(`${API_BASE}/SeeFarmers/`).pipe(
       tap((response) => console.log('[ApiService] listFarming response:', response)),
       retry(1),
       catchError(this.handleError('listFarming'))
+    );
+  }
+
+  getCertificates(workerId: number): Observable<ApiCertificado[]> {
+    return this.http.get<ApiCertificado[]>(`${API_BASE}/listCertificados/${encodeURIComponent(workerId)}`).pipe(
+      tap((response) => console.log('[ApiService] getCertificates workerId:', workerId, 'response:', response)),
+      catchError(this.handleError('getCertificates'))
+    );
+  }
+
+  addCertificate(workerId: number, payload: ApiCertificado, file?: File): Observable<ApiCertificado> {
+    const formData = new FormData();
+    formData.append('nombre', payload.nombre || '');
+    formData.append('entidad', payload.entidad || '');
+    formData.append('descripcion', payload.descripcion || '');
+    if (file) {
+      formData.append('file', file);
+    }
+    const endpoint = file ? 'addCertificadoFile' : 'addCertificado';
+    return this.http.post<ApiCertificado>(`${API_BASE}/${endpoint}/${encodeURIComponent(workerId)}`, formData).pipe(
+      tap(() => console.log('[ApiService] addCertificate workerId:', workerId, 'payload:', payload)),
+      catchError(this.handleError('addCertificate'))
+    );
+  }
+
+  getAreas(): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/listAreas`).pipe(
+      tap((response) => console.log('[ApiService] getAreas response:', response)),
+      retry(1),
+      catchError(this.handleError('getAreas'))
+    );
+  }
+
+  farmProfile(id: number): Observable<any> {
+    return this.http.get<any>(`${API_BASE}/seeProfile/${encodeURIComponent(id)}`).pipe(
+      tap(() => console.log('[ApiService] farmProfile id:', id)),
+      catchError(this.handleError('farmProfile'))
     );
   }
 
@@ -148,6 +204,21 @@ export class ApiService {
     return this.http.get<any[]>(`${API_BASE}/listAllRequests`).pipe(
       catchError(this.handleError('listAllRequests'))
     );
+  }
+
+  getFeed(): Observable<FeedSolicitud[]> {
+    return this.http.get<FeedSolicitud[]>(`${API_BASE}/feed`).pipe(
+      catchError(this.handleError('getFeed'))
+    );
+  }
+
+  uploadSolicitudImage(solicitudId: number, userId: number, file: File): Observable<FeedSolicitud> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<FeedSolicitud>(
+      `${API_BASE}/uploadSolicitudImagen/${encodeURIComponent(solicitudId)}/${encodeURIComponent(userId)}`,
+      formData
+    ).pipe(catchError(this.handleError('uploadSolicitudImage')));
   }
 
   acceptRequestByWorker(requestId: number, workerUserId: number, payload: any = {}): Observable<any> {
@@ -216,7 +287,7 @@ export class ApiService {
 
   listOffers(solicitudId: number, usuarioId: number): Observable<any[]> {
     return this.http.get<any[]>(`${API_BASE}/SeeOfferts/${encodeURIComponent(solicitudId)}/${encodeURIComponent(usuarioId)}`).pipe(
-      tap((response: any) => console.log('[ApiService] listOffers solicitudId:', solicitudId, 'usuarioId:', usuarioId, 'response:', response)),
+      tap((response) => console.log('[ApiService] listOffers solicitudId:', solicitudId, 'usuarioId:', usuarioId, 'response:', response)),
       catchError(this.handleError('listOffers'))
     );
   }
@@ -233,12 +304,6 @@ export class ApiService {
     return this.http.post(`${API_BASE}/finalizarTrabajo/${encodeURIComponent(solicitudId)}/${encodeURIComponent(userId)}`, {}).pipe(
       tap(() => console.log('[ApiService] finishJob solicitudId:', solicitudId, 'userId:', userId)),
       catchError(this.handleError('finishJob'))
-    );
-  }
-
-  updateEncounterDetails(idSolicitud: number, payload: { direccion: string, horaEncuentro: string, notas: string }): Observable<SolicitudDTO> {
-    return this.http.post<SolicitudDTO>(`${API_BASE}/updateEncounter/${idSolicitud}`, payload).pipe(
-      catchError(this.handleError('updateEncounterDetails'))
     );
   }
 
@@ -300,34 +365,7 @@ export class ApiService {
     );
   }
 
-  getAreas(): Observable<any[]> {
-    return this.http.get<any[]>(`${API_BASE}/listAreas`).pipe(
-      catchError(this.handleError('getAreas'))
-    );
-  }
-
-  getCertificates(trabajadorId: number): Observable<ApiCertificado[]> {
-    return this.http.get<ApiCertificado[]>(`${API_BASE}/listCertificados/${trabajadorId}`).pipe(
-      catchError(this.handleError('getCertificates'))
-    );
-  }
-
-  addCertificate(trabajadorId: number, payload: any, file?: File): Observable<any> {
-    if (file) {
-      const formData = new FormData();
-      formData.append('nombre', payload.nombre);
-      formData.append('entidad', payload.entidad);
-      formData.append('descripcion', payload.descripcion);
-      formData.append('file', file);
-      return this.http.post(`${API_BASE}/addCertificadoFile/${trabajadorId}`, formData).pipe(
-        catchError(this.handleError('addCertificateWithFile'))
-      );
-    } else {
-      return this.http.post(`${API_BASE}/addCertificado/${trabajadorId}`, payload).pipe(
-        catchError(this.handleError('addCertificate'))
-      );
-    }
-  }
+  // Chat methods
   getChatMessages(idSolicitud: number): Observable<any[]> {
     return this.http.get<any[]>(`${API_BASE}/chat/solicitud/${encodeURIComponent(idSolicitud)}`).pipe(
       catchError(this.handleError('getChatMessages'))
@@ -360,4 +398,15 @@ export class ApiService {
     );
   }
 
+  updateEncounterDetails(solicitudId: number, payload: { direccion: string; horaEncuentro: string; notas: string; latitud?: number | null; longitud?: number | null }): Observable<any> {
+    return this.http.put(`${API_BASE}/encounter/${encodeURIComponent(solicitudId)}`, payload).pipe(
+      catchError(this.handleError('updateEncounterDetails'))
+    );
+  }
+
+  sendTestEmail(to: string): Observable<any> {
+    return this.http.post(`${API_BASE}/notifications/test-email`, null, {
+      params: { to }
+    }).pipe(catchError(this.handleError('sendTestEmail')));
+  }
 }

@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { ApiService, ApiUser, ApiCertificado } from '../services/api.service';
 import { AuthService, UserRole } from '../services/auth.service';
+import { profilePhotoUrl } from '../utils/media-url';
 
 @Component({
   selector: 'app-profile',
@@ -19,8 +20,12 @@ import { AuthService, UserRole } from '../services/auth.service';
           <div class="banner-pattern"></div>
         </div>
         <div class="header-main-content">
-          <div class="profile-avatar-wrapper">
-            <img [src]="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + profile()?.nombreUsuario" alt="Avatar" class="profile-avatar-img" />
+          <div class="profile-avatar-wrapper" [class.editable]="isOwnProfile()" (click)="isOwnProfile() && avatarInput.click()" style="position: relative;">
+            <img [src]="photoUrl(profile()?.fotoPerfil, profile()?.nombreCompleto || profile()?.nombreUsuario)" alt="Avatar" class="profile-avatar-img" />
+            <div class="avatar-edit-overlay" *ngIf="isOwnProfile()">
+              <span class="edit-icon">📷</span>
+            </div>
+            <input type="file" #avatarInput (change)="onAvatarFileSelected($event)" accept="image/*" style="display:none" />
           </div>
           
           <div class="header-details-container">
@@ -119,7 +124,7 @@ import { AuthService, UserRole } from '../services/auth.service';
              <h2 class="section-title">Reseñas y Recomendaciones</h2>
              <div class="reviews-list-modern">
                <div *ngFor="let calif of calificaciones()" class="review-item-modern">
-                 <img [src]="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + calif.nombreUsuario" alt="User" class="reviewer-img" />
+                 <img [src]="photoUrl(calif.fotoUsuarioUrl, calif.nombreUsuario)" alt="User" class="reviewer-img" />
                  <div class="review-body-modern">
                    <div class="review-meta">
                      <h4>{{ calif.nombreUsuario }}</h4>
@@ -200,7 +205,7 @@ import { AuthService, UserRole } from '../services/auth.service';
                 <select [(ngModel)]="profileEditor.trabajador.areaId" name="areaEd" class="select-premium">
                   <option *ngFor="let area of areas()" [value]="area.idArea">{{ area.nombre }}</option>
                 </select>
-                <p class="form-hint" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">Cambiar de área te permitirá ver solicitudes de trabajo diferentes.</p>
+                <p class="form-hint" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">Cambiar de área te permitirá ver solicitudes de trabajo diferentes.</p>
               </div>
             </div>
             <div class="form-row-premium" *ngIf="profile()?.trabajador">
@@ -369,7 +374,7 @@ import { AuthService, UserRole } from '../services/auth.service';
   styles: [
     `
       .profile-layout { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; }
-      .card { background: white; border-radius: 0.75rem; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
+      .card { background: var(--card-bg); border-radius: 0.75rem; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
       .mt-3 { margin-top: 1.5rem; }
       .mt-2 { margin-top: 0.75rem; }
       .p-3 { padding: 1.5rem; }
@@ -380,13 +385,32 @@ import { AuthService, UserRole } from '../services/auth.service';
       .banner-pattern { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1; background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px; }
       
       .header-main-content { padding: 0 2rem 1rem; display: flex; align-items: center; gap: 2rem; position: relative; z-index: 2; }
-      .profile-avatar-wrapper { margin-top: -76px; }
-      .profile-avatar-img { width: 152px; height: 152px; border-radius: 50%; border: 4px solid white; background: #f8fafc; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+      .profile-avatar-wrapper { margin-top: -76px; position: relative; }
+      .profile-avatar-wrapper.editable { cursor: pointer; }
+      .profile-avatar-img { width: 152px; height: 152px; border-radius: 50%; border: 4px solid white; background: var(--input-bg); box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: block; object-fit: cover; }
+      .avatar-edit-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        border: 4px solid transparent;
+        box-sizing: border-box;
+      }
+      .profile-avatar-wrapper:hover .avatar-edit-overlay { opacity: 1; }
+      .edit-icon { color: white; font-size: 1.5rem; }
       
       .header-details-container { flex: 1; display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; }
       .header-info-group { display: flex; flex-direction: column; gap: 0.15rem; }
       .name-badge-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-      .profile-display-name { font-size: 2rem; color: #1e293b; margin: 0; font-weight: 800; line-height: 1.1; }
+      .profile-display-name { font-size: 2rem; color: var(--text-primary); margin: 0; font-weight: 800; line-height: 1.1; }
       
       .pro-badge-circle { width: 18px; height: 18px; background: #0a66c2; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; position: relative; }
       .pro-badge-circle::after { content: '✓'; color: white; font-size: 10px; font-weight: 900; }
@@ -407,35 +431,35 @@ import { AuthService, UserRole } from '../services/auth.service';
       .farming-insignia-classic .f-text { font-size: 9px; font-weight: 900; letter-spacing: 0.5px; }
       
       .profile-subtitle { font-size: 1.1rem; color: #475569; margin: 0.1rem 0 0.4rem 0; font-weight: 600; }
-      .profile-meta-data { font-size: 0.9rem; color: #64748b; display: flex; align-items: center; gap: 0.5rem; }
+      .profile-meta-data { font-size: 0.9rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem; }
       .meta-link { color: #0a66c2; text-decoration: none; font-weight: 600; }
       .meta-link:hover { text-decoration: underline; }
       
-      .profile-quick-stats { margin-top: 0.75rem; display: flex; gap: 1.5rem; font-size: 0.9rem; color: #64748b; }
-      .quick-stat strong { color: #1e293b; }
+      .profile-quick-stats { margin-top: 0.75rem; display: flex; gap: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); }
+      .quick-stat strong { color: var(--text-primary); }
 
       .header-actions-group { display: flex; flex-direction: column; gap: 0.75rem; min-width: 200px; }
       .btn-lw-primary { background: #0a66c2; color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 2rem; font-weight: 700; cursor: pointer; transition: background 0.2s; text-decoration: none; display: inline-block; text-align: center; }
       .btn-lw-primary:hover { background: #004182; }
       .btn-lw-premium { background: linear-gradient(135deg, #8a1c61 0%, #4f46e5 100%); color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 2rem; font-weight: 700; cursor: pointer; }
-      .btn-lw-outline { background: white; border: 1px solid #0a66c2; color: #0a66c2; padding: 0.6rem 1.5rem; border-radius: 2rem; font-weight: 700; cursor: pointer; }
-      .btn-lw-ghost { background: transparent; border: none; color: #64748b; padding: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+      .btn-lw-outline { background: var(--card-bg); border: 1px solid #0a66c2; color: #0a66c2; padding: 0.6rem 1.5rem; border-radius: 2rem; font-weight: 700; cursor: pointer; }
+      .btn-lw-ghost { background: transparent; border: none; color: var(--text-secondary); padding: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
 
       /* Body Grid Overhaul */
       .profile-container-premium { display: grid; grid-template-columns: 1fr 320px; gap: 2rem; align-items: start; margin-top: 1.5rem; }
       .profile-main-col { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
       .section-profile { padding: 2rem; width: 100%; box-sizing: border-box; }
-      .section-title { font-size: 1.25rem; color: #1e293b; margin: 0 0 1.25rem 0; font-weight: 600; }
+      .section-title { font-size: 1.25rem; color: var(--text-primary); margin: 0 0 1.25rem 0; font-weight: 600; }
       .section-text { font-size: 1rem; color: #475569; line-height: 1.6; }
       
       .review-item-modern { display: flex; gap: 1.25rem; padding: 1.5rem 0; border-bottom: 1px solid #f1f5f9; align-items: flex-start; }
-      .reviewer-img { width: 48px !important; height: 48px !important; min-width: 48px; border-radius: 50%; background: #f8fafc; object-fit: cover; border: 1px solid #e2e8f0; }
+      .reviewer-img { width: 48px !important; height: 48px !important; min-width: 48px; border-radius: 50%; background: var(--input-bg); object-fit: cover; border: 1px solid var(--border-color); }
 
       /* Certifications Premium */
       .section-premium { padding: 0; }
       .section-header-premium { padding: 1.5rem 1.5rem 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; }
-      .premium-title { font-size: 1.2rem; color: #1e293b; margin: 0; font-weight: 700; }
-      .btn-add-premium { background: #f1f5f9; border: none; color: #0a66c2; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 0.85rem; }
+      .premium-title { font-size: 1.2rem; color: var(--text-primary); margin: 0; font-weight: 700; }
+      .btn-add-premium { background: var(--bg-surface-2); border: none; color: #0a66c2; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 0.85rem; }
       .btn-add-premium:hover { background: #e2e8f0; }
 
       .certifications-grid-premium { padding: 1rem; display: grid; grid-template-columns: 1fr; gap: 1rem; }
@@ -444,7 +468,7 @@ import { AuthService, UserRole } from '../services/auth.service';
         gap: 1.25rem; 
         padding: 1.25rem; 
         border-radius: 0.75rem; 
-        border: 1px solid #e2e8f0; 
+        border: 1px solid var(--border-color); 
         background: #fdfdfd; 
         position: relative;
         transition: transform 0.2s, box-shadow 0.2s;
@@ -452,28 +476,28 @@ import { AuthService, UserRole } from '../services/auth.service';
       .cert-card-premium:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: #0a66c2; }
       
       .cert-ribbon { position: absolute; top: 0; right: 20px; background: #0a66c2; color: white; padding: 2px 8px; font-size: 0.7rem; font-weight: 900; border-radius: 0 0 4px 4px; }
-      .cert-icon-box { width: 50px; height: 50px; background: #f8fafc; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 1px solid #f1f5f9; }
+      .cert-icon-box { width: 50px; height: 50px; background: var(--input-bg); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 1px solid #f1f5f9; }
       .cert-content-premium { flex: 1; }
-      .cert-name-premium { font-size: 1.05rem; margin: 0; color: #1e293b; font-weight: 700; }
-      .cert-entity-premium { font-size: 0.9rem; color: #64748b; margin: 0.25rem 0; }
+      .cert-name-premium { font-size: 1.05rem; margin: 0; color: var(--text-primary); font-weight: 700; }
+      .cert-entity-premium { font-size: 0.9rem; color: var(--text-secondary); margin: 0.25rem 0; }
       .cert-meta-premium { display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; }
-      .cert-date-premium { font-size: 0.8rem; color: #94a3b8; }
+      .cert-date-premium { font-size: 0.8rem; color: var(--text-muted); }
       .cert-verify-link { font-size: 0.8rem; color: #0a66c2; font-weight: 600; cursor: pointer; }
       
-      .empty-premium-section { text-align: center; padding: 3rem; color: #94a3b8; }
+      .empty-premium-section { text-align: center; padding: 3rem; color: var(--text-muted); }
       .empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.3; }
 
       .side-premium-card { padding: 1.25rem; }
-      .side-card-title { font-size: 1rem; margin: 0 0 1.25rem 0; color: #1e293b; font-weight: 700; }
+      .side-card-title { font-size: 1rem; margin: 0 0 1.25rem 0; color: var(--text-primary); font-weight: 700; }
       .contact-methods { display: grid; gap: 1rem; }
       .contact-method { display: flex; flex-direction: column; }
-      .method-label { font-size: 0.8rem; color: #64748b; font-weight: 600; margin-bottom: 0.1rem; }
-      .method-value { font-size: 0.95rem; color: #1e293b; font-weight: 500; }
+      .method-label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; margin-bottom: 0.1rem; }
+      .method-value { font-size: 0.95rem; color: var(--text-primary); font-weight: 500; }
 
       .reputation-dashboard { text-align: center; padding: 0.5rem 0; }
       .reputation-score { margin-bottom: 1rem; }
       .score-number { display: block; font-size: 2.5rem; font-weight: 800; color: #0a66c2; line-height: 1; }
-      .score-label { font-size: 0.85rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+      .score-label { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
       
       .reputation-badge { margin-bottom: 1.5rem; }
       .level-text { 
@@ -496,19 +520,19 @@ import { AuthService, UserRole } from '../services/auth.service';
 
       /* Modal Style */
       .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-      .modal-card-premium { background: white; width: 90%; max-width: 600px; border-radius: 1rem; overflow-y: auto; max-height: 90vh; animation: slideUp 0.3s ease; }
+      .modal-card-premium { background: var(--card-bg); width: 90%; max-width: 600px; border-radius: 1rem; overflow-y: auto; max-height: 90vh; animation: slideUp 0.3s ease; }
       @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
       
-      .modal-header-premium { padding: 1.5rem 2rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-      .modal-header-premium h2 { margin: 0; font-size: 1.25rem; color: #1e293b; font-weight: 800; }
-      .modal-close-btn { background: none; border: none; font-size: 1.75rem; color: #94a3b8; cursor: pointer; }
+      .modal-header-premium { padding: 1.5rem 2rem; background: var(--input-bg); border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+      .modal-header-premium h2 { margin: 0; font-size: 1.25rem; color: var(--text-primary); font-weight: 800; }
+      .modal-close-btn { background: none; border: none; font-size: 1.75rem; color: var(--text-muted); cursor: pointer; }
       
       .modal-body-premium { padding: 2rem; }
-      .modal-intro { color: #64748b; margin-bottom: 1.5rem; font-size: 0.95rem; }
+      .modal-intro { color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem; }
       
       .form-row-premium { margin-bottom: 1.25rem; }
       .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-      .form-group-premium label { display: block; font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; }
+      .form-group-premium label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
       
       .select-premium, .textarea-premium { 
         width: 100%; padding: 0.75rem; border: 1.5px solid #e2e8f0; border-radius: 0.75rem; font-size: 0.95rem; outline: none; background: #fff; box-sizing: border-box;
@@ -519,7 +543,7 @@ import { AuthService, UserRole } from '../services/auth.service';
       .btn-upgrade-action { width: 100%; background: #0a66c2; color: white; border: none; padding: 1rem; border-radius: 0.75rem; font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
       .btn-upgrade-action:hover { background: #004182; transform: translateY(-1px); }
 
-      .empty-section { text-align: center; padding: 2rem; color: #94a3b8; font-style: italic; font-size: 0.9rem; }
+      .empty-section { text-align: center; padding: 2rem; color: var(--text-muted); font-style: italic; font-size: 0.9rem; }
 
       .history-list-premium { padding: 0.5rem 0; }
       .history-item-premium { 
@@ -530,7 +554,7 @@ import { AuthService, UserRole } from '../services/auth.service';
         border-bottom: 1px solid #f1f5f9;
         transition: background 0.2s;
       }
-      .history-item-premium:hover { background: #f8fafc; }
+      .history-item-premium:hover { background: var(--input-bg); }
       .history-icon-box { 
         width: 40px; 
         height: 40px; 
@@ -543,8 +567,8 @@ import { AuthService, UserRole } from '../services/auth.service';
         font-size: 1.2rem;
       }
       .history-content-premium { flex: 1; }
-      .history-title { font-size: 0.95rem; margin: 0; color: #1e293b; font-weight: 700; }
-      .history-meta { font-size: 0.8rem; color: #64748b; margin: 0.2rem 0 0; }
+      .history-title { font-size: 0.95rem; margin: 0; color: var(--text-primary); font-weight: 700; }
+      .history-meta { font-size: 0.8rem; color: var(--text-secondary); margin: 0.2rem 0 0; }
       .status-pill { 
         font-size: 0.7rem; 
         padding: 2px 8px; 
@@ -570,13 +594,13 @@ import { AuthService, UserRole } from '../services/auth.service';
       .farming-toggle { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; }
       .farming-toggle input { display: none; }
       .toggle-slider { width: 44px; height: 22px; background: #cbd5e1; border-radius: 20px; position: relative; transition: 0.3s; }
-      .toggle-slider::before { content: ""; position: absolute; width: 18px; height: 18px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: 0.3s; }
+      .toggle-slider::before { content: ""; position: absolute; width: 18px; height: 18px; background: var(--card-bg); border-radius: 50%; top: 2px; left: 2px; transition: 0.3s; }
       .farming-toggle input:checked + .toggle-slider { background: #d946ef; }
       .farming-toggle input:checked + .toggle-slider::before { transform: translateX(22px); }
       .toggle-label { font-size: 0.9rem; font-weight: 700; color: #86198f; }
 
       .file-label-premium { 
-        display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 2px dashed #cbd5e1; border-radius: 0.75rem; cursor: pointer; transition: 0.2s; background: #f8fafc;
+        display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 2px dashed #cbd5e1; border-radius: 0.75rem; cursor: pointer; transition: 0.2s; background: var(--input-bg);
       }
       .file-label-premium:hover { border-color: #0a66c2; background: #eff6ff; }
 
@@ -693,6 +717,9 @@ export class ProfileComponent implements OnInit {
     try {
       const profile = await firstValueFrom(this.api.getProfile(userId));
       this.profile.set(profile);
+      if (profile.roles?.length) {
+        this.auth.setAvailableRoles(profile.roles as UserRole[]);
+      }
       this.activeTab.set('details');
       this.profileEditor = {
         idUsuario: profile.idUsuario || 0,
@@ -765,11 +792,9 @@ export class ProfileComponent implements OnInit {
     if (!id) return;
     this.loading.set(true);
     try {
-      await firstValueFrom(this.api.upgradeToWorker(id, this.upgradeForm));
-      
-      if (!this.auth.availableRoles().includes('ROLE_TRABAJADOR')) {
-        this.auth.addAvailableRole('ROLE_TRABAJADOR');
-      }
+      const updated = await firstValueFrom(this.api.upgradeToWorker(id, this.upgradeForm));
+      const token = localStorage.getItem('linkedwork_jwt_token') || undefined;
+      this.auth.loginFromApiUser(updated, token);
       await this.auth.switchRole('ROLE_TRABAJADOR').toPromise();
       
       this.showUpgradeModal.set(false);
@@ -794,7 +819,11 @@ export class ProfileComponent implements OnInit {
 
     this.loading.set(true);
     try {
-      await firstValueFrom(this.api.createDirectRequest(userId, workerUserId, this.requestForm));
+      const payload = {
+        ...this.requestForm,
+        idArea: this.profile()?.trabajador?.areaId || 0
+      };
+      await firstValueFrom(this.api.createDirectRequest(userId, workerUserId, payload));
       this.successMessage.set('Solicitud enviada.');
       this.showRequestModal.set(false);
     } catch { this.errorMessage.set('Error al enviar.'); } finally { this.loading.set(false); }
@@ -819,8 +848,28 @@ export class ProfileComponent implements OnInit {
     if (file) this.selectedFile.set(file);
   }
 
+  onAvatarFileSelected(event: any) {
+    const file = event.target.files?.[0];
+    const userId = this.auth.userId();
+    if (file && userId) {
+      this.loading.set(true);
+      this.errorMessage.set(null);
+      this.successMessage.set(null);
+      firstValueFrom(this.api.uploadProfilePicture(userId, file)).then(updatedUser => {
+        this.profile.set(updatedUser);
+        if (updatedUser.fotoPerfil) {
+          this.auth.userFotoPerfil.set(updatedUser.fotoPerfil);
+          localStorage.setItem('linkedwork_user_foto_perfil', updatedUser.fotoPerfil);
+        }
+        this.successMessage.set('Foto de perfil actualizada exitosamente.');
+      }).catch(err => {
+        this.errorMessage.set('Error al subir la foto de perfil.');
+      }).finally(() => this.loading.set(false));
+    }
+  }
+
   hasWorkerRole() { return this.auth.availableRoles().includes('ROLE_TRABAJADOR'); }
-  hasMultipleRoles() { return this.auth.availableRoles().length > 1; }
+  hasMultipleRoles() { return this.auth.hasMultipleRoles(); }
   otherRoleLabel() { return this.auth.role() === 'ROLE_USUARIO' ? 'Trabajador' : 'Usuario'; }
   isUser() { return this.auth.role() === 'ROLE_USUARIO'; }
 
@@ -828,8 +877,10 @@ export class ProfileComponent implements OnInit {
     const nextRole = this.auth.role() === 'ROLE_TRABAJADOR' ? 'ROLE_USUARIO' : 'ROLE_TRABAJADOR';
     this.loading.set(true);
     try {
-      await this.auth.switchRole(nextRole).toPromise();
-      await this.reloadProfile();
+      const applied = await this.auth.switchRole(nextRole).toPromise();
+      if (applied === nextRole) {
+        this.router.navigateByUrl(nextRole === 'ROLE_TRABAJADOR' ? '/requests' : '/');
+      }
     } finally { this.loading.set(false); }
   }
 
@@ -838,5 +889,9 @@ export class ProfileComponent implements OnInit {
   async onDepartamentoChange() { 
     if (!this.upgradeForm.idDepartamento) return;
     try { const list = await firstValueFrom(this.api.getCiudades(this.upgradeForm.idDepartamento)); this.ciudades.set(list || []); } catch { }
+  }
+
+  photoUrl(foto?: string | null, seed?: string | null): string {
+    return profilePhotoUrl(foto, seed);
   }
 }

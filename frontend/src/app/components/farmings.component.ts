@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { profilePhotoUrl } from '../utils/media-url';
 
 @Component({
   selector: 'app-farmings',
@@ -110,7 +111,7 @@ import { AuthService } from '../services/auth.service';
             <div *ngFor="let item of filteredFarmings()" class="user-network-row card">
               <div class="user-avatar-column">
                 <div class="user-avatar-wrapper">
-                  <img [src]="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + item.nombreUsuario" alt="Avatar" />
+                  <img [src]="photoUrl(item.fotoPerfil, item.nombreUsuario)" alt="Avatar" />
                 </div>
               </div>
               
@@ -164,37 +165,38 @@ import { AuthService } from '../services/auth.service';
         align-items: start;
       }
       
-      .sidebar-filters { position: sticky; top: 80px; background: white; }
-      .filters-header { padding: 1.25rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 0.75rem; }
-      .filters-header h3 { font-size: 1rem; margin: 0; color: #1e293b; font-weight: 800; }
+      .sidebar-filters { position: sticky; top: 80px; background: var(--card-bg); transition: background 0.3s; }
+      .filters-header { padding: 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.75rem; }
+      .filters-header h3 { font-size: 1rem; margin: 0; color: var(--text-primary); font-weight: 800; }
       .filters-icon { font-size: 1.25rem; }
       
       .filters-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1.5rem; }
-      .filter-group label { display: block; font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px; }
+      .filter-group label { display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px; }
       
-      .filter-select, .filter-input { width: 100%; padding: 0.6rem; border: 1.5px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.85rem; outline: none; }
-      .filter-select:focus, .filter-input:focus { border-color: #0a66c2; }
+      .filter-select, .filter-input { width: 100%; padding: 0.6rem; border: 1.5px solid var(--border-color); border-radius: 0.5rem; font-size: 0.85rem; outline: none; background: var(--input-bg); color: var(--text-primary); }
+      .filter-select:focus, .filter-input:focus { border-color: var(--color-brand); }
       
       .filter-options { display: flex; flex-direction: column; gap: 0.4rem; }
-      .option-check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #475569; cursor: pointer; font-weight: 500; }
+      .option-check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer; font-weight: 500; }
       .option-check input { width: 16px; height: 16px; }
       
-      .farming-toggle-filter { display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; font-weight: 700; color: #1e1b4b; cursor: pointer; }
+      .farming-toggle-filter { display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; font-weight: 700; color: var(--text-primary); cursor: pointer; }
       .farming-toggle-filter input { display: none; }
-      .toggle-track { width: 36px; height: 20px; background: #cbd5e1; border-radius: 20px; position: relative; transition: 0.3s; }
+      .toggle-track { width: 36px; height: 20px; background: var(--bg-surface-3); border-radius: 20px; position: relative; transition: 0.3s; }
       .toggle-track::before { content: ""; position: absolute; width: 14px; height: 14px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: 0.3s; }
-      .farming-toggle-filter input:checked + .toggle-track { background: #0a66c2; }
+      .farming-toggle-filter input:checked + .toggle-track { background: var(--color-brand); }
       .farming-toggle-filter input:checked + .toggle-track::before { transform: translateX(16px); }
       
-      .btn-reset-filters { background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.6rem; border-radius: 0.5rem; font-size: 0.8rem; font-weight: 700; color: #64748b; cursor: pointer; }
-      .btn-reset-filters:hover { background: #f1f5f9; color: #1e293b; }
+      .btn-reset-filters { background: var(--bg-surface-2); border: 1px solid var(--border-color); padding: 0.6rem; border-radius: 0.5rem; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; }
+      .btn-reset-filters:hover { background: var(--bg-surface-3); color: var(--text-primary); }
 
       .card {
-        background: white;
+        background: var(--card-bg);
         border-radius: 0.75rem;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--border-color);
         overflow: hidden;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        box-shadow: var(--shadow-sm);
+        transition: background 0.3s, border-color 0.3s;
       }
 
       /* Sidebar Network */
@@ -214,7 +216,7 @@ import { AuthService } from '../services/auth.service';
       /* Network Main */
       .invite-card { 
         padding: 2.5rem; 
-        background: linear-gradient(135deg, #0a66c2 0%, #004182 100%); 
+        background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-accent) 100%); 
         color: white;
         text-align: center;
         display: flex;
@@ -228,14 +230,14 @@ import { AuthService } from '../services/auth.service';
       .search-input-wrapper { 
         display: flex; 
         align-items: center; 
-        background: white; 
+        background: var(--card-bg); 
         border: none; 
         border-radius: 0.5rem; 
         padding: 0.75rem 1.5rem; 
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       }
       .search-icon { margin-right: 0.75rem; }
-      .search-input-wrapper input { border: none; flex: 1; outline: none; font-size: 0.9rem; padding: 0.25rem 0; }
+      .search-input-wrapper input { border: none; flex: 1; outline: none; font-size: 0.9rem; padding: 0.25rem 0; background: transparent; color: var(--text-primary); }
 
       .section-header { display: flex; justify-content: space-between; align-items: center; }
       .section-header h3 { font-size: 1.1rem; color: #1e293b; margin: 0; font-weight: 400; }
@@ -275,7 +277,7 @@ import { AuthService } from '../services/auth.service';
       
       .user-info-column { display: flex; flex-direction: column; gap: 0.25rem; }
       .user-name-row { display: flex; align-items: center; gap: 0.5rem; }
-      .user-name { font-size: 1.4rem; margin: 0; color: #1e293b; font-weight: 700; }
+      .user-name { font-size: 1.4rem; margin: 0; color: var(--text-primary); font-weight: 700; }
       .pro-circle { 
         width: 14px; 
         height: 14px; 
@@ -287,7 +289,7 @@ import { AuthService } from '../services/auth.service';
       }
 
       .user-role-row { display: flex; align-items: center; gap: 0.75rem; }
-      .user-role { font-size: 1.1rem; color: #64748b; margin: 0; font-weight: 500; }
+      .user-role { font-size: 1.1rem; color: var(--text-secondary); margin: 0; font-weight: 500; }
       
       .user-stats-row { display: flex; gap: 1.25rem; align-items: center; margin-top: 0.5rem; }
       .level-pill { 
@@ -310,10 +312,10 @@ import { AuthService } from '../services/auth.service';
       .location-mini { font-size: 0.9rem; color: #64748b; font-weight: 500; }
       .points-mini { font-size: 0.95rem; color: #0a66c2; font-weight: 800; background: #f0f9ff; padding: 2px 8px; border-radius: 4px; }
 
-      .connect-btn { background: white; border: 1px solid #0a66c2; color: #0a66c2; padding: 0.5rem 1.5rem; border-radius: 2rem; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
-      .connect-btn:hover { background: #0a66c2; color: white; }
+      .connect-btn { background: var(--card-bg); border: 1px solid var(--color-brand); color: var(--color-brand); padding: 0.5rem 1.5rem; border-radius: 2rem; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
+      .connect-btn:hover { background: var(--color-brand); color: white; }
 
-      .empty-state-card { padding: 3rem; text-align: center; color: #64748b; font-style: italic; }
+      .empty-state-card { padding: 3rem; text-align: center; color: var(--text-secondary); font-style: italic; }
 
       @media (max-width: 900px) {
         .network-layout { grid-template-columns: 1fr; padding: 1rem; }
@@ -487,5 +489,9 @@ export class FarmingsComponent implements OnInit, OnDestroy {
     if (score >= 501) return 'Experto';
     if (score >= 101) return 'Profesional';
     return 'Aprendiz';
+  }
+
+  photoUrl(foto?: string | null, seed?: string | null): string {
+    return profilePhotoUrl(foto, seed);
   }
 }

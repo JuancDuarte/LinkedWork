@@ -29,8 +29,14 @@ import com.contact.LinkedWork.repository.UsuarioRepository;
 public class CalificacionService {
 
     @Autowired
+    private EmailService emailService;
+
+    @Autowired
     @Qualifier("CrudCalificacionRepository")
     private CalificacionRepository calificacionRepository;
+
+    @Autowired
+    private MediaUrlService mediaUrlService;
 
     @Autowired
     @Qualifier("CrudSolicitudRepository")
@@ -70,6 +76,30 @@ public class CalificacionService {
         historial.setEstadoNuevo("Finalizada");
         historial.setFecha(LocalDateTime.now());
         solicitudHistorialRepository.save(historial);
+
+        // Buscar al trabajador que aceptó la oferta para enviar las notificaciones de finalización
+        Oferta ofertaAceptada = solicitud.getOfertas().stream()
+                .filter(o -> "Aceptada".equalsIgnoreCase(o.getEstado()))
+                .findFirst()
+                .orElse(null);
+
+        if (ofertaAceptada != null) {
+            try {
+                String clientEmail = solicitud.getUsuario().getEmail();
+                String clientName = solicitud.getUsuario().getNombreCompleto();
+                String workerEmail = ofertaAceptada.getTrabajador().getUsuario().getEmail();
+                String workerName = ofertaAceptada.getTrabajador().getUsuario().getNombreCompleto();
+                String jobTitle = solicitud.getTitulo();
+
+                // Notificar al cliente
+                emailService.sendJobFinishedNotification(clientEmail, clientName, workerEmail, workerName, jobTitle, true);
+                // Notificar al trabajador
+                emailService.sendJobFinishedNotification(clientEmail, clientName, workerEmail, workerName, jobTitle, false);
+            } catch (Exception e) {
+                System.err.println("Error al enviar notificaciones de finalización de trabajo: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
     }
 
     public void calificarTrabajador(Long idUsuario, Long idSolicitud, Long puntuacion, String comentario) {
@@ -146,7 +176,10 @@ public class CalificacionService {
                     dto.setIdSolicitud(c.getSolicitud().getIdSolicitud().intValue());
                     dto.setPuntuacion(c.getPuntuacion().intValue());
                     dto.setComentario(c.getComentario());
-                    dto.setNombreUsuario(c.getUsuario().getNombreCompleto());
+                    dto.setNombreUsuario(c.getUsuario().getNombreCompleto() != null
+                            ? c.getUsuario().getNombreCompleto()
+                            : c.getUsuario().getNombreUsuario());
+                    dto.setFotoUsuarioUrl(mediaUrlService.toPublicUrl(c.getUsuario().getFotoPerfil()));
                     dto.setFechaCreacion(c.getFechaCreacion());
                     return dto;
                 })
@@ -161,16 +194,19 @@ public class CalificacionService {
         dto.setEstado(s.getEstado());
         dto.setFechaCreacion(s.getFechaCreacion());
         dto.setIdUsuario(s.getUsuario().getIdUsuario());
-        dto.setNombreUsuario(s.getUsuario().getNombreCompleto());
-        if (s.getArea() != null) {
-            dto.setIdArea(s.getArea().getIdArea());
-            dto.setNombreArea(s.getArea().getNombre());
-        }
+        dto.setNombreUsuario(s.getUsuario().getNombreCompleto() != null
+                ? s.getUsuario().getNombreCompleto()
+                : s.getUsuario().getNombreUsuario());
+        dto.setFotoUsuarioUrl(mediaUrlService.toPublicUrl(s.getUsuario().getFotoPerfil()));
+        dto.setIdArea(s.getArea().getIdArea());
+        dto.setNombreArea(s.getArea().getNombre());
         dto.setPrecio(s.getPrecio());
         dto.setFechaServicio(s.getFechaServicio());
         dto.setDireccion(s.getDireccion());
         dto.setHoraEncuentro(s.getHoraEncuentro());
         dto.setNotas(s.getNotas());
+        dto.setLatitud(s.getLatitud());
+        dto.setLongitud(s.getLongitud());
         
         // Agregar info del trabajador si está aceptada
         s.getOfertas().stream()
@@ -178,10 +214,15 @@ public class CalificacionService {
             .findFirst()
             .ifPresent(o -> {
                 dto.setIdTrabajador(o.getTrabajador().getIdTrabajador());
-                dto.setNombreTrabajador(o.getTrabajador().getUsuario().getNombreCompleto());
-                dto.setIdUsuarioTrabajador(o.getTrabajador().getUsuario().getIdUsuario());
+                if (o.getTrabajador().getUsuario() != null) {
+                    var tu = o.getTrabajador().getUsuario();
+                    dto.setNombreTrabajador(tu.getNombreCompleto() != null
+                            ? tu.getNombreCompleto()
+                            : tu.getNombreUsuario());
+                    dto.setFotoTrabajadorUrl(mediaUrlService.toPublicUrl(tu.getFotoPerfil()));
+                }
             });
-            
+
         return dto;
     }
 }

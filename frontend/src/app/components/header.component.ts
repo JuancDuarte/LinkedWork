@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal,  OnInit } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -6,6 +6,7 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService, UserRole } from '../services/auth.service';
 import { ApiService } from '../services/api.service';
 import { Notifications } from "./notifications.components";
+import { profilePhotoUrl } from '../utils/media-url';
 
 @Component({
   selector: 'app-header',
@@ -18,6 +19,7 @@ export class HeaderComponent implements OnInit {
   auth = inject(AuthService);
   private router = inject(Router);
   menuOpen = signal(false);
+
 
   toggleRole = computed<UserRole>(() => this.auth.role() === 'ROLE_TRABAJADOR' ? 'ROLE_USUARIO' : 'ROLE_TRABAJADOR');
   toggleRoleLabel = computed(() => {
@@ -33,10 +35,11 @@ export class HeaderComponent implements OnInit {
 
   switchRole() {
     const nextRole = this.toggleRole();
-    if (!this.auth.availableRoles().includes(nextRole)) {
-      this.auth.setAvailableRoles(['ROLE_USUARIO', 'ROLE_TRABAJADOR']);
-    }
-    this.auth.switchRole(nextRole).subscribe();
+    this.auth.switchRole(nextRole).subscribe((applied) => {
+      if (applied === nextRole) {
+        this.router.navigateByUrl(nextRole === 'ROLE_TRABAJADOR' ? '/requests' : '/');
+      }
+    });
     this.closeMenu();
   }
 
@@ -56,9 +59,11 @@ export class HeaderComponent implements OnInit {
   showNotifications = signal(false);
 
   unreadCount = signal(0);
-   private apiService = inject(ApiService)
+  private apiService = inject(ApiService)
   ngOnInit(): void {
-
+        if (this.auth.isLoggedIn()) {
+      this.auth.refreshRolesFromServer();
+    }
     this.unreadCount();
 
     // ACTUALIZAR CADA 15 SEGUNDOS
@@ -108,4 +113,8 @@ export class HeaderComponent implements OnInit {
   }
 
 
+
+  photoUrl(foto?: string | null, seed?: string | null): string {
+    return profilePhotoUrl(foto, seed);
+  }
 }

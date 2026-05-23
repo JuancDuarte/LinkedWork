@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.springframework.web.bind.annotation.PutMapping;
+import jakarta.validation.Valid;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,14 +29,22 @@ import com.contact.LinkedWork.dto.CreateUsuarioDTO;
 import com.contact.LinkedWork.dto.UsuarioDTO;
 import com.contact.LinkedWork.dto.LoginDTO;
 import com.contact.LinkedWork.dto.ListarTrabajadorDTO;
-import com.contact.LinkedWork.dto.UpdateEncounterDTO;
-import com.contact.LinkedWork.dto.CertificadoDTO;
 import com.contact.LinkedWork.service.UsuarioService;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @RestController
 @RequestMapping("/")
 @CrossOrigin(origins = "*")
-
 public class UsuarioController {
     @Autowired
     @Qualifier("UsuarioService")
@@ -103,7 +112,7 @@ public class UsuarioController {
     }
 
     @PostMapping(path = "/CreateUser", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UsuarioDTO> createUser(@RequestBody CreateUsuarioDTO payload) {
+    public ResponseEntity<?> createUser(@Valid @RequestBody CreateUsuarioDTO payload) {
         System.out.println("CreateUser called with: " + payload);
         try {
             String nombre = payload.getNombre();
@@ -116,7 +125,6 @@ public class UsuarioController {
             Integer idDepartamento = payload.getIdDepartamento();
             Integer idCiudad = payload.getIdCiudad();
             String nombreUsuario = payload.getNombreUsuario();
-            List<CertificadoDTO> certificados = payload.getCertificados();
 
             if (nombre == null || nombre.trim().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
@@ -128,11 +136,40 @@ public class UsuarioController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
             }
 
-            UsuarioDTO created = usuarioService.createUser(nombreUsuario, nombre, email, password, roles, areaId, descripcion, experiencia, idDepartamento, idCiudad, certificados);
-            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+            UsuarioDTO created = usuarioService.createUser(nombreUsuario, nombre, email, password, roles, areaId, descripcion, experiencia, idDepartamento, idCiudad);
+            Map<String, Object> response = new java.util.HashMap<>();
+            response.put("user", created);
+            response.put("requiresVerification", true);
+            response.put("message", "Cuenta creada. Revisa tu correo para verificar tu cuenta antes de iniciar sesión.");
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+        }
+    }
+
+    @GetMapping(path = "/verify-email", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> verifyEmail(@org.springframework.web.bind.annotation.RequestParam String token) {
+        try {
+            UsuarioDTO usuario = usuarioService.verifyEmail(token);
+            String jwt = jwtUtil.generateToken(usuario.getIdUsuario(), usuario.getEmail());
+            Map<String, Object> response = new java.util.HashMap<>();
+            response.put("token", jwt);
+            response.put("user", usuario);
+            response.put("message", "Correo verificado correctamente. Ya puedes usar LinkedWork.");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+        }
+    }
+
+    @PostMapping(path = "/resend-verification", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> resendVerification(@RequestBody Map<String, String> payload) {
+        try {
+            String email = payload.get("email");
+            usuarioService.resendVerificationEmail(email);
+            return ResponseEntity.ok(Map.of("message", "Correo de verificación reenviado"));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
         }
     }
 
@@ -182,5 +219,59 @@ public class UsuarioController {
     @GetMapping(path = "/listCiudades/{idDepartamento}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<com.contact.LinkedWork.model.Ciudad>> listCiudades(@PathVariable Integer idDepartamento) {
         return ResponseEntity.ok(usuarioService.getCiudadesByDepartamento(idDepartamento));
+    }
+
+    @PostMapping(path = "/uploadFotoPerfil/{idUsuario}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UsuarioDTO> uploadFotoPerfil(@PathVariable Long idUsuario, @RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            }
+            String uploadDirStr = "./uploads/";
+            File uploadDir = new File(uploadDirStr);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String filename = System.currentTimeMillis() + "_" + idUsuario + extension;
+
+            Path path = Paths.get(uploadDirStr + filename);
+            Files.write(path, file.getBytes());
+
+            UsuarioDTO updated = usuarioService.updateFotoPerfil(idUsuario, filename);
+            return ResponseEntity.ok(updated);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @GetMapping(path = "/uploads/{filename:.+}")
+    public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
+        try {
+            Path file = Paths.get("./uploads").resolve(filename);
+            Resource resource = new UrlResource(file.toUri());
+            if (resource.exists() || resource.isReadable()) {
+                String contentType = Files.probeContentType(file);
+                if (contentType == null) {
+                    contentType = "application/octet-stream";
+                }
+                return ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType(contentType))
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (MalformedURLException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { ApiService, ApiCertificado } from '../services/api.service';
 import { AuthService, UserRole } from '../services/auth.service';
+import { environment } from '../../environments/environment';
 
 declare var google: any;
 
@@ -36,17 +37,16 @@ declare var google: any;
 
             <form *ngIf="activeTab() === 'login'" (ngSubmit)="submitLogin()" class="panel">
               <div class="field">
-                <label for="loginId">Cédula (CC)</label>
+                <label for="loginId">Correo electrónico</label>
                 <div class="field-row">
                   <input
                     id="loginId"
-                    type="text"
-                    inputmode="numeric"
+                    type="email"
                     [(ngModel)]="loginId"
                     name="loginId"
                     required
-                    autocomplete="username"
-                    placeholder="Número de cédula"
+                    autocomplete="email"
+                    placeholder="ejemplo@correo.com"
                   />
                 </div>
               </div>
@@ -77,8 +77,8 @@ declare var google: any;
                 <span>O</span>
               </div>
 
-              <div class="google-login-container">
-                <div id="google-btn"></div>
+              <div class="google-login-container" style="flex-direction: column; align-items: center; gap: 0.5rem; display: flex; width: 100%;">
+                <div id="google-btn" style="width: 100%;"></div>
               </div>
 
               <p class="form-note">
@@ -1004,7 +1004,14 @@ export class AuthComponent implements OnInit {
     this.loading.set(true);
 
     if (!this.loginId) {
-      this.errorMessage.set('⚠️ Por favor ingresa tu número de cédula.');
+      this.errorMessage.set('⚠️ Por favor ingresa tu correo electrónico.');
+      this.loading.set(false);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.loginId.trim())) {
+      this.errorMessage.set('⚠️ Por favor ingresa un correo electrónico válido.');
       this.loading.set(false);
       return;
     }
@@ -1016,12 +1023,7 @@ export class AuthComponent implements OnInit {
     }
 
     try {
-      // If loginId looks like a positive integer, send it as idUsuario (number),
-      // otherwise send it as nombreUsuario (string).
-      const parsed = parseInt(this.loginId ?? '', 10);
-      const usuarioPayload: number | string = (!Number.isNaN(parsed) && String(parsed) === (this.loginId ?? '').trim())
-        ? parsed
-        : (this.loginId ?? '');
+      const usuarioPayload = this.loginId.trim();
 
       const response = await firstValueFrom(
         this.api.loginUser({
@@ -1073,8 +1075,13 @@ export class AuthComponent implements OnInit {
       const statusCode = error?.status;
       let friendlyMessage = '❌ No se pudo iniciar sesión.';
 
-      if (statusCode === 401 || statusCode === 400) {
-        friendlyMessage = '❌ Cédula o contraseña incorrecta. Verifica tus datos.';
+      if (error?.error && typeof error.error === 'string') {
+        // Si el backend responde con un string plano como 'Usuario bloqueado...' o 'Credenciales inválidas'
+        friendlyMessage = `❌ ${error.error}`;
+      } else if (error?.error?.message) {
+        friendlyMessage = `❌ ${error.error.message}`;
+      } else if (statusCode === 401 || statusCode === 400) {
+        friendlyMessage = '❌ Correo o contraseña incorrecta. Verifica tus datos.';
       } else if (statusCode === 404) {
         friendlyMessage = '❌ Esta cuenta no existe. ¿Deseas crear una nueva?';
       } else if (statusCode === 500) {
@@ -1093,6 +1100,11 @@ export class AuthComponent implements OnInit {
       this.activeTab.set('register');
     }
 
+    const verifyToken = this.route.snapshot.queryParamMap.get('verify');
+    if (verifyToken) {
+      this.verifyEmailToken(verifyToken);
+    }
+
     if (this.auth.isLoggedIn()) {
       this.router.navigate(['/']);
     }
@@ -1106,7 +1118,7 @@ export class AuthComponent implements OnInit {
       if (typeof google !== 'undefined' && google.accounts) {
         clearInterval(checkGoogle);
         google.accounts.id.initialize({
-          client_id: '648560152467-llla49ipnmr34bj6q63ii2q56oaine36.apps.googleusercontent.com',
+          client_id: environment.googleClientId,
           callback: this.handleGoogleLogin.bind(this)
         });
         const btnElement = document.getElementById('google-btn');
@@ -1121,6 +1133,33 @@ export class AuthComponent implements OnInit {
     
     // Stop checking after 5 seconds to prevent infinite loops
     setTimeout(() => clearInterval(checkGoogle), 5000);
+  }
+
+  private async verifyEmailToken(token: string) {
+    this.loading.set(true);
+    this.errorMessage.set('');
+    try {
+      const res = await firstValueFrom(this.api.verifyEmail(token));
+      const userObj = res.user;
+      const roles = (userObj?.roles || ['ROLE_USUARIO']).filter(
+        (r: string) => r === 'ROLE_USUARIO' || r === 'ROLE_TRABAJADOR'
+      ) as UserRole[];
+      this.auth.login(
+        userObj?.idUsuario ?? 0,
+        roles,
+        'ROLE_USUARIO',
+        userObj?.nombreCompleto,
+        userObj?.email,
+        res.token
+      );
+      this.successMessage.set('✅ Correo verificado. ¡Bienvenido!');
+      this.router.navigate(['/']);
+    } catch (error: any) {
+      const msg = typeof error?.error === 'string' ? error.error : 'Enlace de verificación inválido o expirado.';
+      this.errorMessage.set(`⚠️ ${msg}`);
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   private async handleGoogleLogin(response: any) {
@@ -1219,8 +1258,35 @@ export class AuthComponent implements OnInit {
       return;
     }
 
+    const ccTrimmed = this.registerCC.trim();
+    const ccValue = parseInt(ccTrimmed, 10);
+    if (Number.isNaN(ccValue) || ccValue <= 0) {
+      this.errorMessage.set('⚠️ El número de cédula debe ser un número válido y mayor a 0.');
+      this.loading.set(false);
+      return;
+    }
+
+    if (ccTrimmed.length < 3 || ccTrimmed.length > 15) {
+      this.errorMessage.set('⚠️ El número de cédula debe tener entre 3 y 15 dígitos.');
+      this.loading.set(false);
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_.-]*$/.test(ccTrimmed)) {
+      this.errorMessage.set('⚠️ El número de cédula solo puede contener letras, números, guiones y puntos.');
+      this.loading.set(false);
+      return;
+    }
+
     if (!this.registerName || !this.registerName.trim()) {
       this.errorMessage.set('⚠️ Por favor ingresa tu nombre completo.');
+      this.loading.set(false);
+      return;
+    }
+
+    const nameTrimmed = this.registerName.trim();
+    if (nameTrimmed.length < 3 || nameTrimmed.length > 100) {
+      this.errorMessage.set('⚠️ El nombre completo debe tener entre 3 y 100 caracteres.');
       this.loading.set(false);
       return;
     }
@@ -1231,53 +1297,110 @@ export class AuthComponent implements OnInit {
       return;
     }
 
-    if (!this.registerPassword || this.registerPassword.length < 4) {
-      this.errorMessage.set('⚠️ La contraseña debe tener al menos 4 caracteres.');
+    const emailTrimmed = this.registerEmail.trim();
+    if (emailTrimmed.length > 100) {
+      this.errorMessage.set('⚠️ El correo electrónico no puede exceder los 100 caracteres.');
       this.loading.set(false);
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(this.registerEmail)) {
+    if (!emailRegex.test(emailTrimmed)) {
       this.errorMessage.set('⚠️ Por favor ingresa un correo electrónico válido.');
       this.loading.set(false);
       return;
     }
 
-    const ccValue = parseInt(this.registerCC, 10);
-    if (Number.isNaN(ccValue) || ccValue <= 0) {
-      this.errorMessage.set('⚠️ El número de cédula debe ser un número válido y mayor a 0.');
+    if (!this.registerPassword) {
+      this.errorMessage.set('⚠️ La contraseña es obligatoria.');
       this.loading.set(false);
       return;
     }
 
+    if (this.registerPassword.length < 8) {
+      this.errorMessage.set('⚠️ La contraseña debe tener al menos 8 caracteres.');
+      this.loading.set(false);
+      return;
+    }
+
+    const selectedRoles = this.registerRoles.length > 0 ? this.registerRoles : ['ROLE_USUARIO'];
+    if (this.registerRoles.length === 0) {
+      this.errorMessage.set('⚠️ Debes seleccionar al menos un rol (Usuario o Trabajador).');
+      this.loading.set(false);
+      return;
+    }
+
+    // Validaciones específicas para Trabajador
+    if (selectedRoles.includes('ROLE_TRABAJADOR')) {
+      const areaId = Number(this.registerAreaId);
+      if (!areaId || areaId <= 0) {
+        this.errorMessage.set('⚠️ Por favor selecciona un área de trabajo válida.');
+        this.loading.set(false);
+        return;
+      }
+
+      if (!this.registerDescripcion || !this.registerDescripcion.trim()) {
+        this.errorMessage.set('⚠️ Por favor ingresa una descripción de tus habilidades y experiencia.');
+        this.loading.set(false);
+        return;
+      }
+
+      if (this.registerDescripcion.trim().length > 500) {
+        this.errorMessage.set('⚠️ La descripción de tu perfil no puede exceder los 500 caracteres.');
+        this.loading.set(false);
+        return;
+      }
+
+      const expValue = Number(this.registerExperiencia);
+      if (this.registerExperiencia === null || this.registerExperiencia === undefined || Number.isNaN(expValue) || expValue < 0) {
+        this.errorMessage.set('⚠️ Por favor ingresa tus años de experiencia (debe ser mayor o igual a 0).');
+        this.loading.set(false);
+        return;
+      }
+
+      const deptoId = Number(this.registerIdDepartamento);
+      if (!deptoId || deptoId <= 0) {
+        this.errorMessage.set('⚠️ Por favor selecciona un departamento.');
+        this.loading.set(false);
+        return;
+      }
+
+      const ciudadId = Number(this.registerIdCiudad);
+      if (!ciudadId || ciudadId <= 0) {
+        this.errorMessage.set('⚠️ Por favor selecciona una ciudad.');
+        this.loading.set(false);
+        return;
+      }
+    }
+
     try {
       // Simple payload compatible with your backend
-      const selectedRoles = this.registerRoles.length > 0 ? this.registerRoles : ['ROLE_USUARIO'];
       const payload: any = {
-        nombreUsuario: this.registerCC,
-        nombre: this.registerName,
-        email: this.registerEmail,
+        nombreUsuario: ccTrimmed,
+        nombre: nameTrimmed,
+        email: emailTrimmed,
         password: this.registerPassword,
         roles: selectedRoles
       };
 
       if (selectedRoles.includes('ROLE_TRABAJADOR')) {
-        const areaId = Number(this.registerAreaId);
-        if (!areaId || areaId <= 0) {
-          this.errorMessage.set('⚠️ Por favor selecciona un área válida para trabajadores.');
-          this.loading.set(false);
-          return;
-        }
-        payload.areaId = areaId;
-        payload.descripcion = this.registerDescripcion;
-        payload.experiencia = this.registerExperiencia;
-        payload.idDepartamento = this.registerIdDepartamento;
-        payload.idCiudad = this.registerIdCiudad;
+        payload.areaId = Number(this.registerAreaId);
+        payload.descripcion = this.registerDescripcion.trim();
+        payload.experiencia = Number(this.registerExperiencia);
+        payload.idDepartamento = Number(this.registerIdDepartamento);
+        payload.idCiudad = Number(this.registerIdCiudad);
       }
 
-      const created: any = await firstValueFrom(this.api.createUser(payload));
+      const createdRes: any = await firstValueFrom(this.api.createUser(payload));
+      const created = createdRes?.user ?? createdRes;
+
+      if (createdRes?.requiresVerification) {
+        this.successMessage.set('✅ Cuenta creada. Revisa tu correo para verificar tu cuenta antes de iniciar sesión.');
+        this.clearRegisterForm();
+        setTimeout(() => this.activeTab.set('login'), 2000);
+        return;
+      }
 
       // Si se cre o trabajador y hay certificados en borrador, los guardamos
       if (selectedRoles.includes('ROLE_TRABAJADOR') && this.certificateDrafts.length > 0) {
@@ -1298,20 +1421,24 @@ export class AuthComponent implements OnInit {
       }
 
       this.successMessage.set('✅ Cuenta creada correctamente. Iniciando sesión...');
-      
-      // Intentar login automático
+
       try {
         const loginRes = await firstValueFrom(this.api.loginUser({
-          usuario: this.registerCC,
+          usuario: emailTrimmed,
           password: this.registerPassword
         }));
-
+        const userObj = (loginRes as any)?.user || loginRes;
+        const token = (loginRes as any)?.token;
+        const roles = (userObj?.roles || selectedRoles).filter(
+          (r: string) => r === 'ROLE_USUARIO' || r === 'ROLE_TRABAJADOR'
+        ) as UserRole[];
         this.auth.login(
-          loginRes.idUsuario,
-          loginRes.roles,
-          loginRes.roles.includes('ROLE_TRABAJADOR') ? 'ROLE_TRABAJADOR' : 'ROLE_USUARIO',
-          loginRes.nombreUsuario,
-          loginRes.email
+          userObj?.idUsuario ?? 0,
+          roles.length ? roles : ['ROLE_USUARIO'],
+          roles.includes('ROLE_TRABAJADOR') ? 'ROLE_TRABAJADOR' : 'ROLE_USUARIO',
+          userObj?.nombreCompleto || nameTrimmed,
+          userObj?.email || emailTrimmed,
+          token
         );
 
         if (this.wantFarmingCertification && selectedRoles.includes('ROLE_TRABAJADOR')) {
@@ -1319,17 +1446,26 @@ export class AuthComponent implements OnInit {
         } else {
           this.router.navigate(['/']);
         }
-      } catch (e) {
-        // Si falla el login automático, ir a login normal
+      } catch {
         this.clearRegisterForm();
         setTimeout(() => this.activeTab.set('login'), 1500);
       }
     } catch (error: any) {
       const statusCode = error?.status;
-
       let friendlyMessage = 'No pudimos crear tu cuenta en este momento. Intenta de nuevo.';
 
-      if (statusCode === 400) {
+      if (error?.error?.errors) {
+        // Extraer los mensajes de error devueltos por el backend (Validation errors)
+        const errMap = error.error.errors;
+        const messages = Object.values(errMap).join(' | ');
+        if (messages) {
+          friendlyMessage = `${messages}`;
+        }
+      } else if (typeof error?.error === 'string') {
+        friendlyMessage = error.error;
+      } else if (error?.error?.message) {
+        friendlyMessage = `${error.error.message}`;
+      } else if (statusCode === 400) {
         friendlyMessage = 'Revisa los datos del formulario e inténtalo nuevamente.';
       } else if (statusCode === 409) {
         friendlyMessage = 'Ya existe una cuenta con esa cédula o correo.';
@@ -1337,7 +1473,7 @@ export class AuthComponent implements OnInit {
         friendlyMessage = 'Tenemos un problema temporal en el servidor. Intenta más tarde.';
       }
 
-      this.errorMessage.set(friendlyMessage);
+      this.errorMessage.set(`⚠️ ${friendlyMessage}`);
     } finally {
       this.loading.set(false);
     }

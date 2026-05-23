@@ -7,9 +7,11 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,9 +66,35 @@ public class SolicitudService {
     @Qualifier("CrudOfertaHistorialRepository")
     private OfertaHistorialRepository ofertaHistorialRepository;
 
+
     @Autowired
     @Qualifier("NotificacionService")   
     private NotificacionService notificacionService;
+
+    @Autowired(required = false)
+    private EmailService emailService;
+
+    @Autowired
+    private MediaUrlService mediaUrlService;
+
+    public List<SolicitudDTO> getFeed() {
+        return StreamSupport.stream(solicitudRepository.findAll().spliterator(), false)
+                .filter(s -> "Pendiente".equalsIgnoreCase(s.getEstado()))
+                .sorted((a, b) -> b.getFechaCreacion().compareTo(a.getFechaCreacion()))
+                .map(this::convertToDTO)
+                .toList();
+    }
+
+    public SolicitudDTO attachImagen(Long idSolicitud, Long idUsuario, String filename) {
+        Solicitud solicitud = solicitudRepository.findById(idSolicitud)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+        if (!solicitud.getUsuario().getIdUsuario().equals(idUsuario)) {
+            throw new RuntimeException("No tienes permiso para modificar esta solicitud.");
+        }
+        solicitud.setImagenUrl(filename);
+        return convertToDTO(solicitudRepository.save(solicitud));
+    }
+
 
     public SolicitudDTO AgregarSolicitud(CrearSolicituDto crearSolicitudDto, Long idUsuario, Long idArea) {
         if (crearSolicitudDto == null || crearSolicitudDto.getTitulo() == null || crearSolicitudDto.getTitulo().isBlank()) {
@@ -89,6 +117,15 @@ public class SolicitudService {
         solicitud.setArea(area);
         solicitud.setPrecio(crearSolicitudDto.getPrecio());
         solicitud.setFechaServicio(crearSolicitudDto.getFechaServicio());
+        if (crearSolicitudDto.getDireccion() != null && !crearSolicitudDto.getDireccion().isBlank()) {
+            solicitud.setDireccion(crearSolicitudDto.getDireccion().trim());
+        }
+        if (crearSolicitudDto.getLatitud() != null) {
+            solicitud.setLatitud(crearSolicitudDto.getLatitud());
+        }
+        if (crearSolicitudDto.getLongitud() != null) {
+            solicitud.setLongitud(crearSolicitudDto.getLongitud());
+        }
 
         solicitud = solicitudRepository.save(solicitud);
 
@@ -120,7 +157,9 @@ public class SolicitudService {
         "SOLICITUD_AREA"
     );
 }
-        return solicitudDTO;
+        notifySolicitudCreada(solicitud, usuario, area);
+
+        return convertToDTO(solicitud);
     }
 
     public SolicitudDTO agregarSolicitudDirecta(CrearSolicituDto crearSolicitudDto, Long idUsuario, Long idTrabajadorUsuario) {
@@ -159,6 +198,15 @@ public class SolicitudService {
         solicitud.setArea(area);
         solicitud.setPrecio(crearSolicitudDto.getPrecio());
         solicitud.setFechaServicio(crearSolicitudDto.getFechaServicio());
+        if (crearSolicitudDto.getDireccion() != null && !crearSolicitudDto.getDireccion().isBlank()) {
+            solicitud.setDireccion(crearSolicitudDto.getDireccion().trim());
+        }
+        if (crearSolicitudDto.getLatitud() != null) {
+            solicitud.setLatitud(crearSolicitudDto.getLatitud());
+        }
+        if (crearSolicitudDto.getLongitud() != null) {
+            solicitud.setLongitud(crearSolicitudDto.getLongitud());
+        }
         solicitud = solicitudRepository.save(solicitud);
 
         SolicitudHistorial historial = new SolicitudHistorial();
@@ -190,53 +238,28 @@ public class SolicitudService {
         ofertaHistorial.setDescripcionNueva(oferta.getDescripcion());
         ofertaHistorial.setFecha(LocalDateTime.now());
         ofertaHistorialRepository.save(ofertaHistorial);
+
         notificacionService.crearNotificacion(
         trabajador.getUsuario().getIdUsuario() ,
         "Te enviaron una solicitud directa",
-        "El usuario "+ solicitud.getUsuario().getNombreCompleto() + "te envio una solicitud",
         "SOLICITUD"
+        
+ 
     );
-        
+           notifySolicitudCreada(solicitud, usuarioSolicitante, area);
+        notifyDirectSolicitudToWorker(solicitud, usuarioSolicitante, trabajador);
+
         return convertToDTO(solicitud);
+    
     }
 
-    private SolicitudDTO convertToDTO(Solicitud solicitud) {
-        SolicitudDTO dto = new SolicitudDTO();
-        dto.setIdSolicitud(solicitud.getIdSolicitud());
-        dto.setTitulo(solicitud.getTitulo());
-        dto.setDescripcion(solicitud.getDescripcion());
-        dto.setEstado(solicitud.getEstado());
-        dto.setFechaCreacion(solicitud.getFechaCreacion());
-        dto.setIdUsuario(solicitud.getUsuario().getIdUsuario());
-        dto.setNombreUsuario(solicitud.getUsuario().getNombreCompleto());
-        if (solicitud.getArea() != null) {
-            dto.setIdArea(solicitud.getArea().getIdArea());
-            dto.setNombreArea(solicitud.getArea().getNombre());
-        }
-        dto.setPrecio(solicitud.getPrecio());
-        dto.setFechaServicio(solicitud.getFechaServicio());
-        dto.setDireccion(solicitud.getDireccion());
-        dto.setHoraEncuentro(solicitud.getHoraEncuentro());
-        dto.setNotas(solicitud.getNotas());
-        
-        if ("Aceptada".equalsIgnoreCase(solicitud.getEstado()) || "En Progreso".equalsIgnoreCase(solicitud.getEstado())) {
-            Oferta ofertaAceptada = solicitud.getOfertas().stream()
-                .filter(o -> "Aceptada".equalsIgnoreCase(o.getEstado()))
-                .findFirst().orElse(null);
-            if (ofertaAceptada != null && ofertaAceptada.getTrabajador() != null) {
-                dto.setIdTrabajador(ofertaAceptada.getTrabajador().getIdTrabajador());
-                dto.setNombreTrabajador(ofertaAceptada.getTrabajador().getUsuario().getNombreCompleto());
-                dto.setIdUsuarioTrabajador(ofertaAceptada.getTrabajador().getUsuario().getIdUsuario());
-            }
-        }
-        return dto;
-    }
-
+    
     public List<SolicitudDTO> getAllSolicitudes() {
         return ((List<Solicitud>) solicitudRepository.findAll())
                 .stream()
                 .map(this::convertToDTO)
                 .toList();
+        
     }
 
     public List<SolicitudDTO> getSolicitudesByUsuario(Long idUsuario) {
@@ -304,9 +327,6 @@ public class SolicitudService {
                 continue;
             }
 
-            SolicitudDTO dto = new SolicitudDTO();
-            dto.setIdSolicitud(solicitud.getIdSolicitud());
-            dto.setTitulo(solicitud.getTitulo());
             resultado.add(convertToDTO(solicitud));
             idsAgregados.add(solicitud.getIdSolicitud());
         }
@@ -387,7 +407,9 @@ public class SolicitudService {
             historialOferta.setDescripcionNueva(oferta.getDescripcion());
             historialOferta.setFecha(LocalDateTime.now());
             ofertaHistorialRepository.save(historialOferta);
-            
+
+            notifyNewOffer(solicitud, trabajador, oferta);
+
             String nombreSolicitante = solicitud.getUsuario().getNombreCompleto() != null
                 ? solicitud.getUsuario().getNombreCompleto()
                 : solicitud.getUsuario().getNombreUsuario();
@@ -496,18 +518,6 @@ public class SolicitudService {
         Solicitud solicitudActualizada = solicitudRepository.save(solicitud);
         return convertToDTO(solicitudActualizada);
     }
-
-    public SolicitudDTO updateEncounterDetails(Long idSolicitud, String direccion, String horaEncuentro, String notas) {
-        Solicitud solicitud = solicitudRepository.findById(idSolicitud)
-                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
-        
-        if (direccion != null) solicitud.setDireccion(direccion);
-        if (horaEncuentro != null) solicitud.setHoraEncuentro(horaEncuentro);
-        if (notas != null) solicitud.setNotas(notas);
-        
-        Solicitud guardada = solicitudRepository.save(solicitud);
-        return convertToDTO(guardada);
-    }
     public void eliminarSolicitud(Long idSolicitud, Long idUsuario) {
         Optional<Solicitud> solicitudExistente = solicitudRepository.findById(idSolicitud);
         if (!solicitudExistente.get().getUsuario().getIdUsuario().equals(idUsuario)) {
@@ -538,4 +548,166 @@ public class SolicitudService {
                     return dto;
                 })
                 .toList();
-    }}
+    }
+    public SolicitudDTO updateEncounterDetails(Long idSolicitud, String direccion, String horaEncuentro, String notas, Double latitud, Double longitud) {
+        Solicitud solicitud = solicitudRepository.findById(idSolicitud)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada con ID: " + idSolicitud));
+        
+        if (direccion == null || direccion.trim().isEmpty()) {
+            throw new RuntimeException("La dirección de encuentro es obligatoria.");
+        }
+        if (horaEncuentro == null || horaEncuentro.trim().isEmpty()) {
+            throw new RuntimeException("La hora de encuentro es obligatoria.");
+        }
+        
+        solicitud.setDireccion(direccion.trim());
+        solicitud.setHoraEncuentro(horaEncuentro.trim());
+        solicitud.setNotas(notesSanitized(notas));
+        solicitud.setLatitud(latitud);
+        solicitud.setLongitud(longitud);
+        
+        Solicitud saved = solicitudRepository.save(solicitud);
+        return convertToDTO(saved);
+    }
+
+    private String notesSanitized(String notes) {
+        return notes != null ? notes.trim() : null;
+    }
+
+    private void notifySolicitudCreada(Solicitud solicitud, Usuario cliente, Area area) {
+        if (emailService == null) {
+            return;
+        }
+        try {
+            String clientName = cliente.getNombreCompleto() != null
+                    ? cliente.getNombreCompleto()
+                    : cliente.getNombreUsuario();
+            if (cliente.getEmail() != null) {
+                emailService.sendSolicitudCreada(cliente.getEmail(), clientName, solicitud.getTitulo());
+            }
+            String areaName = area != null ? area.getNombre() : "tu área";
+            if (area != null) {
+                List<Trabajador> trabajadores = trabajadorRepository.findByArea_IdArea(area.getIdArea());
+                for (Trabajador t : trabajadores) {
+                    if (t.getUsuario() == null || t.getUsuario().getEmail() == null) {
+                        continue;
+                    }
+                    String workerName = t.getUsuario().getNombreCompleto() != null
+                            ? t.getUsuario().getNombreCompleto()
+                            : t.getUsuario().getNombreUsuario();
+                    emailService.sendNewSolicitudInAreaToWorker(
+                            t.getUsuario().getEmail(),
+                            workerName,
+                            solicitud.getTitulo(),
+                            areaName,
+                            clientName,
+                            solicitud.getPrecio());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[Email] Error notificando solicitud creada: " + e.getMessage());
+        }
+    }
+
+    private void notifyNewOffer(Solicitud solicitud, Trabajador trabajador, Oferta oferta) {
+        if (emailService == null) {
+            return;
+        }
+        try {
+            if (solicitud.getUsuario() != null && solicitud.getUsuario().getEmail() != null) {
+                String clientEmail = solicitud.getUsuario().getEmail();
+                String clientName = solicitud.getUsuario().getNombreCompleto() != null
+                        ? solicitud.getUsuario().getNombreCompleto()
+                        : solicitud.getUsuario().getNombreUsuario();
+                String workerName = trabajador.getUsuario().getNombreCompleto() != null
+                        ? trabajador.getUsuario().getNombreCompleto()
+                        : trabajador.getUsuario().getNombreUsuario();
+                emailService.sendOfferNotification(
+                        clientEmail, clientName, solicitud.getTitulo(), workerName, oferta.getPrecio());
+            }
+            if (trabajador.getUsuario() != null && trabajador.getUsuario().getEmail() != null) {
+                String workerEmail = trabajador.getUsuario().getEmail();
+                String workerName = trabajador.getUsuario().getNombreCompleto() != null
+                        ? trabajador.getUsuario().getNombreCompleto()
+                        : trabajador.getUsuario().getNombreUsuario();
+                String clientName = solicitud.getUsuario().getNombreCompleto() != null
+                        ? solicitud.getUsuario().getNombreCompleto()
+                        : solicitud.getUsuario().getNombreUsuario();
+                emailService.sendWorkerApplicationConfirmation(
+                        workerEmail, workerName, solicitud.getTitulo(), clientName, oferta.getPrecio());
+            }
+        } catch (Exception e) {
+            System.err.println("[Email] Error notificando nueva oferta: " + e.getMessage());
+        }
+    }
+
+    private void notifyDirectSolicitudToWorker(Solicitud solicitud, Usuario cliente, Trabajador trabajador) {
+        if (emailService == null || trabajador.getUsuario() == null || trabajador.getUsuario().getEmail() == null) {
+            return;
+        }
+        try {
+            String clientName = cliente.getNombreCompleto() != null
+                    ? cliente.getNombreCompleto()
+                    : cliente.getNombreUsuario();
+            String workerName = trabajador.getUsuario().getNombreCompleto() != null
+                    ? trabajador.getUsuario().getNombreCompleto()
+                    : trabajador.getUsuario().getNombreUsuario();
+            emailService.sendDirectSolicitudToWorker(
+                    trabajador.getUsuario().getEmail(),
+                    workerName,
+                    solicitud.getTitulo(),
+                    clientName);
+        } catch (Exception e) {
+            System.err.println("[Email] Error notificando solicitud directa: " + e.getMessage());
+        }
+    }
+
+    private SolicitudDTO convertToDTO(Solicitud s) {
+        if (s == null) return null;
+        SolicitudDTO dto = new SolicitudDTO();
+        dto.setIdSolicitud(s.getIdSolicitud());
+        dto.setTitulo(s.getTitulo());
+        dto.setDescripcion(s.getDescripcion());
+        dto.setEstado(s.getEstado());
+        dto.setFechaCreacion(s.getFechaCreacion());
+        if (s.getUsuario() != null) {
+            dto.setIdUsuario(s.getUsuario().getIdUsuario());
+            dto.setNombreUsuario(s.getUsuario().getNombreCompleto() != null
+                    ? s.getUsuario().getNombreCompleto()
+                    : s.getUsuario().getNombreUsuario());
+            dto.setFotoUsuarioUrl(mediaUrlService.toPublicUrl(s.getUsuario().getFotoPerfil()));
+        }
+        dto.setImagenUrl(mediaUrlService.toPublicUrl(s.getImagenUrl()));
+        if (s.getArea() != null) {
+            dto.setIdArea(s.getArea().getIdArea());
+            dto.setNombreArea(s.getArea().getNombre());
+        }
+        dto.setPrecio(s.getPrecio());
+        dto.setFechaServicio(s.getFechaServicio());
+        dto.setDireccion(s.getDireccion());
+        dto.setHoraEncuentro(s.getHoraEncuentro());
+        dto.setNotas(s.getNotas());
+        dto.setLatitud(s.getLatitud());
+        dto.setLongitud(s.getLongitud());
+
+        // Map trabajador if there is an accepted offer
+        if (s.getOfertas() != null) {
+            s.getOfertas().stream()
+                .filter(o -> "Aceptada".equalsIgnoreCase(o.getEstado()))
+                .findFirst()
+                .ifPresent(o -> {
+                    if (o.getTrabajador() != null) {
+                        dto.setIdTrabajador(o.getTrabajador().getIdTrabajador());
+                        if (o.getTrabajador().getUsuario() != null) {
+                            var tu = o.getTrabajador().getUsuario();
+                            dto.setNombreTrabajador(tu.getNombreCompleto() != null
+                                    ? tu.getNombreCompleto()
+                                    : tu.getNombreUsuario());
+                            dto.setFotoTrabajadorUrl(mediaUrlService.toPublicUrl(tu.getFotoPerfil()));
+                        }
+                    }
+                });
+        }
+        return dto;
+    }
+}

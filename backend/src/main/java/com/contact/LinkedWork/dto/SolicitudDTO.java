@@ -15,12 +15,16 @@ public class SolicitudDTO {
     private String nombreArea;
     private Long idTrabajador;
     private String nombreTrabajador;
-    private Long idUsuarioTrabajador;
     private java.math.BigDecimal precio;
     private java.time.LocalDate fechaServicio;
     private String direccion;
     private String horaEncuentro;
     private String notas;
+    private Double latitud;
+    private Double longitud;
+    private String imagenUrl;
+    private String fotoUsuarioUrl;
+    private String fotoTrabajadorUrl;
 
     public Long getIdTrabajador() {
         return idTrabajador;
@@ -36,14 +40,6 @@ public class SolicitudDTO {
 
     public void setNombreTrabajador(String nombreTrabajador) {
         this.nombreTrabajador = nombreTrabajador;
-    }
-
-    public Long getIdUsuarioTrabajador() {
-        return idUsuarioTrabajador;
-    }
-
-    public void setIdUsuarioTrabajador(Long idUsuarioTrabajador) {
-        this.idUsuarioTrabajador = idUsuarioTrabajador;
     }
     
     public SolicitudDTO() {
@@ -161,5 +157,45 @@ public class SolicitudDTO {
 
     public void setNotas(String notas) {
         this.notas = notas;
+    }
+
+    public Double getLatitud() {
+        return latitud;
+    }
+
+    public void setLatitud(Double latitud) {
+        this.latitud = latitud;
+    }
+
+    public Double getLongitud() {
+        return longitud;
+    }
+
+    public void setLongitud(Double longitud) {
+        this.longitud = longitud;
+    }
+
+    public String getImagenUrl() {
+        return imagenUrl;
+    }
+
+    public void setImagenUrl(String imagenUrl) {
+        this.imagenUrl = imagenUrl;
+    }
+
+    public String getFotoUsuarioUrl() {
+        return fotoUsuarioUrl;
+    }
+
+    public void setFotoUsuarioUrl(String fotoUsuarioUrl) {
+        this.fotoUsuarioUrl = fotoUsuarioUrl;
+    }
+
+    public String getFotoTrabajadorUrl() {
+        return fotoTrabajadorUrl;
+    }
+
+    public void setFotoTrabajadorUrl(String fotoTrabajadorUrl) {
+        this.fotoTrabajadorUrl = fotoTrabajadorUrl;
     }
 }

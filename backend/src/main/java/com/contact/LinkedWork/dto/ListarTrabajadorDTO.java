@@ -11,6 +11,7 @@ public class ListarTrabajadorDTO {
     private String departamento;
     private String ciudad;
     private boolean esFarming;
+    private String fotoPerfil;
 
     public ListarTrabajadorDTO() {
     }
@@ -90,5 +91,12 @@ public class ListarTrabajadorDTO {
         this.esFarming = esFarming;
     }
 
+    public String getFotoPerfil() {
+        return fotoPerfil;
+    }
+
+    public void setFotoPerfil(String fotoPerfil) {
+        this.fotoPerfil = fotoPerfil;
+    }
 
 }

@@ -16,6 +16,15 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import jakarta.validation.Valid;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.contact.LinkedWork.dto.CrearSolicituDto;
 import com.contact.LinkedWork.dto.EditarSolicitudDTO;
@@ -42,12 +51,12 @@ public class ServicioController {
     private AreaRepository areaRepository;
 
     @PostMapping(path="/addSolicitud/{idUsuario}/{idArea}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public SolicitudDTO addSolicitud(@RequestBody CrearSolicituDto solicitud, @PathVariable Long idUsuario, @PathVariable Long idArea) {
+    public SolicitudDTO addSolicitud(@Valid @RequestBody CrearSolicituDto solicitud, @PathVariable Long idUsuario, @PathVariable Long idArea) {
         return solicitudService.AgregarSolicitud(solicitud, idUsuario, idArea);
-    }  
+    }
 
     @PostMapping(path="/addSolicitudDirecta/{idUsuario}/{idTrabajadorUsuario}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public SolicitudDTO addSolicitudDirecta(@RequestBody CrearSolicituDto solicitud, @PathVariable Long idUsuario, @PathVariable Long idTrabajadorUsuario) {
+    public SolicitudDTO addSolicitudDirecta(@Valid @RequestBody CrearSolicituDto solicitud, @PathVariable Long idUsuario, @PathVariable Long idTrabajadorUsuario) {
         return solicitudService.agregarSolicitudDirecta(solicitud, idUsuario, idTrabajadorUsuario);
     }
 
@@ -71,6 +80,46 @@ public class ServicioController {
         return solicitudService.getTodasSolicitudesPendientes();
     }
 
+    @GetMapping(path = "/feed", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<SolicitudDTO> getFeed() {
+        return solicitudService.getFeed();
+    }
+
+    @PostMapping(path = "/uploadSolicitudImagen/{idSolicitud}/{idUsuario}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> uploadSolicitudImagen(
+            @PathVariable Long idSolicitud,
+            @PathVariable Long idUsuario,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body(java.util.Map.of("mensaje", "Archivo vacío."));
+            }
+            String uploadDirStr = "./uploads/";
+            File uploadDir = new File(uploadDirStr);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
+            }
+            if (!extension.matches("\\.(jpg|jpeg|png|gif|webp)")) {
+                extension = ".jpg";
+            }
+            String filename = "sol_" + idSolicitud + "_" + System.currentTimeMillis() + extension;
+            Path path = Paths.get(uploadDirStr + filename);
+            Files.write(path, file.getBytes());
+            SolicitudDTO updated = solicitudService.attachImagen(idSolicitud, idUsuario, filename);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(java.util.Map.of("mensaje", ex.getMessage()));
+        } catch (IOException ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(java.util.Map.of("mensaje", "No se pudo guardar la imagen."));
+        }
+    }
+
     @GetMapping(path = "/checkOverlap/{idUsuarioTrabajador}/{fechaServicio}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Boolean> checkOverlap(
             @PathVariable Long idUsuarioTrabajador, 
@@ -92,7 +141,7 @@ public class ServicioController {
     }
 
     @PutMapping(path = "/editSolicitud/{idSolicitud}/{idUsuario}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public SolicitudDTO editSolicitud(@RequestBody EditarSolicitudDTO solicitud, @PathVariable Long idSolicitud, @PathVariable Long idUsuario) {
+    public SolicitudDTO editSolicitud(@Valid @RequestBody EditarSolicitudDTO solicitud, @PathVariable Long idSolicitud, @PathVariable Long idUsuario) {
         return solicitudService.editarSolicitud(solicitud, idSolicitud, idUsuario);
     }
     @DeleteMapping(path = "/deleteSolicitud/{idSolicitud}/{idUsuario}")
@@ -109,6 +158,23 @@ public class ServicioController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permiso para eliminar esta solicitud.");
             }
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No fue posible eliminar la solicitud en este momento.");
+        }
+    }
+
+    @PutMapping(path = "/encounter/{solicitudId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updateEncounterDetails(@PathVariable Long solicitudId, @RequestBody java.util.Map<String, Object> payload) {
+        try {
+            SolicitudDTO updated = solicitudService.updateEncounterDetails(
+                solicitudId,
+                (String) payload.get("direccion"),
+                (String) payload.get("horaEncuentro"),
+                (String) payload.get("notas"),
+                payload.get("latitud") != null ? Double.valueOf(payload.get("latitud").toString()) : null,
+                payload.get("longitud") != null ? Double.valueOf(payload.get("longitud").toString()) : null
+            );
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of("mensaje", e.getMessage()));
         }
     }
 
