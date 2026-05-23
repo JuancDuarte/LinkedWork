@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
-import { ApiService } from '../../services/api.service';
+import { ApiService } from '../services/api.service';
 
 export interface Notification {
 
@@ -27,8 +27,8 @@ export interface Notification {
 @Component({
   selector: 'app-notifications',
   imports: [CommonModule],
-  templateUrl: './notifications.html',
-  styleUrls: ['./notifications.css'],
+  templateUrl: './notifications.components.html',
+  styleUrls: ['./notifications.components.css'],
 })
 export class Notifications implements OnInit {
 

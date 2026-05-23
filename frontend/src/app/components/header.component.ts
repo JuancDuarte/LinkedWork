@@ -5,7 +5,7 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService, UserRole } from '../services/auth.service';
 import { ApiService } from '../services/api.service';
-import { Notifications } from "./notifications/notifications";
+import { Notifications } from "./notifications.components";
 
 @Component({
   selector: 'app-header',
