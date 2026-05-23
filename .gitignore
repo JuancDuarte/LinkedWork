@@ -1,3 +1,43 @@
+
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+logs/proyecto-vagoneta.log.2025-06-05.0.gz
+
+node_modules/
+.angular/
+dist/
+=======
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # Compiled output
@@ -7,7 +47,8 @@
 /bazel-out
 
 # Node
-/node_modules
+node_modules/
+**/node_modules/
 npm-debug.log
 yarn-error.log
 
@@ -45,3 +86,39 @@ Thumbs.db
 
 # Maven
 target/
+
+# Local configuration
+.env
+scratch/
+backend_logs.txt
+>>>>>>> feature/vercel-deploy
+
+# Local configuration
+.env
+scratch/
+backend_logs.txt
+>>>>>>> feature/vercel-deploy
+
+# Dependencias
+node_modules/
+
+# Angular
+.angular/
+dist/
+
+# VSCode
+.vscode/
+
+# Logs
+*.log
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Java / Maven
+target/
+*.class
+
+# IDEs
+.idea/

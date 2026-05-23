@@ -14,6 +14,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/farming")
 @CrossOrigin(origins = "*")
+
 public class CertificationController {
 
     @Autowired

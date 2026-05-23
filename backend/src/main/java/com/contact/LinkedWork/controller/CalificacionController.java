@@ -20,7 +20,7 @@ import com.contact.LinkedWork.service.CalificacionService;
 
 @RestController
 @RequestMapping("/")
-@CrossOrigin(origins="*")
+@CrossOrigin(origins = "*")
 public class CalificacionController {
 
     @Autowired

@@ -1,0 +1,233 @@
+:host {
+  --ink: #132a2e;
+  --paper: #f7f4ec;
+  --mint: #5bc4a5;
+  --mint-strong: #2aa07f;
+  --sun: #ffb14a;
+  --danger: #b4232c;
+
+  display: block;
+  min-height: 100dvh;
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.screen {
+  min-height: 100dvh;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 10% 15%, rgba(255, 177, 74, 0.22), transparent 45%),
+    radial-gradient(circle at 90% 90%, rgba(42, 160, 127, 0.24), transparent 40%),
+    linear-gradient(160deg, #f3eee0 0%, #eaf6f1 100%);
+}
+
+.login-card {
+  width: min(100%, 760px);
+  background: color-mix(in srgb, var(--paper) 82%, white 18%);
+  border: 1px solid rgba(19, 42, 46, 0.14);
+  border-radius: 20px;
+  box-shadow: 0 18px 50px rgba(19, 42, 46, 0.14);
+  padding: 26px;
+  animation: card-in 0.45s ease-out both;
+}
+
+.badge {
+  width: fit-content;
+  background: rgba(42, 160, 127, 0.14);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+h1 {
+  margin: 14px 0 8px;
+  color: var(--ink);
+  font-size: clamp(28px, 4vw, 34px);
+  line-height: 1.05;
+}
+
+p {
+  margin: 0 0 20px;
+  color: rgba(19, 42, 46, 0.86);
+}
+
+.tab-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  margin-top: 0;
+  background: transparent;
+  border: 1px solid rgba(19, 42, 46, 0.18);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.tab.active {
+  background: linear-gradient(90deg, rgba(42, 160, 127, 0.16), rgba(255, 177, 74, 0.18));
+  border-color: rgba(42, 160, 127, 0.55);
+}
+
+form {
+  display: grid;
+  gap: 10px;
+}
+
+.grid {
+  display: grid;
+  gap: 10px;
+}
+
+.grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+label {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+input {
+  margin-top: 5px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(19, 42, 46, 0.24);
+  padding: 12px 13px;
+  font-size: 15px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+select {
+  margin-top: 5px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(19, 42, 46, 0.24);
+  padding: 12px 13px;
+  font-size: 15px;
+  background: #fff;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--mint-strong);
+  box-shadow: 0 0 0 4px rgba(42, 160, 127, 0.16);
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--mint-strong);
+  box-shadow: 0 0 0 4px rgba(42, 160, 127, 0.16);
+}
+
+button {
+  margin-top: 8px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--mint-strong), var(--sun));
+  color: #092224;
+  font-weight: 800;
+  font-size: 15px;
+  padding: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.feedback {
+  margin-top: 14px;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 700;
+}
+
+.feedback.error {
+  background: rgba(180, 35, 44, 0.12);
+  color: var(--danger);
+}
+
+.feedback.ok {
+  background: rgba(42, 160, 127, 0.14);
+  color: #0f6d58;
+}
+
+.hint {
+  margin-top: 6px;
+  border-left: 4px solid var(--mint-strong);
+  background: rgba(42, 160, 127, 0.08);
+  color: rgba(19, 42, 46, 0.92);
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.response-box {
+  margin-top: 14px;
+  border-top: 1px dashed rgba(19, 42, 46, 0.25);
+  padding-top: 12px;
+}
+
+.response-box h2 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+pre {
+  margin: 0;
+  max-height: 220px;
+  overflow: auto;
+  background: #12292d;
+  color: #d4f8e9;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 13px;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 560px) {
+  .screen {
+    padding: 16px;
+  }
+
+  .login-card {
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .grid.two {
+    grid-template-columns: 1fr;
+  }
+}

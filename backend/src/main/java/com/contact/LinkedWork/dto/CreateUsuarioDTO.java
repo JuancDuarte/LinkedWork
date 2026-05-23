@@ -36,6 +36,7 @@ public class CreateUsuarioDTO {
     @Size(min = 3, max = 50, message = "El nombre de usuario debe tener entre 3 y 50 caracteres")
     @Pattern(regexp = "^[a-zA-Z0-9_.@-]*$", message = "El nombre de usuario solo puede contener letras, números, guiones y puntos")
     private String nombreUsuario;
+    private List<CertificadoDTO> certificados;
 
     // Getters and setters
     public String getNombreUsuario() {
@@ -115,5 +116,13 @@ public class CreateUsuarioDTO {
 
     public void setIdCiudad(Integer idCiudad) {
         this.idCiudad = idCiudad;
+    }
+
+    public List<CertificadoDTO> getCertificados() {
+        return certificados;
+    }
+
+    public void setCertificados(List<CertificadoDTO> certificados) {
+        this.certificados = certificados;
     }
 }
