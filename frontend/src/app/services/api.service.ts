@@ -339,5 +339,25 @@ export class ApiService {
       catchError(this.handleError('sendChatMessage'))
     );
   }
+  getNotifications(userId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE}/notifications/${encodeURIComponent(userId)}`).pipe(
+      catchError(this.handleError('getNotifications'))
+    );
+  }
+  getUnreadCount(userId: number): Observable<number> {
+    return this.http.get<number>(`${API_BASE}/notifications/unread/${encodeURIComponent(userId)}`).pipe(
+      catchError(this.handleError('getUnreadCount'))
+    );
+  }
+  markAsRead(idNotificacion: number){
+    return this.http.post(`${API_BASE}/notifications/read/${encodeURIComponent(idNotificacion)}`, {}).pipe(
+      catchError(this.handleError('markAsRead'))
+    );
+  }
+  markAllAsRead(userId: number){
+    return this.http.post(`${API_BASE}/notifications/read-all/${encodeURIComponent(userId)}`, {}).pipe(
+      catchError(this.handleError('markAllAsRead'))
+    );
+  }
 
 }

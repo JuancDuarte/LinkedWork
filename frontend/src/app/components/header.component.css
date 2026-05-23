@@ -237,3 +237,72 @@
   .navbar-right { gap: 0.5rem; }
   .user-dropdown { right: -10px; width: 240px; }
 }
+.notification-wrapper{
+
+   position: relative;
+
+   display: flex;
+   align-items: center;
+
+}
+
+.notification-btn{
+
+   background: transparent;
+   border: none;
+
+   cursor: pointer;
+
+   font-size: 22px;
+
+   position: relative;
+
+}
+
+.notification-badge{
+
+   position: absolute;
+
+   top: -6px;
+   right: -8px;
+
+   background: red;
+
+   color: white;
+
+   width: 18px;
+   height: 18px;
+
+   border-radius: 50%;
+
+   font-size: 11px;
+
+   display: flex;
+   align-items: center;
+   justify-content: center;
+
+   font-weight: bold;
+
+}
+
+.notification-dropdown{
+
+   position: absolute;
+
+   top: 45px;
+   right: 0;
+
+   width: 350px;
+
+   background: white;
+
+   border-radius: 12px;
+
+   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+
+   z-index: 9999;
+
+   max-height: 500px;
+
+   overflow-y: auto;
+}

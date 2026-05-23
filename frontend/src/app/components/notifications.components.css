@@ -1,0 +1,39 @@
+.notifications-container{
+
+  padding: 15px;
+
+}
+
+.notification-item{
+
+  padding: 12px;
+
+  border-bottom: 1px solid #eee;
+
+  cursor: pointer;
+
+}
+
+.notification-item:hover{
+
+  background: #f5f5f5;
+
+}
+
+.unread{
+
+  background: #eef5ff;
+
+  font-weight: bold;
+
+}
+
+.empty{
+
+  padding: 20px;
+
+  text-align: center;
+
+  color: gray;
+
+}

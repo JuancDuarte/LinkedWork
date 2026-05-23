@@ -1,0 +1,40 @@
+<div class="notifications-container">
+
+  <h3>Notificaciones</h3>
+
+  @if(notifications().length === 0){
+
+    <div class="empty">
+
+      No tienes notificaciones
+
+    </div>
+
+  }
+
+  @for(notification of notifications();
+       track notification.idNotificacion){
+
+    <div
+      class="notification-item"
+      [class.unread]="!notification.leida"
+      (click)="markAsRead(notification.idNotificacion)"
+    >
+
+      <div class="notification-title">
+
+        {{ notification.titulo }}
+
+      </div>
+
+      <div class="notification-message">
+
+        {{ notification.mensaje }}
+
+      </div>
+
+    </div>
+
+  }
+
+</div>

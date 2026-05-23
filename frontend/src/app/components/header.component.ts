@@ -1,17 +1,20 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal,  OnInit } from '@angular/core';
 import { NgIf } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService, UserRole } from '../services/auth.service';
+import { ApiService } from '../services/api.service';
+import { Notifications } from "./notifications/notifications";
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [NgIf, RouterLink, RouterLinkActive],
+  imports: [NgIf, RouterLink, RouterLinkActive, CommonModule, Notifications],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   auth = inject(AuthService);
   private router = inject(Router);
   menuOpen = signal(false);
@@ -50,4 +53,59 @@ export class HeaderComponent {
     this.closeMenu();
     this.router.navigate(['/auth']);
   }
+  showNotifications = signal(false);
+
+  unreadCount = signal(0);
+   private apiService = inject(ApiService)
+  ngOnInit(): void {
+
+    this.unreadCount();
+
+    // ACTUALIZAR CADA 15 SEGUNDOS
+    setInterval(() => {
+
+      this.unreadCount();
+
+    }, 15000);
+
+  }
+   toggleNotifications(): void {
+
+    this.showNotifications.update(v => !v);
+
+  }
+
+  // CARGAR CONTADOR
+  loadUnreadCount(): void {
+
+    const idUsuario = Number(
+      localStorage.getItem('idUsuario')
+    );
+
+    if (!idUsuario) return;
+
+    this.apiService
+      .getUnreadCount(idUsuario)
+      .subscribe({
+
+        next: (count) => {
+
+          this.unreadCount.set(count);
+
+        },
+
+        error: (err) => {
+
+          console.error(
+            'Error cargando notificaciones',
+            err
+          );
+
+        }
+
+      });
+
+  }
+
+
 }
