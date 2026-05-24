@@ -70,16 +70,20 @@ export class NotificationsComponent implements OnInit {
 
   }
 
-  markAsRead(id: number): void {
+markAsRead(id: number): void {
 
-    this.apiService
-      .markAsRead(id)
-      .subscribe(() => {
+  this.apiService
+    .markAsRead(id)
+    .subscribe(() => {
 
-        this.loadNotifications();
+      this.loadNotifications();
 
-      });
+      window.dispatchEvent(
+        new Event('notificationsUpdated')
+      );
 
-  }
+    });
+
+}
 
 }

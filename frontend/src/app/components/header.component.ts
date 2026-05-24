@@ -72,6 +72,14 @@ export class HeaderComponent implements OnInit {
       this.unreadCount();
 
     }, 15000);
+    this.loadUnreadCount();
+
+    window.addEventListener(
+    'notificationsUpdated',
+    () => {
+      this.loadUnreadCount();
+    }
+  );
 
   }
    toggleNotifications(): void {
@@ -84,7 +92,7 @@ export class HeaderComponent implements OnInit {
   loadUnreadCount(): void {
 
     const idUsuario = Number(
-      localStorage.getItem('idUsuario')
+      localStorage.getItem('linkedwork_user_id')
     );
 
     if (!idUsuario) return;
@@ -100,7 +108,7 @@ export class HeaderComponent implements OnInit {
         },
 
         error: (err) => {
-
+        localStorage.getItem('linkedwork_user_id')
           console.error(
             'Error cargando notificaciones',
             err

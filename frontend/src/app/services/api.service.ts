@@ -388,12 +388,12 @@ export class ApiService {
     );
   }
   markAsRead(idNotificacion: number){
-    return this.http.post(`${API_BASE}/notifications/read/${encodeURIComponent(idNotificacion)}`, {}).pipe(
+    return this.http.put(`${API_BASE}/notifications/read/${encodeURIComponent(idNotificacion)}`, {}).pipe(
       catchError(this.handleError('markAsRead'))
     );
   }
   markAllAsRead(userId: number){
-    return this.http.post(`${API_BASE}/notifications/read-all/${encodeURIComponent(userId)}`, {}).pipe(
+    return this.http.put(`${API_BASE}/notifications/read-all/${encodeURIComponent(userId)}`, {}).pipe(
       catchError(this.handleError('markAllAsRead'))
     );
   }
