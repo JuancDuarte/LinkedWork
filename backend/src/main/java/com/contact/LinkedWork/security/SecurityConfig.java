@@ -40,7 +40,8 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/error"
                 ).permitAll()
-                .anyRequest().authenticated()
+
+                .anyRequest().permitAll()
             );
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
