@@ -6,10 +6,13 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import jakarta.mail.internet.MimeMessage;
 import java.math.BigDecimal;
 
-@Service
+@Service("EmailService")
+@Transactional
 public class EmailService {
 
     @Autowired(required = false)

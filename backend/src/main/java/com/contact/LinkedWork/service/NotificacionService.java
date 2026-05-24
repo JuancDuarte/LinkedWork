@@ -11,7 +11,8 @@ import com.contact.LinkedWork.model.Usuario;
 import com.contact.LinkedWork.repository.NotificacionRepository;
 import com.contact.LinkedWork.repository.UsuarioRepository;
 
-@Service
+@Service("NotificacionService")
+@Transactional
 public class NotificacionService {
  @Autowired
     private NotificacionRepository notificacionRepository;
