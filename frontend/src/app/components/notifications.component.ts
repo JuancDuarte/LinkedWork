@@ -27,10 +27,10 @@ export interface Notification {
 @Component({
   selector: 'app-notifications',
   imports: [CommonModule],
-  templateUrl: './notifications.components.html',
-  styleUrls: ['./notifications.components.css'],
+  templateUrl: './notifications.component.html',
+  styleUrls: ['./notifications.component.css'],
 })
-export class Notifications implements OnInit {
+export class NotificationsComponent implements OnInit {
 
   private apiService =
     inject(ApiService);
@@ -48,13 +48,14 @@ export class Notifications implements OnInit {
     const idUsuario = Number(
       localStorage.getItem('idUsuario')
     );
+      console.log("ID USUARIO:", idUsuario);
 
     this.apiService
       .getNotifications(idUsuario)
       .subscribe({
 
         next: (data) => {
-
+          console.log("NOTIFICACIONES:", data);
           this.notifications.set(data);
 
         },

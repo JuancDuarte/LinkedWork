@@ -5,13 +5,13 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService, UserRole } from '../services/auth.service';
 import { ApiService } from '../services/api.service';
-import { Notifications } from "./notifications.components";
+import { NotificationsComponent } from "./notifications.component";
 import { profilePhotoUrl } from '../utils/media-url';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [NgIf, RouterLink, RouterLinkActive, CommonModule, Notifications],
+  imports: [NgIf, RouterLink, RouterLinkActive, CommonModule, NotificationsComponent],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
