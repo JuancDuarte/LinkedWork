@@ -5,15 +5,12 @@ export function profilePhotoUrl(
   foto: string | null | undefined,
   seed: string | null | undefined
 ): string {
-  if (foto && foto.trim()) {
-    const f = foto.trim();
-    if (f.startsWith('http://') || f.startsWith('https://')) {
-      return f;
-    }
-    const base = 'https://linkedwork.onrender.com/LinkedApi';
 
-    return `${base}/uploads/${f.replace(/^\/+/, '')}`;
+  if (foto && foto.trim()) {
+    return foto;
   }
+
   const s = (seed || 'user').trim() || 'user';
+
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(s)}`;
 }

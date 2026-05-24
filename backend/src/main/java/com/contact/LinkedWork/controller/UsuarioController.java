@@ -29,6 +29,7 @@ import com.contact.LinkedWork.dto.CreateUsuarioDTO;
 import com.contact.LinkedWork.dto.UsuarioDTO;
 import com.contact.LinkedWork.dto.LoginDTO;
 import com.contact.LinkedWork.dto.ListarTrabajadorDTO;
+import com.contact.LinkedWork.service.SupabaseStorageService;
 import com.contact.LinkedWork.service.UsuarioService;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
@@ -50,6 +51,9 @@ public class UsuarioController {
     @Qualifier("UsuarioService")
     private UsuarioService usuarioService;
 
+    @Autowired
+    @Qualifier("SupabaseStorageService")
+    private SupabaseStorageService supabaseStorageService;
 
     @GetMapping(path = "/listUsers", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<UsuarioDTO> getAllUsuarios() {
@@ -221,57 +225,36 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.getCiudadesByDepartamento(idDepartamento));
     }
 
-    @PostMapping(path = "/uploadFotoPerfil/{idUsuario}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UsuarioDTO> uploadFotoPerfil(@PathVariable Long idUsuario, @RequestParam("file") MultipartFile file) {
-        try {
-            if (file.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-            }
-            String uploadDirStr = "./uploads/";
-            File uploadDir = new File(uploadDirStr);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
-            }
+    @PostMapping(
+    path = "/uploadFotoPerfil/{idUsuario}",
+    consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<UsuarioDTO> uploadFotoPerfil(
+        @PathVariable Long idUsuario,
+        @RequestParam("file") MultipartFile file) {
 
-            String originalFilename = file.getOriginalFilename();
-            String extension = "";
-            if (originalFilename != null && originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            }
-            String filename = System.currentTimeMillis() + "_" + idUsuario + extension;
+    try {
 
-            Path path = Paths.get(uploadDirStr + filename);
-            Files.write(path, file.getBytes());
-
-            UsuarioDTO updated = usuarioService.updateFotoPerfil(idUsuario, filename);
-            return ResponseEntity.ok(updated);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(null);
         }
-    }
 
-    @GetMapping(path = "/uploads/{filename:.+}")
-    public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
-        try {
-            Path file = Paths.get("./uploads").resolve(filename);
-            Resource resource = new UrlResource(file.toUri());
-            if (resource.exists() || resource.isReadable()) {
-                String contentType = Files.probeContentType(file);
-                if (contentType == null) {
-                    contentType = "application/octet-stream";
-                }
-                return ResponseEntity.ok()
-                        .contentType(MediaType.parseMediaType(contentType))
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
-                        .body(resource);
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-        } catch (MalformedURLException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        String imageUrl =
+                supabaseStorageService.uploadFile(file);
+
+        UsuarioDTO updated =
+                usuarioService.updateFotoPerfil(idUsuario, imageUrl);
+
+        return ResponseEntity.ok(updated);
+
+    } catch (Exception ex) {
+
+        ex.printStackTrace();
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(null);
     }
+}
 }

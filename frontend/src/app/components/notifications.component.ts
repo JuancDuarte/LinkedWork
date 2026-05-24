@@ -45,9 +45,9 @@ export class NotificationsComponent implements OnInit {
 
   loadNotifications(): void {
 
-    const idUsuario = Number(
-      localStorage.getItem('idUsuario')
-    );
+  const idUsuario = Number(
+    localStorage.getItem('linkedwork_user_id')
+  );
       console.log("ID USUARIO:", idUsuario);
 
     this.apiService
