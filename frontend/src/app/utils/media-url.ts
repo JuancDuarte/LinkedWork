@@ -10,7 +10,8 @@ export function profilePhotoUrl(
     if (f.startsWith('http://') || f.startsWith('https://')) {
       return f;
     }
-    const base = environment.apiBase.replace(/\/$/, '');
+    const base = 'https://linkedwork.onrender.com/LinkedApi';
+
     return `${base}/uploads/${f.replace(/^\/+/, '')}`;
   }
   const s = (seed || 'user').trim() || 'user';
