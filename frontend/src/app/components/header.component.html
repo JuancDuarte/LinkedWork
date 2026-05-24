@@ -34,42 +34,7 @@
         <span class="nav-icon">🎓</span>
         <span class="nav-label">Certificarme</span>
       </a>
-  <a routerLink="/farmings" class="nav-item" routerLinkActive="active">
-  <span class="nav-icon">👥</span>
-  <span class="nav-label">Técnicos</span>
-</a>
-
-<a routerLink="/requests" class="nav-item" routerLinkActive="active">
-  <span class="nav-icon">💼</span>
-  <span class="nav-label">
-    {{ auth.role() === 'ROLE_TRABAJADOR' ? 'Solicitudes' : 'Solicitar' }}
-  </span>
-</a>
-
-<a routerLink="/active-jobs" class="nav-item" routerLinkActive="active">
-  <span class="nav-icon">📋</span>
-  <span class="nav-label">Mis Trabajos</span>
-</a>
-
-<a routerLink="/postulations"
-   class="nav-item"
-   routerLinkActive="active"
-   *ngIf="auth.role() === 'ROLE_TRABAJADOR'">
-
-  <span class="nav-icon">📩</span>
-  <span class="nav-label">Mis Postulaciones</span>
-
-</a>
-
-<a routerLink="/certification"
-   class="nav-item"
-   routerLinkActive="active"
-   *ngIf="auth.role() === 'ROLE_TRABAJADOR'">
-
-  <span class="nav-icon">🎓</span>
-  <span class="nav-label">Certificarme</span>
-
-</a>
+  
 <div class="notification-wrapper">
 
   <button class="notification-btn"
