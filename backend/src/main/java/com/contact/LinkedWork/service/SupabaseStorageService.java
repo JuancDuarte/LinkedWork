@@ -22,7 +22,28 @@ public class SupabaseStorageService {
 
     public String uploadFile(MultipartFile file) throws IOException {
 
-        String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+       String extension = ".jpg";
+
+    String contentType = file.getContentType();
+
+    if (contentType != null) {
+
+        if (contentType.contains("png")) {
+            extension = ".png";
+        }
+        else if (contentType.contains("jpeg")
+            || contentType.contains("jpg")) {
+
+            extension = ".jpg";
+        }
+        else if (contentType.contains("heic")
+            || contentType.contains("heif")) {
+
+            extension = ".jpg";
+        }
+    }
+
+    String filename = System.currentTimeMillis()+ extension;
 
         webClient.put()
                 .uri(supabaseUrl + "/storage/v1/object/" + bucket + "/" + filename)

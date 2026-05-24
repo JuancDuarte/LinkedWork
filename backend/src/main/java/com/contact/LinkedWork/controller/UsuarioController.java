@@ -246,6 +246,16 @@ public ResponseEntity<UsuarioDTO> uploadFotoPerfil(
         UsuarioDTO updated =
                 usuarioService.updateFotoPerfil(idUsuario, imageUrl);
 
+        String contentType = file.getContentType();
+
+        if (contentType == null ||
+            !contentType.startsWith("image/")) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(null);
+        }
+
         return ResponseEntity.ok(updated);
 
     } catch (Exception ex) {
