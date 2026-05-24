@@ -242,6 +242,7 @@ public class SolicitudService {
         notificacionService.crearNotificacion(
         trabajador.getUsuario().getIdUsuario() ,
         "Te enviaron una solicitud directa",
+        "El usuario "+ solicitud.getUsuario().getNombreCompleto() +"te mando una solicitud de oferta",
         "SOLICITUD"
         
  

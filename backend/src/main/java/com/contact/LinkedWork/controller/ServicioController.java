@@ -193,7 +193,7 @@ public class ServicioController {
     @PostMapping(path = "/updateEncounter/{idSolicitud}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SolicitudDTO> updateEncounter(@PathVariable Long idSolicitud, @RequestBody UpdateEncounterDTO payload) {
         try {
-            SolicitudDTO updated = solicitudService.updateEncounterDetails(idSolicitud, payload.getDireccion(), payload.getHoraEncuentro(), payload.getNotas());
+            SolicitudDTO updated = solicitudService.updateEncounterDetails(idSolicitud, payload.getDireccion(), payload.getHoraEncuentro(), payload.getNotas(), null, null);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
