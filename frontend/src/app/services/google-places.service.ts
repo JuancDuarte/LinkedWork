@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-const API_BASE = 'http://localhost:8082/LinkedApi';
+const API_BASE = "https://linkedwork.onrender.com/LinkedApi";
 
 export interface AddressPrediction {
   placeId: string;

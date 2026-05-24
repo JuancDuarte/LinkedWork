@@ -1118,7 +1118,7 @@ export class AuthComponent implements OnInit {
       if (typeof google !== 'undefined' && google.accounts) {
         clearInterval(checkGoogle);
         google.accounts.id.initialize({
-          client_id: environment.googleClientId,
+          client_id: '648560152467-llla49ipnmr34bj6q63ii2q56oaine36.apps.googleusercontent.com',
           callback: this.handleGoogleLogin.bind(this)
         });
         const btnElement = document.getElementById('google-btn');

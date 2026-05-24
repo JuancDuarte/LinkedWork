@@ -6,6 +6,6 @@
  */
 export const environment = {
   production: false,
-  apiBase: 'http://localhost:8082/LinkedApi',
+  apiBaseURrl: 'http://localhost:8082/LinkedApi',
   googleClientId: '648560152467-llla49ipnmr34bj6q63ii2q56oaine36.apps.googleusercontent.com'
 };
