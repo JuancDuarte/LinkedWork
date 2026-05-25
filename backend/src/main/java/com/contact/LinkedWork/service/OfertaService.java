@@ -25,6 +25,8 @@ import com.contact.LinkedWork.repository.OfertaRepository;
 import com.contact.LinkedWork.repository.SolicitudRepository;
 import com.contact.LinkedWork.repository.TrabajadorRepository;
 import com.contact.LinkedWork.repository.UsuarioRepository;
+import com.contact.LinkedWork.service.EmailService;
+import com.contact.LinkedWork.service.MediaUrlService;
 import java.util.stream.StreamSupport;
 
 @Service("OfertaService")
@@ -36,6 +38,7 @@ public class OfertaService {
     private OfertaRepository ofertaRepository;
 
     @Autowired
+    @Qualifier("EmailService")
     private EmailService emailService;
 
     @Autowired
@@ -57,6 +60,9 @@ public class OfertaService {
     @Autowired
     @Qualifier("NotificacionService")
     private NotificacionService notificacionService;
+
+    @Autowired
+    @Qualifier("MediaUrlService")
     private MediaUrlService mediaUrlService;
 
     public OfertaDTO crearOferta(CrearOfertaDTO crearofertaDTO, Long idTrabajador, Long idSolicitud) {
