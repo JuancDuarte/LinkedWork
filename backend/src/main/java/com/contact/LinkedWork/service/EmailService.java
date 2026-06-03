@@ -2,21 +2,24 @@ package com.contact.LinkedWork.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpEntity;
 
-import jakarta.mail.internet.MimeMessage;
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service("EmailService")
 @Transactional
 public class EmailService {
 
-    @Autowired(required = false)
-    private JavaMailSender mailSender;
+    @Value("${linkedwork.mail.webhook-url}")
+    private String webhookUrl;
 
     @Value("${linkedwork.mail.enabled:true}")
     private boolean mailEnabled;
@@ -27,13 +30,11 @@ public class EmailService {
     @Value("${linkedwork.frontend.url:http://localhost:4200}")
     private String frontendUrl;
 
+    private final RestTemplate restTemplate = new RestTemplate();
+
     public boolean sendHtmlEmail(String to, String subject, String htmlBody) {
         if (!mailEnabled) {
             System.out.println("[Email] Deshabilitado. Para: " + to + " | Asunto: " + subject);
-            return false;
-        }
-        if (mailSender == null) {
-            System.err.println("[Email] JavaMailSender no configurado. No se envió a: " + to);
             return false;
         }
         if (to == null || to.isBlank()) {
@@ -41,17 +42,21 @@ public class EmailService {
             return false;
         }
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromEmail, "LinkedWork");
-            helper.setTo(to.trim());
-            helper.setSubject(subject);
-            helper.setText(htmlBody, true);
-            mailSender.send(message);
-            System.out.println("[Email] OK -> " + to + " | " + subject);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            
+            Map<String, String> body = new HashMap<>();
+            body.put("to", to.trim());
+            body.put("subject", subject);
+            body.put("htmlBody", htmlBody);
+            
+            HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
+            
+            String response = restTemplate.postForObject(webhookUrl, request, String.class);
+            System.out.println("[Email] Webhook OK -> " + to + " | " + subject);
             return true;
         } catch (Exception e) {
-            System.err.println("[Email] FALLO -> " + to + " | " + subject + " | " + e.getMessage());
+            System.err.println("[Email] FALLO Webhook -> " + to + " | " + subject + " | " + e.getMessage());
             e.printStackTrace();
             return false;
         }
