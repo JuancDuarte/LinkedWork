@@ -5,10 +5,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.HttpEntity;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -30,7 +32,7 @@ public class EmailService {
     @Value("${linkedwork.frontend.url:http://localhost:4200}")
     private String frontendUrl;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public boolean sendHtmlEmail(String to, String subject, String htmlBody) {
         if (!mailEnabled) {
@@ -42,18 +44,25 @@ public class EmailService {
             return false;
         }
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            
             Map<String, String> body = new HashMap<>();
             body.put("to", to.trim());
             body.put("subject", subject);
             body.put("htmlBody", htmlBody);
             
-            HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
-            
-            String response = restTemplate.postForObject(webhookUrl, request, String.class);
-            System.out.println("[Email] Webhook OK -> " + to + " | " + subject);
+            String jsonBody = objectMapper.writeValueAsString(body);
+
+            HttpClient client = HttpClient.newBuilder()
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .build();
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(webhookUrl))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            System.out.println("[Email] Webhook OK -> " + response.statusCode() + " | " + response.body());
             return true;
         } catch (Exception e) {
             System.err.println("[Email] FALLO Webhook -> " + to + " | " + subject + " | " + e.getMessage());
