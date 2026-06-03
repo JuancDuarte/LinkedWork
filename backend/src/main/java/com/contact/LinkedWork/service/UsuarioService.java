@@ -361,9 +361,10 @@ public class UsuarioService {
             throw new RuntimeException("Credenciales inválidas");
         }
 
-        if (Boolean.FALSE.equals(usuario.getEmailVerificado())) {
-            throw new RuntimeException("Debes verificar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.");
-        }
+        // Verificación de email deshabilitada temporalmente
+        // if (Boolean.FALSE.equals(usuario.getEmailVerificado())) {
+        //     throw new RuntimeException("Debes verificar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.");
+        // }
 
         usuario.setIntentosFallidos(0);
         usuario.setBloqueado(false);
